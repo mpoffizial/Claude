@@ -1,0 +1,270 @@
+// This Pine Script™ strategy is designed for MGC1! (Micro Gold Futures)
+// © MGC1 Multi-Factor Gold Strategy
+// Combines trend following, momentum, volatility filtering, and session awareness
+// Optimized for low drawdown with controlled position sizing
+
+//@version=6
+strategy("MGC1 Multi-Factor Gold Strategy",
+     overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.fixed,
+     default_qty_value=1,
+     commission_type=strategy.commission.cash_per_contract,
+     commission_value=1.25,       // Typical MGC commission per side
+     slippage=1,                  // 1 tick slippage
+     currency=currency.USD,
+     calc_on_every_tick=false,
+     max_bars_back=500,
+     pyramiding=0)                // No pyramiding - one position at a time
+
+// ============================================================================
+// INPUT PARAMETERS
+// ============================================================================
+
+// --- Trend Detection ---
+grp_trend = "Trend Detection"
+fastEmaLen   = input.int(9,   "Fast EMA Length",   minval=2, maxval=50,  group=grp_trend)
+slowEmaLen   = input.int(21,  "Slow EMA Length",   minval=5, maxval=100, group=grp_trend)
+trendEmaLen  = input.int(100, "Trend Filter EMA",  minval=50, maxval=300, group=grp_trend)
+
+// --- Momentum ---
+grp_mom = "Momentum"
+rsiLen       = input.int(14,  "RSI Length",         minval=5, maxval=30, group=grp_mom)
+rsiOB        = input.int(70,  "RSI Overbought",     minval=60, maxval=85, group=grp_mom)
+rsiOS        = input.int(30,  "RSI Oversold",        minval=15, maxval=40, group=grp_mom)
+macdFast     = input.int(12,  "MACD Fast Length",    minval=5, maxval=20, group=grp_mom)
+macdSlow     = input.int(26,  "MACD Slow Length",    minval=15, maxval=40, group=grp_mom)
+macdSignal   = input.int(9,   "MACD Signal Length",  minval=5, maxval=15, group=grp_mom)
+
+// --- Volatility Filter ---
+grp_vol = "Volatility Filter"
+atrLen       = input.int(14,  "ATR Length",          minval=5, maxval=30, group=grp_vol)
+atrMultSL    = input.float(2.0, "ATR Multiplier (Stop Loss)", minval=0.5, maxval=5.0, step=0.1, group=grp_vol)
+atrMultTP    = input.float(3.0, "ATR Multiplier (Take Profit)", minval=1.0, maxval=8.0, step=0.1, group=grp_vol)
+useTrailing  = input.bool(true, "Use Trailing Stop", group=grp_vol)
+trailAtrMult = input.float(1.5, "Trailing Stop ATR Mult", minval=0.5, maxval=4.0, step=0.1, group=grp_vol)
+
+// --- Volume Filter ---
+grp_volm = "Volume Filter"
+useVolFilter = input.bool(true, "Use Volume Filter", group=grp_volm)
+volMaLen     = input.int(20,  "Volume MA Length",    minval=5, maxval=50, group=grp_volm)
+volThresh    = input.float(1.0, "Volume Threshold (x avg)", minval=0.5, maxval=3.0, step=0.1, group=grp_volm)
+
+// --- Session Filter ---
+grp_sess = "Session Filter (Exchange Time)"
+useSessFilter = input.bool(true, "Trade Only During Active Sessions", group=grp_sess)
+sessStart     = input.int(8,  "Session Start Hour (ET)", minval=0, maxval=23, group=grp_sess)
+sessEnd       = input.int(17, "Session End Hour (ET)",   minval=0, maxval=23, group=grp_sess)
+
+// --- Risk Management ---
+grp_risk = "Risk Management"
+maxDailyLoss   = input.float(200.0, "Max Daily Loss ($)", minval=50, maxval=1000, step=50, group=grp_risk)
+maxTradesDay   = input.int(3,     "Max Trades Per Day",   minval=1, maxval=10, group=grp_risk)
+cooldownBars   = input.int(5,     "Cooldown Bars After Loss", minval=1, maxval=20, group=grp_risk)
+
+// ============================================================================
+// INDICATOR CALCULATIONS
+// ============================================================================
+
+// --- EMAs for trend ---
+fastEma  = ta.ema(close, fastEmaLen)
+slowEma  = ta.ema(close, slowEmaLen)
+trendEma = ta.ema(close, trendEmaLen)
+
+// --- RSI ---
+rsiVal = ta.rsi(close, rsiLen)
+
+// --- MACD ---
+[macdLine, signalLine, histLine] = ta.macd(close, macdFast, macdSlow, macdSignal)
+
+// --- ATR ---
+atrVal = ta.atr(atrLen)
+
+// --- Volume ---
+volMa     = ta.sma(volume, volMaLen)
+volActive  = not useVolFilter or (volume >= volMa * volThresh)
+
+// --- Bollinger Bands for mean reversion confirmation ---
+bbLen    = 20
+bbMult   = 2.0
+bbBasis  = ta.sma(close, bbLen)
+bbDev    = bbMult * ta.stdev(close, bbLen)
+bbUpper  = bbBasis + bbDev
+bbLower  = bbBasis - bbDev
+
+// ============================================================================
+// SESSION FILTER
+// ============================================================================
+
+currentHour = hour(time, "America/New_York")
+inSession   = not useSessFilter or (currentHour >= sessStart and currentHour < sessEnd)
+
+// ============================================================================
+// DAILY RISK TRACKING
+// ============================================================================
+
+var float dailyPnL      = 0.0
+var int   dailyTrades    = 0
+var int   lastTradeDay   = 0
+var int   barsSinceLoss  = 999
+
+// Reset daily counters
+currentDay = dayofmonth(time)
+if currentDay != lastTradeDay
+    dailyPnL     := 0.0
+    dailyTrades  := 0
+    lastTradeDay := currentDay
+
+// Track closed trades
+if strategy.closedtrades > 0
+    lastPnL = strategy.closedtrades.profit(strategy.closedtrades - 1)
+    if lastPnL < 0
+        barsSinceLoss := 0
+    else
+        barsSinceLoss += 1
+else
+    barsSinceLoss += 1
+
+dailyRiskOk   = dailyPnL > -maxDailyLoss
+dailyTradesOk = dailyTrades < maxTradesDay
+cooldownOk    = barsSinceLoss >= cooldownBars
+
+// ============================================================================
+// TREND DETECTION
+// ============================================================================
+
+bullTrend = close > trendEma
+bearTrend = close < trendEma
+
+emaCrossUp   = ta.crossover(fastEma, slowEma)
+emaCrossDown = ta.crossunder(fastEma, slowEma)
+
+// ============================================================================
+// ENTRY CONDITIONS
+// ============================================================================
+
+// --- LONG CONDITIONS ---
+// 1. Price above trend EMA (bullish environment)
+// 2. Fast EMA crosses above slow EMA (momentum shift)
+// 3. RSI not overbought (room to run)
+// 4. MACD histogram positive or turning positive
+// 5. Volume above average
+// 6. Within active session
+// 7. Risk limits not exceeded
+
+longCondition = bullTrend
+     and emaCrossUp
+     and rsiVal < rsiOB
+     and rsiVal > rsiOS
+     and (histLine > 0 or (histLine > histLine[1]))
+     and volActive
+     and inSession
+     and dailyRiskOk
+     and dailyTradesOk
+     and cooldownOk
+
+// --- SHORT CONDITIONS ---
+// Mirror of long conditions for bearish side
+shortCondition = bearTrend
+     and emaCrossDown
+     and rsiVal > rsiOS
+     and rsiVal < rsiOB
+     and (histLine < 0 or (histLine < histLine[1]))
+     and volActive
+     and inSession
+     and dailyRiskOk
+     and dailyTradesOk
+     and cooldownOk
+
+// ============================================================================
+// CONFIRMATION: Require candle close in direction
+// ============================================================================
+
+longConfirm  = longCondition and close > open
+shortConfirm = shortCondition and close < open
+
+// ============================================================================
+// STOP LOSS & TAKE PROFIT CALCULATION
+// ============================================================================
+
+longSL  = close - (atrVal * atrMultSL)
+longTP  = close + (atrVal * atrMultTP)
+shortSL = close + (atrVal * atrMultSL)
+shortTP = close - (atrVal * atrMultTP)
+
+// ============================================================================
+// TRADE EXECUTION
+// ============================================================================
+
+if longConfirm and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long",
+         stop=longSL,
+         limit=longTP,
+         trail_points=useTrailing ? atrVal * trailAtrMult / syminfo.mintick : na,
+         trail_offset=useTrailing ? atrVal * trailAtrMult * 0.5 / syminfo.mintick : na)
+    dailyTrades += 1
+
+if shortConfirm and strategy.position_size == 0
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short",
+         stop=shortSL,
+         limit=shortTP,
+         trail_points=useTrailing ? atrVal * trailAtrMult / syminfo.mintick : na,
+         trail_offset=useTrailing ? atrVal * trailAtrMult * 0.5 / syminfo.mintick : na)
+    dailyTrades += 1
+
+// ============================================================================
+// EMERGENCY EXIT: Close at session end
+// ============================================================================
+
+if useSessFilter and currentHour >= sessEnd and strategy.position_size != 0
+    strategy.close_all("Session End")
+
+// ============================================================================
+// PLOTTING
+// ============================================================================
+
+// EMAs
+plot(fastEma,  "Fast EMA",  color=color.new(color.blue, 0),   linewidth=1)
+plot(slowEma,  "Slow EMA",  color=color.new(color.orange, 0), linewidth=1)
+plot(trendEma, "Trend EMA", color=color.new(color.white, 30), linewidth=2)
+
+// Bollinger Bands
+p1 = plot(bbUpper, "BB Upper", color=color.new(color.gray, 60))
+p2 = plot(bbLower, "BB Lower", color=color.new(color.gray, 60))
+fill(p1, p2, color=color.new(color.gray, 90))
+
+// Entry signals
+plotshape(longConfirm  and strategy.position_size == 0, "Long Signal",  shape.triangleup,   location.belowbar, color.new(color.green, 0), size=size.small)
+plotshape(shortConfirm and strategy.position_size == 0, "Short Signal", shape.triangledown, location.abovebar, color.new(color.red, 0),   size=size.small)
+
+// Background: session filter
+bgcolor(useSessFilter and not inSession ? color.new(color.red, 95) : na, title="Outside Session")
+
+// Background: trend direction
+bgcolor(bullTrend ? color.new(color.green, 95) : bearTrend ? color.new(color.red, 95) : na, title="Trend Direction")
+
+// ============================================================================
+// INFO TABLE
+// ============================================================================
+
+var table infoTable = table.new(position.top_right, 2, 8, bgcolor=color.new(color.black, 80), border_width=1)
+
+if barstate.islast
+    table.cell(infoTable, 0, 0, "Metric",       text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 0, "Value",         text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 0, 1, "Trend",         text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 1, bullTrend ? "BULL" : "BEAR", text_color=bullTrend ? color.green : color.red, text_size=size.small)
+    table.cell(infoTable, 0, 2, "RSI",           text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 2, str.tostring(rsiVal, "#.0"), text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 0, 3, "MACD Hist",     text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 3, str.tostring(histLine, "#.00"), text_color=histLine > 0 ? color.green : color.red, text_size=size.small)
+    table.cell(infoTable, 0, 4, "ATR",           text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 4, str.tostring(atrVal, "#.00"), text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 0, 5, "Daily Trades",  text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 5, str.tostring(dailyTrades), text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 0, 6, "Session",       text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 6, inSession ? "ACTIVE" : "CLOSED", text_color=inSession ? color.green : color.red, text_size=size.small)
+    table.cell(infoTable, 0, 7, "Position",      text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 7, strategy.position_size > 0 ? "LONG" : strategy.position_size < 0 ? "SHORT" : "FLAT", text_color=strategy.position_size > 0 ? color.green : strategy.position_size < 0 ? color.red : color.gray, text_size=size.small)
