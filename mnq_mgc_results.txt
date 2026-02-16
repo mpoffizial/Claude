@@ -1,0 +1,32 @@
+
+MNQ & MGC Trading Strategy Optimization Report
+================================================
+Datum: 2026-02-15 23:56
+Account: $20,000
+Indikatoren: Top 10 TradingView (SuperTrend, RSI, MACD, EMA, BB, VWAP, Ichimoku, StochRSI, ADX, HullMA)
+
+MNQ Daten: 5000 Bars (2025-07-22 16:23:54.933085 bis 2026-02-15 23:23:54.933085)
+MGC Daten: 5000 Bars (2025-07-22 16:23:54.968968 bis 2026-02-15 23:23:54.968968)
+
+PORTFOLIO ERGEBNIS
+------------------
+Startkapital:       $20,000.00
+Endkapital:         $27,249.54
+Rendite:            +36.2%
+Est. Max Drawdown:  -1.5%
+
+MNQ BESTE STRATEGIE: BB-Squeeze+HullMA
+Parameter: {'bb_period': 20, 'bb_mult': 1.5, 'hma_period': 26, 'sl_mult': 1.5, 'tp_mult': 3.0, 'long_only': True}
+- Trades: 58, Win Rate: 65.5%
+- PnL: $10747.90, Return: 53.7%
+- Profit Factor: 2.20, Max DD: -3.8%
+- Sharpe: 5.89, Calmar: 14.25
+- Expectancy: $185.31/Trade
+
+MGC BESTE STRATEGIE: BB-Squeeze+HullMA
+Parameter: {'bb_period': 25, 'bb_mult': 2.0, 'hma_period': 20, 'sl_mult': 1.5, 'tp_mult': 3.0, 'long_only': True}
+- Trades: 21, Win Rate: 81.0%
+- PnL: $3751.18, Return: 18.8%
+- Profit Factor: 4.36, Max DD: -2.1%
+- Sharpe: 11.03, Calmar: 8.82
+- Expectancy: $178.63/Trade

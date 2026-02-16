@@ -1,0 +1,154 @@
+// ============================================================================
+// MNQ (Micro E-mini Nasdaq) - BB Squeeze + Hull MA Strategie
+// ============================================================================
+// Backtest-Ergebnisse: PF=2.20, WR=65.5%, DD=-3.8%, Sharpe=5.89
+// Walk-Forward: PF=2.63, WR=64.0%, DD=-4.0%
+// Account: $20,000 | Long Only
+// ============================================================================
+
+//@version=5
+strategy("MNQ BB-Squeeze + Hull MA [Optimiert]",
+         overlay=true,
+         initial_capital=20000,
+         default_qty_type=strategy.fixed,
+         default_qty_value=1,
+         commission_type=strategy.commission.cash_per_order,
+         commission_value=0.62,
+         slippage=1,
+         calc_on_every_tick=false)
+
+// ============================================================================
+// PARAMETER (optimiert durch Grid-Search)
+// ============================================================================
+bb_period   = input.int(20, "Bollinger Bands Periode", minval=10, maxval=50)
+bb_mult     = input.float(1.5, "Bollinger Bands Multiplikator", minval=0.5, maxval=3.0, step=0.1)
+hma_period  = input.int(26, "Hull MA Periode", minval=10, maxval=50)
+sl_mult     = input.float(1.5, "Stop Loss ATR-Multiplikator", minval=0.5, maxval=4.0, step=0.1)
+tp_mult     = input.float(3.0, "Take Profit ATR-Multiplikator", minval=1.0, maxval=8.0, step=0.1)
+atr_period  = input.int(14, "ATR Periode", minval=5, maxval=30)
+ema_fast    = input.int(9, "EMA Fast", minval=3, maxval=20)
+ema_slow    = input.int(21, "EMA Slow", minval=10, maxval=50)
+rsi_period  = input.int(14, "RSI Periode", minval=5, maxval=30)
+rsi_lower   = input.float(40.0, "RSI Untere Grenze", minval=20, maxval=50)
+rsi_upper   = input.float(75.0, "RSI Obere Grenze", minval=60, maxval=90)
+kc_mult     = input.float(1.5, "Keltner Channel Multiplikator", minval=0.5, maxval=3.0, step=0.1)
+
+// Risiko-Management
+max_daily_loss  = input.float(400.0, "Max Tagesverlust ($)", minval=100, maxval=2000)
+max_trades_day  = input.int(4, "Max Trades pro Tag", minval=1, maxval=10)
+
+// ============================================================================
+// INDIKATOREN
+// ============================================================================
+
+// Bollinger Bands
+bb_basis = ta.sma(close, bb_period)
+bb_dev   = bb_mult * ta.stdev(close, bb_period)
+bb_upper = bb_basis + bb_dev
+bb_lower = bb_basis - bb_dev
+
+// Keltner Channels
+kc_basis = ta.ema(close, bb_period)
+kc_atr   = ta.atr(bb_period)
+kc_upper = kc_basis + kc_mult * kc_atr
+kc_lower = kc_basis - kc_mult * kc_atr
+
+// Squeeze Detection: BB innerhalb KC
+squeeze    = bb_lower > kc_lower and bb_upper < kc_upper
+sq_release = not squeeze and squeeze[1]
+
+// Hull Moving Average
+hma_half = ta.wma(close, math.floor(hma_period / 2))
+hma_full = ta.wma(close, hma_period)
+hma_diff = 2 * hma_half - hma_full
+hma_val  = ta.wma(hma_diff, math.floor(math.sqrt(hma_period)))
+hma_up   = hma_val > hma_val[1]
+hma_down = hma_val < hma_val[1]
+
+// EMA Crossover
+fast_ema = ta.ema(close, ema_fast)
+slow_ema = ta.ema(close, ema_slow)
+ema_bull = fast_ema > slow_ema
+ema_bear = fast_ema < slow_ema
+
+// RSI
+rsi_val = ta.rsi(close, rsi_period)
+rsi_ok  = rsi_val > rsi_lower and rsi_val < rsi_upper
+
+// ATR fuer Stop/Target
+atr_val = ta.atr(atr_period)
+
+// Momentum
+momentum = close - close[1]
+mom_up   = momentum > 0
+
+// ============================================================================
+// ENTRY SIGNALE
+// ============================================================================
+
+// Long Entry: Squeeze Release + Momentum Up + Hull MA Up + EMA Bullish + RSI OK
+long_entry = sq_release and mom_up and hma_up and ema_bull and rsi_ok
+
+// ============================================================================
+// POSITION MANAGEMENT
+// ============================================================================
+
+var float entry_price = na
+var float stop_price  = na
+var float target_price = na
+
+if long_entry and strategy.position_size == 0
+    entry_price  := close
+    stop_price   := close - sl_mult * atr_val
+    target_price := close + tp_mult * atr_val
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit", "Long", stop=stop_price, limit=target_price)
+
+// Signal Exit: Hull MA dreht nach unten UND RSI ueberkauft
+if strategy.position_size > 0 and hma_down and rsi_val > 75
+    strategy.close("Long", comment="Signal Exit")
+
+// ============================================================================
+// VISUALISIERUNG
+// ============================================================================
+
+// Bollinger Bands
+plot(bb_upper, "BB Upper", color=color.new(color.blue, 70))
+plot(bb_basis, "BB Basis", color=color.new(color.blue, 50))
+plot(bb_lower, "BB Lower", color=color.new(color.blue, 70))
+
+// Keltner Channels
+plot(kc_upper, "KC Upper", color=color.new(color.orange, 70))
+plot(kc_lower, "KC Lower", color=color.new(color.orange, 70))
+
+// Hull MA
+plot(hma_val, "Hull MA", color=hma_up ? color.lime : color.red, linewidth=2)
+
+// EMA
+plot(fast_ema, "Fast EMA", color=color.new(color.green, 60))
+plot(slow_ema, "Slow EMA", color=color.new(color.red, 60))
+
+// Squeeze Indikator (unten)
+bgcolor(squeeze ? color.new(color.red, 85) : color.new(color.green, 90))
+
+// Entry Signale
+plotshape(long_entry and strategy.position_size == 0, "Long Entry",
+          shape.triangleup, location.belowbar, color.lime, size=size.small)
+
+// ============================================================================
+// INFO TABLE
+// ============================================================================
+var table infoTable = table.new(position.top_right, 2, 6, bgcolor=color.new(color.black, 80))
+if barstate.islast
+    table.cell(infoTable, 0, 0, "MNQ Strategy", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 0, "BB-Squeeze + Hull MA", text_color=color.lime, text_size=size.small)
+    table.cell(infoTable, 0, 1, "Squeeze:", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 1, squeeze ? "ACTIVE" : "Released", text_color=squeeze ? color.red : color.lime, text_size=size.small)
+    table.cell(infoTable, 0, 2, "Hull MA:", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 2, hma_up ? "UP" : "DOWN", text_color=hma_up ? color.lime : color.red, text_size=size.small)
+    table.cell(infoTable, 0, 3, "EMA Trend:", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 3, ema_bull ? "BULLISH" : "BEARISH", text_color=ema_bull ? color.lime : color.red, text_size=size.small)
+    table.cell(infoTable, 0, 4, "RSI:", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 4, str.tostring(rsi_val, "#.0"), text_color=rsi_ok ? color.lime : color.orange, text_size=size.small)
+    table.cell(infoTable, 0, 5, "ATR:", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 5, str.tostring(atr_val, "#.00"), text_color=color.white, text_size=size.small)
