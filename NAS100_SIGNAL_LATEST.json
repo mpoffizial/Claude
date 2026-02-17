@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-02-17 21:58:48.662722",
+  "price": 22489.873200967297,
+  "trend": "STRONG UPTREND",
+  "rsi": 96.41865264579359,
+  "atr": 92.44616461507134,
+  "signals": [
+    {
+      "direction": "SHORT",
+      "type": "Mean Reversion",
+      "entry": 22489.873200967297,
+      "stop_loss": 22582.319365582367,
+      "take_profit": 22351.20395404469,
+      "risk_reward": 1.5,
+      "quality_score": 38
+    }
+  ]
+}
