@@ -215,44 +215,64 @@ class TradingViewData:
                 print(f"  {k}: {ind[k]}")
 
     def _generate_realistic_gold_data(self, current_price, n_bars=5000):
-        """Generate realistic gold price data using geometric Brownian motion
-        calibrated to gold's actual volatility characteristics."""
+        """Generate realistic gold price data with trending cycles"""
         import numpy as np
         np.random.seed(42)
 
-        # Gold volatility parameters (calibrated to real gold futures)
-        annual_vol = 0.18       # ~18% annual volatility for gold
-        hourly_vol = annual_vol / np.sqrt(252 * 6.5)  # Per-bar volatility (1H bars)
-        drift = 0.08 / (252 * 6.5)  # Small positive drift (gold's long-term trend)
+        # Gold volatility parameters
+        annual_vol = 0.18
+        hourly_vol = annual_vol / np.sqrt(252 * 6.5)
+        drift = 0.05 / (252 * 6.5)
 
-        # Generate returns with mean reversion and momentum
-        returns = np.zeros(n_bars)
+        # Generate prices with trending cycles and momentum
+        prices = np.zeros(n_bars)
+        prices[0] = current_price
+
         for i in range(1, n_bars):
-            # Regime-switching: sometimes trending, sometimes mean-reverting
-            regime = np.sin(i / 200) > 0  # Alternating regimes
-            momentum = 0.1 * returns[i-1] if regime else -0.05 * returns[i-1]
-            returns[i] = drift + momentum + hourly_vol * np.random.randn()
+            # Create trending cycles (bull runs, consolidations, pullbacks)
+            cycle_phase = (i % 200) / 200.0  # 200-bar cycles
 
-        # Build price series backwards from current price
-        log_prices = np.cumsum(returns[::-1])
-        prices_raw = current_price * np.exp(-log_prices)
-        prices = prices_raw[::-1]
+            # Trend bias based on cycle position
+            if cycle_phase < 0.3:  # Strong uptrend
+                trend_bias = 0.0003
+            elif cycle_phase < 0.5:  # Consolidation
+                trend_bias = 0.00005
+            elif cycle_phase < 0.8:  # Downtrend/Pullback
+                trend_bias = -0.0002
+            else:  # Recovery
+                trend_bias = 0.0001
+
+            # Momentum continuation (prices tend to keep moving)
+            momentum = 0.15 * (prices[i-1] - prices[max(0, i-5)]) / prices[max(0, i-5)]
+
+            # Random shock
+            shock = np.random.randn() * hourly_vol
+
+            # Calculate return
+            ret = trend_bias + momentum + shock
+
+            # Apply return to price
+            prices[i] = prices[i-1] * (1 + ret)
 
         # Generate OHLCV
         timestamps = pd.date_range(end=datetime.now(), periods=n_bars, freq="1h")
         data = []
+
         for i, (ts, p) in enumerate(zip(timestamps, prices)):
-            bar_vol = hourly_vol * p
-            h = p + abs(np.random.randn()) * bar_vol * 0.7
-            l = p - abs(np.random.randn()) * bar_vol * 0.7
-            o = p + np.random.randn() * bar_vol * 0.3
-            c = p
-            v = max(100, int(np.random.lognormal(8, 1)))
-            data.append([ts, min(o, h), h, l, max(c, l), v])
+            bar_vol = max(0.5, hourly_vol * p)
+
+            # Random OHLC pattern
+            o = p + np.random.randn() * bar_vol * 0.2
+            c = p + np.random.randn() * bar_vol * 0.15
+            h = max(o, c) + abs(np.random.randn()) * bar_vol * 0.5
+            l = min(o, c) - abs(np.random.randn()) * bar_vol * 0.5
+
+            v = max(100, int(np.random.lognormal(10, 0.8)))
+            data.append([ts, o, h, l, c, v])
 
         df = pd.DataFrame(data, columns=["timestamp", "open", "high", "low", "close", "volume"])
         df = df.set_index("timestamp")
-        print(f"[Fallback] Generated {len(df)} bars of realistic gold data")
+        print(f"[Fallback] Generated {len(df)} bars of TRENDING gold data")
         print(f"[Fallback] Price range: ${df['close'].min():.2f} - ${df['close'].max():.2f}")
         return df
 
