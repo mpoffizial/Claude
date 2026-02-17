@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-02-17T22:06:26.424886",
+  "markets_analyzed": 4,
+  "buy_signals": 1,
+  "sell_signals": 0,
+  "hold_signals": 3,
+  "edge_opportunities": 1,
+  "signals": [
+    {
+      "question": "Will Bitcoin be above $50,000 by December 31, 2026?",
+      "category": "Cryptocurrency",
+      "recommendation": "HOLD",
+      "analysis_count": 0,
+      "liquidity": "GOOD",
+      "edge_found": false
+    },
+    {
+      "question": "Who will win the 2026 US Presidential Election?",
+      "category": "Politics",
+      "recommendation": "BUY",
+      "analysis_count": 1,
+      "liquidity": "EXCELLENT",
+      "edge_found": true
+    },
+    {
+      "question": "Will Tesla stock be above $300 by Q3 2026?",
+      "category": "Technology",
+      "recommendation": "HOLD",
+      "analysis_count": 0,
+      "liquidity": "GOOD",
+      "edge_found": false
+    },
+    {
+      "question": "Will Fed raise interest rates in 2026?",
+      "category": "Economics",
+      "recommendation": "HOLD",
+      "analysis_count": 0,
+      "liquidity": "EXCELLENT",
+      "edge_found": false
+    }
+  ]
+}
