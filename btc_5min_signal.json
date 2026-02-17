@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-02-17T22:09:34.640687",
+  "direction": "UP",
+  "confidence": 78.25709791823408,
+  "current_price": 103922.63584097191,
+  "entry": 103922.63584097191,
+  "stop_loss": 103497.10492297732,
+  "take_profit_1": 104206.32311963497,
+  "take_profit_2": 104490.01039829802,
+  "polymarket_action": "BUY YES (UP)"
+}
