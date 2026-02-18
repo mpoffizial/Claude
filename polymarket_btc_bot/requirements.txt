@@ -1,0 +1,15 @@
+# Core dependencies
+py-clob-client>=0.0.1
+websockets>=12.0
+aiohttp>=3.9.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Monitoring
+rich>=13.0.0
+
+# Async support
+asyncio-compat>=0.1.0; python_version < "3.11"
+
+# Optional: for backtesting data storage
+# sqlite3 is included in Python stdlib
