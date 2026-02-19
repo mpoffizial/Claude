@@ -5,6 +5,9 @@ aiohttp>=3.9.0
 numpy>=1.24.0
 pandas>=2.0.0
 
+# Blockchain / On-chain reads
+web3>=6.0.0
+
 # Monitoring
 rich>=13.0.0
 
