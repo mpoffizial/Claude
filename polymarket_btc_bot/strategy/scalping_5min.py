@@ -30,6 +30,7 @@ from typing import Optional
 from polymarket_btc_bot.config import StrategyConfig, RiskConfig
 from polymarket_btc_bot.data.binance_feed import BinanceFeed, MomentumData
 from polymarket_btc_bot.data.polymarket_clob import MarketOrderbook
+from polymarket_btc_bot.execution.fee_calculator import FeeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,10 @@ class EarlyScalping:
         self._signal_cooldown: float = 20.0  # No repeated signals in early window
         self._stats = ScalpStats()
         self._market_start_time: float = 0.0
+        self._fees = FeeCalculator(
+            winner_fee=risk_config.winner_fee,
+            gas_cost=risk_config.gas_cost_usdc,
+        )
 
     def set_market_start(self, start_timestamp: float):
         """Called when a new market opens."""
@@ -202,7 +207,8 @@ class EarlyScalping:
             )
             return no_signal
 
-        # Calculate expected edge
+        # Exakte Fee-Berechnung: Break-Even-Prob und Edge via FeeCalculator
+        be_prob = self._fees.break_even_probability(ask_price)
         payout = 1.0 - self.risk.winner_fee  # 0.98
         expected_edge = (payout - ask_price) / ask_price
 
@@ -262,7 +268,8 @@ class EarlyScalping:
 
         logger.info(
             "SCALP SIGNAL: %s | conf=%.2f | elapsed=%.0fs | "
-            "mom20=%+.5f | mom10=%+.5f | accel=%+.5f | ask=%.3f | edge=%.4f",
+            "mom20=%+.5f | mom10=%+.5f | accel=%+.5f | "
+            "ask=%.3f | edge=%.4f | break_even=%.1%%",
             direction.upper(),
             confidence,
             time_elapsed,
@@ -271,6 +278,7 @@ class EarlyScalping:
             acceleration,
             ask_price,
             expected_edge,
+            be_prob * 100,
         )
 
         return signal

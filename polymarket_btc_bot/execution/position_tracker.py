@@ -11,6 +11,7 @@ from typing import Optional
 
 from polymarket_btc_bot.config import RiskConfig
 from polymarket_btc_bot.execution.order_manager import Order, OrderStatus, OrderSide
+from polymarket_btc_bot.execution.fee_calculator import FeeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -48,26 +49,38 @@ class Position:
         end = self.closed_at or time.time()
         return end - self.opened_at
 
-    def close(self, won: bool, winner_fee: float = 0.02):
-        """Close this position with the market result."""
+    def close(self, won: bool, fee_calculator: Optional["FeeCalculator"] = None, winner_fee: float = 0.02):
+        """
+        Close this position with the market result.
+
+        Nutzt FeeCalculator fuer exaktes PnL:
+        - WIN:  Netto = tokens * (1 - winner_fee) - gas - cost
+        - LOSE: Netto = -cost - gas
+        """
         now = time.time()
         self.closed_at = now
 
-        if won:
-            payout = self.size * 1.0  # Each winning token pays $1
-            fee = payout * winner_fee
-            self.pnl = payout - self.cost
-            self.pnl_after_fee = payout - fee - self.cost
-            self.exit_price = 1.0
-            self.status = PositionStatus.CLOSED_WIN
+        if fee_calculator is not None:
+            self.pnl, self.pnl_after_fee = fee_calculator.close_position_pnl(
+                tokens=self.size, cost=self.cost, won=won
+            )
         else:
-            self.pnl = -self.cost
-            self.pnl_after_fee = -self.cost
-            self.exit_price = 0.0
-            self.status = PositionStatus.CLOSED_LOSS
+            # Fallback: nur Winner-Fee
+            if won:
+                gross = self.size * 1.0
+                fee = gross * winner_fee
+                self.pnl = gross - self.cost
+                self.pnl_after_fee = gross - fee - self.cost
+            else:
+                self.pnl = -self.cost
+                self.pnl_after_fee = -self.cost
+
+        self.exit_price = 1.0 if won else 0.0
+        self.status = PositionStatus.CLOSED_WIN if won else PositionStatus.CLOSED_LOSS
 
         logger.info(
-            "Position closed: %s %s | %s | PnL: $%.4f (after fee: $%.4f)",
+            "Position closed: %s %s | %s | "
+            "PnL gross: $%.4f | PnL nach Fee+Gas: $%.4f",
             self.side,
             self.market_slug,
             "WIN" if won else "LOSS",
@@ -110,6 +123,10 @@ class PositionTracker:
         self._daily_stats: dict[str, DailyStats] = {}
         self._total_pnl: float = 0.0
         self._session_start: float = time.time()
+        self._fee_calculator = FeeCalculator(
+            winner_fee=risk_config.winner_fee,
+            gas_cost=risk_config.gas_cost_usdc,
+        )
 
     @property
     def open_positions(self) -> list[Position]:
@@ -170,7 +187,7 @@ class PositionTracker:
         if not position or not position.is_open:
             return
 
-        position.close(won, self.risk.winner_fee)
+        position.close(won, fee_calculator=self._fee_calculator)
         self._total_pnl += position.pnl_after_fee
 
         # Update daily stats

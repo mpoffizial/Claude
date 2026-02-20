@@ -98,9 +98,12 @@ class RiskConfig:
     no_trade_last_seconds: int = 15              # Buffer before close
     max_hold_time_minutes: int = 4               # Max hold = market duration
 
-    # Fee Management
-    winner_fee: float = 0.02                     # Polymarket 2% winner fee
-    min_profit_after_fee: float = 0.005          # Min $0.005 profit after fee
+    # Fee Management (Polymarket, Stand 2025)
+    winner_fee: float = 0.02                     # 2% Gebuehr auf Gewinn-Payout
+    maker_fee: float = 0.0                       # 0% fuer Limit-Orders (Maker)
+    taker_fee: float = 0.0                       # 0% fuer Market-Orders (Taker)
+    gas_cost_usdc: float = 0.005                 # ~$0.005 pro Tx (Polygon PoS)
+    min_profit_after_fee: float = 0.005          # Min $0.005 Gewinn nach allen Fees
 
 
 @dataclass
