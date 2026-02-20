@@ -84,7 +84,7 @@ class EarlyScalping:
         self._stats = ScalpStats()
         self._market_start_time: float = 0.0
         self._fees = FeeCalculator(
-            winner_fee=risk_config.winner_fee,
+            market_type=risk_config.market_type,
             gas_cost=risk_config.gas_cost_usdc,
         )
 
@@ -209,7 +209,7 @@ class EarlyScalping:
 
         # Exakte Fee-Berechnung: Break-Even-Prob und Edge via FeeCalculator
         be_prob = self._fees.break_even_probability(ask_price)
-        payout = 1.0 - self.risk.winner_fee  # 0.98
+        payout = 1.0 - self._fees.taker_fee_rate(ask_price)  # dynamische Taker-Fee
         expected_edge = (payout - ask_price) / ask_price
 
         if expected_edge < self.risk.min_edge_threshold:

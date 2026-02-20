@@ -98,12 +98,16 @@ class RiskConfig:
     no_trade_last_seconds: int = 15              # Buffer before close
     max_hold_time_minutes: int = 4               # Max hold = market duration
 
-    # Fee Management (Polymarket, Stand 2025)
-    winner_fee: float = 0.02                     # 2% Gebuehr auf Gewinn-Payout
-    maker_fee: float = 0.0                       # 0% fuer Limit-Orders (Maker)
-    taker_fee: float = 0.0                       # 0% fuer Market-Orders (Taker)
-    gas_cost_usdc: float = 0.005                 # ~$0.005 pro Tx (Polygon PoS)
-    min_profit_after_fee: float = 0.005          # Min $0.005 Gewinn nach allen Fees
+    # Fee Management (Polymarket, Stand Feb 2026 - neues dynamisches Fee-Modell)
+    # Neues Modell: Dynamische Taker-Fee beim Kauf (nicht bei Resolution)
+    #   5min:  max 0.44%  bei p=0.50  → fee_rate(p) = 0.0044 * 4 * p * (1-p)
+    #   15min: max 1.56%  bei p=0.50  → fee_rate(p) = 0.0156 * 4 * p * (1-p)
+    # Alte Winner-Fee (2%) nicht mehr aktiv fuer Krypto-Kurzmarkte
+    market_type: str = "crypto_5min"         # "crypto_5min" | "crypto_15min" | "other"
+    winner_fee: float = 0.0                  # 0% (neues Modell: keine Winner-Fee mehr)
+    maker_fee: float = 0.0                   # 0% fuer Limit-Orders (Maker)
+    gas_cost_usdc: float = 0.005             # ~$0.005 pro Tx (Polygon PoS)
+    min_profit_after_fee: float = 0.005      # Min $0.005 Gewinn nach allen Fees
 
 
 @dataclass

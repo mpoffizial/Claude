@@ -61,7 +61,7 @@ class LagArbitrage:
         self._signal_cooldown: float = 10.0  # Min seconds between signals
         self._signal_count: int = 0
         self._fees = FeeCalculator(
-            winner_fee=risk_config.winner_fee,
+            market_type=risk_config.market_type,
             gas_cost=risk_config.gas_cost_usdc,
         )
 
@@ -147,7 +147,7 @@ class LagArbitrage:
         # Break-Even: minimale Win-Prob fuer Profitabilitaet
         # Edge: (1 - winner_fee - gas_per_token) / ask - 1
         be_prob = self._fees.break_even_probability(ask_price)
-        payout = 1.0 - self.risk.winner_fee
+        payout = 1.0 - self._fees.taker_fee_rate(ask_price)
         expected_edge = (payout - ask_price) / ask_price
 
         if expected_edge < self.risk.min_edge_threshold:
@@ -190,14 +190,14 @@ class LagArbitrage:
 
         logger.info(
             "LAG SIGNAL: %s | conf=%.2f | momentum=%+.5f | ask=%.3f | "
-            "edge=%.4f | break_even=%.1%% | winner_fee=%.0f%% | gas=$%.3f",
+            "edge=%.4f | break_even=%.1%% | taker_fee=%.3f%% | gas=$%.3f",
             direction.value.upper(),
             confidence,
             momentum.momentum_score,
             ask_price,
             expected_edge,
             be_prob * 100,
-            self.risk.winner_fee * 100,
+            self._fees.taker_fee_rate(ask_price) * 100,
             self.risk.gas_cost_usdc,
         )
 

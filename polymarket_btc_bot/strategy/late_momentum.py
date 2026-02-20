@@ -51,7 +51,7 @@ class LateMomentum:
         self._last_signal_time: float = 0.0
         self._cooldown_seconds: float = 15.0
         self._fees = FeeCalculator(
-            winner_fee=risk_config.winner_fee,
+            market_type=risk_config.market_type,
             gas_cost=risk_config.gas_cost_usdc,
         )
 
@@ -142,7 +142,7 @@ class LateMomentum:
 
         # Exakte Fee-Berechnung via FeeCalculator
         be_prob = self._fees.break_even_probability(ask_price)
-        payout = 1.0 - self.risk.winner_fee
+        payout = 1.0 - self._fees.taker_fee_rate(ask_price)
         expected_edge = (payout - ask_price) / ask_price
 
         if expected_edge < self.risk.min_edge_threshold:

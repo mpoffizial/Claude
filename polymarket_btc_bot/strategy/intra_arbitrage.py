@@ -53,7 +53,7 @@ class IntraArbitrage:
         self._opportunities_found: int = 0
         self._last_signal_time: float = 0.0
         self._fees = FeeCalculator(
-            winner_fee=risk_config.winner_fee,
+            market_type=risk_config.market_type,
             gas_cost=risk_config.gas_cost_usdc,
         )
 
@@ -86,10 +86,8 @@ class IntraArbitrage:
             return no_signal
 
         combined = up_ask + down_ask
-        # Nutze FeeCalculator fuer exaktes Arb-Profit inkl. Gas
-        # Vereinfacht: profit_per_token = (1 - winner_fee) - combined
-        # (Gas wird separat abgezogen, ist aber minimal fuer Arb)
-        payout = 1.0 - self.risk.winner_fee  # $0.98 netto pro Token
+        # Nutze FeeCalculator fuer exaktes Arb-Profit inkl. Gas und Taker-Fee
+        payout = 1.0 - (self._fees.taker_fee_rate(up_ask) * up_ask + self._fees.taker_fee_rate(down_ask) * down_ask)
         guaranteed_profit = payout - combined
 
         if combined >= self.config.arb_threshold:

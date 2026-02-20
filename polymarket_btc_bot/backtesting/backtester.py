@@ -14,6 +14,7 @@ import numpy as np
 
 from polymarket_btc_bot.config import BotConfig, BacktestConfig, StrategyConfig, RiskConfig
 from polymarket_btc_bot.backtesting.historical_loader import HistoricalLoader, HistoricalKline
+from polymarket_btc_bot.execution.fee_calculator import FeeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,10 @@ class Backtester:
         self.strategy_config = config.strategy
         self.risk_config = config.risk
         self.backtest_config = config.backtest
+        self._fees = FeeCalculator(
+            market_type=config.risk.market_type,
+            gas_cost=config.risk.gas_cost_usdc,
+        )
 
     def run(
         self,
@@ -228,7 +233,7 @@ class Backtester:
                 continue
 
             # Check edge
-            payout = 1.0 - self.risk_config.winner_fee
+            payout = 1.0 - self._fees.taker_fee_rate(simulated_ask)
             edge = (payout - simulated_ask) / simulated_ask
             if edge < self.risk_config.min_edge_threshold:
                 continue
@@ -247,15 +252,9 @@ class Backtester:
             # Determine if trade won
             won = (direction == "up" and up_won) or (direction == "down" and not up_won)
 
-            # Calculate PnL
+            # Exaktes PnL via FeeCalculator (Winner-Fee 2% + Gas)
             tokens = actual_size / actual_ask
-            if won:
-                pnl = tokens * 1.0 - actual_size
-                fee = tokens * self.risk_config.winner_fee
-                pnl_after_fee = pnl - fee
-            else:
-                pnl = -actual_size
-                pnl_after_fee = -actual_size
+            pnl, pnl_after_fee = self._fees.close_position_pnl(tokens, actual_size, won)
 
             trade = SimulatedTrade(
                 timestamp=window[i].timestamp,
@@ -307,7 +306,7 @@ class Backtester:
                 continue
 
             # Check edge
-            payout = 1.0 - self.risk_config.winner_fee
+            payout = 1.0 - self._fees.taker_fee_rate(simulated_ask)
             edge = (payout - simulated_ask) / simulated_ask
             if edge < self.risk_config.min_edge_threshold:
                 continue
@@ -320,14 +319,9 @@ class Backtester:
 
             won = (direction == "up" and up_won) or (direction == "down" and not up_won)
 
+            # Exaktes PnL via FeeCalculator (Winner-Fee 2% + Gas)
             tokens = actual_size / actual_ask
-            if won:
-                pnl = tokens * 1.0 - actual_size
-                fee = tokens * self.risk_config.winner_fee
-                pnl_after_fee = pnl - fee
-            else:
-                pnl = -actual_size
-                pnl_after_fee = -actual_size
+            pnl, pnl_after_fee = self._fees.close_position_pnl(tokens, actual_size, won)
 
             trade = SimulatedTrade(
                 timestamp=window[i].timestamp,

@@ -124,7 +124,7 @@ class PositionTracker:
         self._total_pnl: float = 0.0
         self._session_start: float = time.time()
         self._fee_calculator = FeeCalculator(
-            winner_fee=risk_config.winner_fee,
+            market_type=risk_config.market_type,
             gas_cost=risk_config.gas_cost_usdc,
         )
 
