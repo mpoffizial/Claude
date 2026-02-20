@@ -15,6 +15,7 @@ from typing import Optional
 from polymarket_btc_bot.config import StrategyConfig, RiskConfig
 from polymarket_btc_bot.data.binance_feed import BinanceFeed
 from polymarket_btc_bot.data.polymarket_clob import MarketOrderbook
+from polymarket_btc_bot.execution.fee_calculator import FeeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,10 @@ class LateMomentum:
         self._signal_count: int = 0
         self._last_signal_time: float = 0.0
         self._cooldown_seconds: float = 15.0
+        self._fees = FeeCalculator(
+            market_type=risk_config.market_type,
+            gas_cost=risk_config.gas_cost_usdc,
+        )
 
     def evaluate(
         self,
@@ -135,8 +140,9 @@ class LateMomentum:
             )
             return no_signal
 
-        # Calculate expected edge
-        payout = 1.0 - self.risk.winner_fee
+        # Exakte Fee-Berechnung via FeeCalculator
+        be_prob = self._fees.break_even_probability(ask_price)
+        payout = 1.0 - self._fees.taker_fee_rate(ask_price)
         expected_edge = (payout - ask_price) / ask_price
 
         if expected_edge < self.risk.min_edge_threshold:
@@ -177,18 +183,19 @@ class LateMomentum:
             reason=(
                 f"Late momentum: {direction} | dev={deviation:+.5f} | "
                 f"ask={ask_price:.3f} | edge={expected_edge:.4f} | "
-                f"time_left={time_remaining:.0f}s"
+                f"break_even={be_prob:.1%} | time_left={time_remaining:.0f}s"
             ),
         )
 
         logger.info(
-            "LATE SIGNAL: %s | confidence=%.2f | deviation=%+.5f | "
-            "ask=%.3f | edge=%.4f | remaining=%.0fs",
+            "LATE SIGNAL: %s | conf=%.2f | dev=%+.5f | ask=%.3f | "
+            "edge=%.4f | break_even=%.1%% | remaining=%.0fs",
             direction.upper(),
             confidence,
             deviation,
             ask_price,
             expected_edge,
+            be_prob * 100,
             time_remaining,
         )
 

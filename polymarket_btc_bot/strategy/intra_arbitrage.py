@@ -13,6 +13,7 @@ from typing import Optional
 
 from polymarket_btc_bot.config import StrategyConfig, RiskConfig
 from polymarket_btc_bot.data.polymarket_clob import MarketOrderbook
+from polymarket_btc_bot.execution.fee_calculator import FeeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,10 @@ class IntraArbitrage:
         self.risk = risk_config
         self._opportunities_found: int = 0
         self._last_signal_time: float = 0.0
+        self._fees = FeeCalculator(
+            market_type=risk_config.market_type,
+            gas_cost=risk_config.gas_cost_usdc,
+        )
 
     def evaluate(self, orderbook: MarketOrderbook) -> ArbitrageSignal:
         """
@@ -81,7 +86,8 @@ class IntraArbitrage:
             return no_signal
 
         combined = up_ask + down_ask
-        payout = 1.0 - self.risk.winner_fee  # $0.98
+        # Nutze FeeCalculator fuer exaktes Arb-Profit inkl. Gas und Taker-Fee
+        payout = 1.0 - (self._fees.taker_fee_rate(up_ask) * up_ask + self._fees.taker_fee_rate(down_ask) * down_ask)
         guaranteed_profit = payout - combined
 
         if combined >= self.config.arb_threshold:

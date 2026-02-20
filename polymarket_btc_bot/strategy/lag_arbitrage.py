@@ -6,6 +6,9 @@ movements on Binance and the Polymarket orderbook reaction.
 
 When BTC breaks strongly in one direction on Binance but the Polymarket
 orderbook hasn't adjusted yet, the corresponding outcome tokens are mispriced.
+
+For 5-minute markets (300s), the lag window is proportionally larger relative
+to total market duration, making this strategy especially effective.
 """
 
 import logging
@@ -17,6 +20,7 @@ from typing import Optional
 from polymarket_btc_bot.config import StrategyConfig, RiskConfig
 from polymarket_btc_bot.data.binance_feed import BinanceFeed, MomentumData
 from polymarket_btc_bot.data.polymarket_clob import MarketOrderbook
+from polymarket_btc_bot.execution.fee_calculator import FeeCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +38,10 @@ class LagSignal:
     momentum_score: float       # Raw momentum value
     target_token: str           # "up" or "down"
     ask_price: float            # Current ask price for the target
-    expected_edge: float        # Expected edge after fee
-    timestamp: float
-    reason: str
+    expected_edge: float        # Expected edge after fee (conditional on win)
+    break_even_probability: float = 0.0  # Min win-rate needed to be profitable
+    timestamp: float = 0.0
+    reason: str = ""
 
     @property
     def is_valid(self) -> bool:
@@ -55,6 +60,10 @@ class LagArbitrage:
         self._last_signal_time: float = 0.0
         self._signal_cooldown: float = 10.0  # Min seconds between signals
         self._signal_count: int = 0
+        self._fees = FeeCalculator(
+            market_type=risk_config.market_type,
+            gas_cost=risk_config.gas_cost_usdc,
+        )
 
     def evaluate(
         self,
@@ -89,7 +98,7 @@ class LagArbitrage:
             no_signal.reason = f"Too close to market close ({time_remaining:.0f}s remaining)"
             return no_signal
 
-        market_duration = 900  # 15 minutes
+        market_duration = self.config.market_duration_seconds  # 300 or 900
         time_elapsed = market_duration - time_remaining
         if time_elapsed < self.risk.no_trade_first_seconds:
             no_signal.reason = f"Too early in market ({time_elapsed:.0f}s elapsed)"
@@ -134,10 +143,11 @@ class LagArbitrage:
             )
             return no_signal
 
-        # Calculate expected edge
-        # If we buy at ask_price and win, we get $1.00 minus 2% fee = $0.98
-        # Edge = (0.98 - ask_price) / ask_price
-        payout = 1.0 - self.risk.winner_fee
+        # Exakte Fee-Berechnung via FeeCalculator
+        # Break-Even: minimale Win-Prob fuer Profitabilitaet
+        # Edge: (1 - winner_fee - gas_per_token) / ask - 1
+        be_prob = self._fees.break_even_probability(ask_price)
+        payout = 1.0 - self._fees.taker_fee_rate(ask_price)
         expected_edge = (payout - ask_price) / ask_price
 
         if expected_edge < self.risk.min_edge_threshold:
@@ -169,20 +179,26 @@ class LagArbitrage:
             target_token=target,
             ask_price=ask_price,
             expected_edge=expected_edge,
+            break_even_probability=be_prob,
             timestamp=now,
             reason=(
                 f"Lag arb: momentum={momentum.momentum_score:+.5f}, "
-                f"ask={ask_price:.3f}, edge={expected_edge:.4f}"
+                f"ask={ask_price:.3f}, edge={expected_edge:.4f}, "
+                f"break_even={be_prob:.1%}"
             ),
         )
 
         logger.info(
-            "LAG SIGNAL: %s | confidence=%.2f | momentum=%+.5f | ask=%.3f | edge=%.4f",
+            "LAG SIGNAL: %s | conf=%.2f | momentum=%+.5f | ask=%.3f | "
+            "edge=%.4f | break_even=%.1%% | taker_fee=%.3f%% | gas=$%.3f",
             direction.value.upper(),
             confidence,
             momentum.momentum_score,
             ask_price,
             expected_edge,
+            be_prob * 100,
+            self._fees.taker_fee_rate(ask_price) * 100,
+            self.risk.gas_cost_usdc,
         )
 
         return signal

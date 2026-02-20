@@ -1,5 +1,6 @@
 """
-Configuration for the Polymarket BTC 15-Minute Trading Bot.
+Configuration for the Polymarket BTC Trading Bot.
+Supports both 5-minute and 15-minute markets.
 All parameters, thresholds, API endpoints, and risk limits.
 """
 
@@ -46,25 +47,35 @@ class ChainlinkConfig:
 
 @dataclass
 class StrategyConfig:
+    # Market Duration
+    market_duration_seconds: int = 300          # 300s = 5min, 900s = 15min
+
     # Lag Arbitrage (Layer 1)
-    momentum_threshold: float = 0.002       # 0.2% BTC move in lookback window
-    momentum_lookback_seconds: int = 60     # Look back 60s for momentum calc
-    max_ask_price_lag: float = 0.62         # Only buy if ask < this
-    min_edge_ratio: float = 0.05            # (1-ask)/ask must exceed this
+    momentum_threshold: float = 0.0015     # 0.15% BTC move - lower for 5min markets
+    momentum_lookback_seconds: int = 20    # Look back 20s (scaled for 5min market)
+    max_ask_price_lag: float = 0.62        # Only buy if ask < this
+    min_edge_ratio: float = 0.05           # (1-ask)/ask must exceed this
 
     # Intra-Market Arbitrage (Layer 2)
-    arb_threshold: float = 0.975            # up_ask + down_ask < this triggers arb
-    arb_min_profit: float = 0.005           # Min profit after fees for arb
+    arb_threshold: float = 0.975           # up_ask + down_ask < this triggers arb
+    arb_min_profit: float = 0.005          # Min profit after fees for arb
 
     # Late-Period Momentum (Layer 3)
-    late_period_activation_seconds: int = 360   # Activate in last 6 minutes
+    late_period_activation_seconds: int = 90    # Last 90s of 5min market (last 30%)
     late_period_price_deviation: float = 0.001  # 0.1% deviation from opening
     late_period_max_ask: float = 0.80           # Only buy if ask < this
 
+    # Early Scalping (Layer 4 - 5min specific)
+    scalping_entry_window_seconds: int = 60     # Trade only in first 60s
+    scalping_momentum_threshold: float = 0.0012 # 0.12% move triggers scalp entry
+    scalping_max_ask: float = 0.60              # Buy only if ask <= 0.60
+    scalping_acceleration_threshold: float = 0.0006  # Min additional momentum per 10s
+
     # Signal Aggregation Weights
-    lag_weight: float = 0.5
-    arb_weight: float = 0.3
-    late_weight: float = 0.2
+    lag_weight: float = 0.40
+    arb_weight: float = 0.30
+    late_weight: float = 0.15
+    scalping_weight: float = 0.15
 
 
 @dataclass
@@ -82,14 +93,21 @@ class RiskConfig:
     min_edge_threshold: float = 0.03             # Minimum 3% expected edge
     min_momentum_threshold: float = 0.002        # Minimum 0.2% BTC movement
 
-    # Timing
-    no_trade_first_seconds: int = 30             # No trades in first 30s
-    no_trade_last_seconds: int = 20              # No new trades in last 20s
-    max_hold_time_minutes: int = 12              # Exit if no profit after 12min
+    # Timing (tuned for 5min markets)
+    no_trade_first_seconds: int = 10             # Only 10s warmup for 5min market
+    no_trade_last_seconds: int = 15              # Buffer before close
+    max_hold_time_minutes: int = 4               # Max hold = market duration
 
-    # Fee Management
-    winner_fee: float = 0.02                     # Polymarket 2% winner fee
-    min_profit_after_fee: float = 0.005          # Min $0.005 profit after fee
+    # Fee Management (Polymarket, Stand Feb 2026 - neues dynamisches Fee-Modell)
+    # Neues Modell: Dynamische Taker-Fee beim Kauf (nicht bei Resolution)
+    #   5min:  max 0.44%  bei p=0.50  → fee_rate(p) = 0.0044 * 4 * p * (1-p)
+    #   15min: max 1.56%  bei p=0.50  → fee_rate(p) = 0.0156 * 4 * p * (1-p)
+    # Alte Winner-Fee (2%) nicht mehr aktiv fuer Krypto-Kurzmarkte
+    market_type: str = "crypto_5min"         # "crypto_5min" | "crypto_15min" | "other"
+    winner_fee: float = 0.0                  # 0% (neues Modell: keine Winner-Fee mehr)
+    maker_fee: float = 0.0                   # 0% fuer Limit-Orders (Maker)
+    gas_cost_usdc: float = 0.005             # ~$0.005 pro Tx (Polygon PoS)
+    min_profit_after_fee: float = 0.005      # Min $0.005 Gewinn nach allen Fees
 
 
 @dataclass
@@ -135,19 +153,57 @@ class BotConfig:
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
 
     @classmethod
-    def from_args(cls, mode: str = "simulation", size: float = 10.0) -> "BotConfig":
+    def from_args(
+        cls,
+        mode: str = "simulation",
+        size: float = 10.0,
+        market_minutes: int = 5,
+    ) -> "BotConfig":
         config = cls()
         config.mode = TradingMode(mode)
         config.trade_size = size
         config.execution.default_trade_size = size
+
+        # Apply market-duration-specific tuning
+        if market_minutes == 5:
+            config.strategy.market_duration_seconds = 300
+            config.strategy.momentum_lookback_seconds = 20
+            config.strategy.late_period_activation_seconds = 90
+            config.risk.no_trade_first_seconds = 10
+            config.risk.no_trade_last_seconds = 15
+            config.risk.max_hold_time_minutes = 4
+        elif market_minutes == 15:
+            config.strategy.market_duration_seconds = 900
+            config.strategy.momentum_lookback_seconds = 60
+            config.strategy.late_period_activation_seconds = 360
+            config.risk.no_trade_first_seconds = 30
+            config.risk.no_trade_last_seconds = 20
+            config.risk.max_hold_time_minutes = 12
+            # Restore 15min defaults
+            config.strategy.momentum_threshold = 0.002
+            config.strategy.scalping_entry_window_seconds = 0  # Disable scalping
         return config
 
 
-# Optimization grid for backtesting
-OPTIMIZATION_GRID = {
+# Optimization grid for 5-minute backtesting
+OPTIMIZATION_GRID_5MIN = {
+    "momentum_threshold": [0.0008, 0.001, 0.0012, 0.0015, 0.002],
+    "momentum_lookback_seconds": [10, 15, 20, 30],
+    "min_edge_threshold": [0.02, 0.03, 0.04, 0.05],
+    "late_period_activation_seconds": [60, 75, 90, 120],
+    "late_period_max_ask": [0.65, 0.70, 0.75, 0.80],
+    "scalping_momentum_threshold": [0.0008, 0.001, 0.0012, 0.0015],
+    "scalping_max_ask": [0.55, 0.58, 0.60, 0.62],
+}
+
+# Optimization grid for 15-minute backtesting (legacy)
+OPTIMIZATION_GRID_15MIN = {
     "momentum_threshold": [0.001, 0.0015, 0.002, 0.003, 0.004],
     "momentum_lookback_seconds": [30, 45, 60, 90, 120],
     "min_edge_threshold": [0.02, 0.03, 0.04, 0.05],
     "late_period_activation_seconds": [240, 300, 360, 420],
     "late_period_max_ask": [0.65, 0.70, 0.75, 0.80],
 }
+
+# Default grid (5min)
+OPTIMIZATION_GRID = OPTIMIZATION_GRID_5MIN
