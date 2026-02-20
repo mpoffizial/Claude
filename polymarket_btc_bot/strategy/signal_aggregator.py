@@ -1,6 +1,12 @@
 """
 Signal Aggregator: Combines signals from all strategy layers into
 a unified trading decision with weighted confidence scoring.
+
+Layer priority for 5-minute markets:
+  1. Intra-market arbitrage  (risk-free, always take it)
+  2. Early Scalping          (first 60s, highest edge window)
+  3. Lag arbitrage           (primary directional alpha)
+  4. Late-period momentum    (last 90s, outcome near-certain)
 """
 
 import logging
@@ -15,6 +21,7 @@ from polymarket_btc_bot.data.polymarket_clob import MarketOrderbook
 from polymarket_btc_bot.strategy.lag_arbitrage import LagArbitrage, LagSignal, SignalDirection
 from polymarket_btc_bot.strategy.intra_arbitrage import IntraArbitrage, ArbitrageSignal
 from polymarket_btc_bot.strategy.late_momentum import LateMomentum, LateMomentumSignal
+from polymarket_btc_bot.strategy.scalping_5min import EarlyScalping, ScalpSignal
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +45,7 @@ class AggregatedSignal:
     lag_signal: Optional[LagSignal] = None
     arb_signal: Optional[ArbitrageSignal] = None
     late_signal: Optional[LateMomentumSignal] = None
+    scalp_signal: Optional[ScalpSignal] = None
     timestamp: float = 0.0
     reason: str = ""
 
@@ -48,13 +56,14 @@ class AggregatedSignal:
 
 class SignalAggregator:
     """
-    Aggregates signals from all three strategy layers and produces
+    Aggregates signals from all four strategy layers and produces
     a single, weighted trading decision.
 
-    Priority order:
+    Priority order for 5-minute markets:
     1. Intra-market arbitrage (risk-free, always take it)
-    2. Lag arbitrage (primary alpha source)
-    3. Late-period momentum (secondary, lower risk)
+    2. Early scalping         (first 60s entry window - highest alpha)
+    3. Lag arbitrage          (primary directional alpha via Binance lag)
+    4. Late-period momentum   (last 90s, outcome near-certain)
     """
 
     def __init__(self, strategy_config: StrategyConfig, risk_config: RiskConfig):
@@ -64,6 +73,7 @@ class SignalAggregator:
         self.lag_strategy = LagArbitrage(strategy_config, risk_config)
         self.arb_strategy = IntraArbitrage(strategy_config, risk_config)
         self.late_strategy = LateMomentum(strategy_config, risk_config)
+        self.scalp_strategy = EarlyScalping(strategy_config, risk_config)
 
         self._trade_count: int = 0
         self._last_trade_time: float = 0.0
@@ -77,6 +87,7 @@ class SignalAggregator:
         time_remaining: float,
         available_balance: float,
         max_position: float,
+        binance: Optional[BinanceFeed] = None,
     ) -> AggregatedSignal:
         """
         Evaluate all strategies and return the best trading decision.
@@ -89,6 +100,7 @@ class SignalAggregator:
             time_remaining: Seconds until market close
             available_balance: Available USDC balance
             max_position: Maximum position size
+            binance: Full Binance feed (needed for scalping multi-window momentum)
 
         Returns:
             AggregatedSignal with the recommended action
@@ -113,7 +125,7 @@ class SignalAggregator:
             hold.reason = "Insufficient balance"
             return hold
 
-        # === Priority 1: Intra-market Arbitrage (risk-free) ===
+        # === Priority 1: Intra-market Arbitrage (risk-free, always take) ===
         arb_signal = self.arb_strategy.evaluate(orderbook)
         if arb_signal.is_valid:
             size = self.arb_strategy.compute_position_size(
@@ -132,7 +144,31 @@ class SignalAggregator:
                 reason=arb_signal.reason,
             )
 
-        # === Priority 2: Lag Arbitrage ===
+        # === Priority 2: Early Scalping (first 60s - highest alpha window) ===
+        if binance is not None and self.config.scalping_entry_window_seconds > 0:
+            scalp_signal = self.scalp_strategy.evaluate(binance, orderbook, time_remaining)
+            if scalp_signal.is_valid:
+                size = self.scalp_strategy.compute_position_size(
+                    scalp_signal, available_balance, max_position
+                )
+                action = (
+                    TradeAction.BUY_UP if scalp_signal.direction == "up"
+                    else TradeAction.BUY_DOWN
+                )
+                return AggregatedSignal(
+                    action=action,
+                    confidence=scalp_signal.confidence * self.config.scalping_weight * 6,
+                    position_size=size,
+                    target_token=scalp_signal.direction,
+                    target_price=scalp_signal.ask_price,
+                    expected_edge=scalp_signal.expected_edge,
+                    source_strategy="early_scalping",
+                    scalp_signal=scalp_signal,
+                    timestamp=time.time(),
+                    reason=scalp_signal.reason,
+                )
+
+        # === Priority 3: Lag Arbitrage ===
         lag_signal = None
         if momentum is not None:
             lag_signal = self.lag_strategy.evaluate(momentum, orderbook, time_remaining)
@@ -158,7 +194,7 @@ class SignalAggregator:
                     reason=lag_signal.reason,
                 )
 
-        # === Priority 3: Late-Period Momentum ===
+        # === Priority 4: Late-Period Momentum ===
         if opening_btc_price > 0 and current_btc_price > 0:
             late_signal = self.late_strategy.evaluate(
                 current_btc_price, opening_btc_price, orderbook, time_remaining
@@ -200,5 +236,6 @@ class SignalAggregator:
         self.lag_strategy.reset()
         self.arb_strategy.reset()
         self.late_strategy.reset()
+        self.scalp_strategy.reset()
         self._trade_count = 0
         self._last_trade_time = 0.0

@@ -6,6 +6,9 @@ movements on Binance and the Polymarket orderbook reaction.
 
 When BTC breaks strongly in one direction on Binance but the Polymarket
 orderbook hasn't adjusted yet, the corresponding outcome tokens are mispriced.
+
+For 5-minute markets (300s), the lag window is proportionally larger relative
+to total market duration, making this strategy especially effective.
 """
 
 import logging
@@ -89,7 +92,7 @@ class LagArbitrage:
             no_signal.reason = f"Too close to market close ({time_remaining:.0f}s remaining)"
             return no_signal
 
-        market_duration = 900  # 15 minutes
+        market_duration = self.config.market_duration_seconds  # 300 or 900
         time_elapsed = market_duration - time_remaining
         if time_elapsed < self.risk.no_trade_first_seconds:
             no_signal.reason = f"Too early in market ({time_elapsed:.0f}s elapsed)"

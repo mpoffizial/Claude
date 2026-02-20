@@ -1,20 +1,23 @@
 """
-Polymarket BTC 15-Minute Trading Bot - Main Orchestrator
+Polymarket BTC Trading Bot - Main Orchestrator
+
+Supports both 5-minute and 15-minute BTC Up/Down markets on Polymarket.
 
 Coordinates all modules:
 - Market discovery
 - Data feeds (Binance, Polymarket CLOB, Chainlink)
-- Strategy evaluation
+- Strategy evaluation (4 layers for 5min, 3 layers for 15min)
 - Order execution
 - Risk management
 - Monitoring dashboard
 
 Usage:
-    python -m polymarket_btc_bot.main --mode simulation
-    python -m polymarket_btc_bot.main --mode paper --size 10
-    python -m polymarket_btc_bot.main --mode live --size 50
-    python -m polymarket_btc_bot.main --backtest --days 30
-    python -m polymarket_btc_bot.main --optimize --days 30
+    python -m polymarket_btc_bot.main --mode simulation --minutes 5
+    python -m polymarket_btc_bot.main --mode paper --size 10 --minutes 5
+    python -m polymarket_btc_bot.main --mode live --size 50 --minutes 5
+    python -m polymarket_btc_bot.main --backtest --days 30 --minutes 5
+    python -m polymarket_btc_bot.main --optimize --days 30 --minutes 5
+    python -m polymarket_btc_bot.main --mode simulation --minutes 15
 """
 
 import argparse
@@ -70,7 +73,10 @@ class TradingBot:
         self.trade_logger = setup_logging(self.config.monitoring)
 
         logger.info("=" * 60)
-        logger.info("Polymarket BTC 15m Trading Bot Starting")
+        logger.info(
+            "Polymarket BTC %dm Trading Bot Starting",
+            self.config.strategy.market_duration_seconds // 60,
+        )
         logger.info("Mode: %s | Trade Size: $%.2f", self.config.mode.value, self.config.trade_size)
         logger.info("=" * 60)
 
@@ -202,8 +208,9 @@ class TradingBot:
                 market.opening_price,
             )
 
-        # Reset strategies for new market
+        # Reset strategies for new market and inform scalper of start time
         self.aggregator.reset()
+        self.aggregator.scalp_strategy.set_market_start(market.start_timestamp)
 
         if self.dashboard:
             self.dashboard.set_market(market)
@@ -280,7 +287,7 @@ class TradingBot:
         if not momentum or not orderbook:
             return
 
-        # Evaluate all strategies
+        # Evaluate all strategies (pass binance feed for scalping multi-window momentum)
         signal = self.aggregator.evaluate(
             momentum=momentum,
             orderbook=orderbook,
@@ -289,6 +296,7 @@ class TradingBot:
             time_remaining=time_remaining,
             available_balance=self.config.trade_size,
             max_position=self.config.risk.max_position_per_market,
+            binance=self.binance,
         )
 
         if self.dashboard:
@@ -446,7 +454,7 @@ async def run_optimize(config: BotConfig, days: int):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Polymarket BTC 15-Minute Trading Bot",
+        description="Polymarket BTC Trading Bot (5-min and 15-min markets)",
     )
     parser.add_argument(
         "--mode",
@@ -459,6 +467,13 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=10.0,
         help="Trade size in USDC (default: 10.0)",
+    )
+    parser.add_argument(
+        "--minutes",
+        type=int,
+        choices=[5, 15],
+        default=5,
+        help="Market duration in minutes: 5 or 15 (default: 5)",
     )
     parser.add_argument(
         "--backtest",
@@ -481,13 +496,19 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     args = parse_args()
-    config = BotConfig.from_args(mode=args.mode, size=args.size)
+    config = BotConfig.from_args(mode=args.mode, size=args.size, market_minutes=args.minutes)
 
     # Setup basic logging before full init
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)-7s] %(name)-25s | %(message)s",
         datefmt="%H:%M:%S",
+    )
+
+    logger.info(
+        "Market mode: %d-minute | Scalping: %s",
+        args.minutes,
+        "enabled" if config.strategy.scalping_entry_window_seconds > 0 else "disabled",
     )
 
     if args.backtest:
