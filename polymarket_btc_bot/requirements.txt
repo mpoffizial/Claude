@@ -1,18 +1,50 @@
-# Core dependencies
+# ═══════════════════════════════════════════════════════════════════════════════
+# Polymarket BTC Market Making Bot — Abhängigkeiten
+# Installation: pip install -r requirements.txt
+# Python 3.11+ empfohlen
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Kern-Abhängigkeiten ───────────────────────────────────────────────────────
+
+# Polymarket CLOB API (für Live-Trading)
 py-clob-client>=0.0.1
+
+# WebSocket-Verbindungen (Binance Preisfeed)
 websockets>=12.0
+
+# HTTP-Client für REST API-Aufrufe
 aiohttp>=3.9.0
+
+# Numerische Berechnungen (EMA, ATR)
 numpy>=1.24.0
+
+# Datenverarbeitung
 pandas>=2.0.0
 
-# Blockchain / On-chain reads
+# ── Blockchain / On-Chain ──────────────────────────────────────────────────────
+
+# Ethereum/Polygon Interaktion (Polymarket Authentifizierung)
 web3>=6.0.0
 
-# Monitoring
+# ── Market Data Feeds ─────────────────────────────────────────────────────────
+
+# CCXT: Einheitliche Krypto-Exchange-Bibliothek (Binance, Backup-Feeds)
+ccxt>=4.0.0
+
+# ── Konfiguration ─────────────────────────────────────────────────────────────
+
+# YAML-Konfigurationsdateien (config.yaml)
+pyyaml>=6.0.0
+
+# ── Monitoring & Dashboard ────────────────────────────────────────────────────
+
+# Rich: Terminal-Dashboard mit Live-Rendering
 rich>=13.0.0
 
-# Async support
+# ── Async Support ─────────────────────────────────────────────────────────────
+
+# Async-Kompatibilität (für Python < 3.11)
 asyncio-compat>=0.1.0; python_version < "3.11"
 
-# Optional: for backtesting data storage
-# sqlite3 is included in Python stdlib
+# ── Hinweis ───────────────────────────────────────────────────────────────────
+# sqlite3 ist in der Python-Standardbibliothek enthalten (kein extra Paket)

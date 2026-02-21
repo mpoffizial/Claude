@@ -1,0 +1,185 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Polymarket BTC Market Making Bot — Konfigurationsdatei
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Alle Parameter können hier zentral konfiguriert werden.
+# Kommandozeilen-Argumente überschreiben diese Werte.
+#
+# Verwendung:
+#   python -m polymarket_btc_bot.mm_main --config config.yaml
+#
+# Umgebungsvariablen (für Live-Trading, NICHT hier eintragen!):
+#   POLY_PRIVATE_KEY      — Ethereum Private Key (0x...)
+#   POLY_API_KEY          — Polymarket API-Schlüssel
+#   POLY_API_SECRET       — Polymarket API-Secret
+#   POLY_API_PASSPHRASE   — Polymarket API-Passphrase
+#   POLY_PROXY_WALLET     — Polymarket Proxy Wallet Address
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+market_making:
+
+  # ── Handelsmodus ────────────────────────────────────────────────────────────
+  # "simulation" : Keine echten Orders, Preise simuliert
+  # "paper"      : Echte Marktdaten, simulierte Order-Ausführung
+  # "live"       : Echter Handel (API-Keys in Umgebungsvariablen nötig!)
+  mode: simulation
+
+  # ── Kapital & Positionsgröße ─────────────────────────────────────────────────
+  capital: 100.0                   # Verfügbares Kapital in USDC
+
+  # Max. Position pro Markt als Anteil des Kapitals
+  # 0.10 = max. $10 pro Markt bei $100 Kapital
+  max_position_pct: 0.10
+
+  # Basis-Ordergröße pro Side (BID oder ASK) in USDC
+  # Wird durch Kelly Criterion und Inventory-Skewing angepasst
+  base_order_size_usdc: 5.0
+
+  # ── Spread-Parameter ─────────────────────────────────────────────────────────
+  #
+  # Fair Value = 0.50 → Bid = 0.50 - (base_spread/2), Ask = 0.50 + (base_spread/2)
+  # Beispiel: base_spread=0.04 → Bid=0.48, Ask=0.52 (Spread = 4%)
+  #
+  # Breiterer Spread = mehr Marge, aber weniger Fills
+  # Engerer Spread  = mehr Fills, aber weniger Marge pro Roundtrip
+  #
+  base_spread: 0.04                # Basis-Spread (4%)
+  min_spread: 0.025                # Minimaler Spread (2.5%) — unter niedrige Konfidenz
+  max_spread: 0.10                 # Maximaler Spread (10%) — bei hoher Unsicherheit
+
+  # ── Refresh & Timing ─────────────────────────────────────────────────────────
+  refresh_seconds: 30.0            # Sekunden zwischen Quote-Updates (30s empfohlen)
+  max_order_age_seconds: 60.0      # Order-Alter vor automatischem Cancel (60s)
+
+  # Threshold für "stale" Order-Detection:
+  # 0.5 = Order wird gecancelt wenn FV sich um mehr als 50% des half_spread verschiebt
+  # Beispiel: half_spread=0.02, stale_threshold=0.5 → Cancel bei FV-Shift > 0.01
+  stale_threshold: 0.5
+
+  # ── Order-Limits ─────────────────────────────────────────────────────────────
+  max_open_orders: 4               # Gesamt max. offene Orders (2 BID + 2 ASK)
+  max_markets: 2                   # Max. gleichzeitige Märkte
+
+  # ── Inventory Skewing ────────────────────────────────────────────────────────
+  #
+  # Wenn die Position einseitig wird (z.B. nur BIDs gefüllt, keine ASKs):
+  #   → Spread wird asymmetrisch verschoben um die Imbalance abzubauen
+  #
+  # skew_factor: Wie stark geskewed wird [0.0 = kein Skewing, 1.0 = max. Skewing]
+  # Empfehlung: 0.3 - 0.6
+  skew_factor: 0.50
+
+  # Ab dieser Imbalance werden auf der übergewichteten Seite keine neuen Orders
+  # platziert (Schutz vor zu großen einseitigen Positionen)
+  # 0.60 = Stopp wenn 60% mehr YES als NO (oder umgekehrt)
+  max_inventory_ratio: 0.60
+
+  # ── Kelly Criterion ──────────────────────────────────────────────────────────
+  #
+  # Kelly% = (p - q) / (1 - q)
+  # wobei p = Fair Value, q = Bid-Preis
+  #
+  # kelly_fraction < 1.0 (fractional Kelly) reduziert Risiko signifikant.
+  # 0.25 = 25% Kelly (empfohlen für volatile Märkte und kleines Kapital)
+  # 0.50 = 50% Kelly (aggressiver)
+  #
+  kelly_fraction: 0.25
+
+  # ── Risikomanagement ─────────────────────────────────────────────────────────
+  #
+  # Stop-Loss: Bot wird angehalten wenn Session-Verlust diesen Wert überschreitet
+  # 0.20 = Bot stoppt bei -20% des Kapitals (= -$20 bei $100 Kapital)
+  max_session_loss_pct: 0.20
+
+  # Polymarket Gewinner-Gebühr (2% auf Gewinne)
+  # Diese wird in der PnL-Berechnung berücksichtigt
+  polymarket_fee: 0.02
+
+  # ── Fair Value Berechnung ────────────────────────────────────────────────────
+  #
+  # EMA-Perioden für Momentum-Berechnung
+  # Kürzere Periode reagiert schneller auf Preisänderungen
+  ema_short_period: 5              # Kurzfristiger EMA (5 Datenpunkte)
+  ema_long_period: 15              # Langfristiger EMA (15 Datenpunkte)
+
+  # ATR-Periode für Volatilitätsmessung
+  atr_period: 14
+
+  # Maximale Anpassungen des Fair Values durch Momentum
+  # 0.12 = max. ±12% Anpassung durch EMA-Crossover
+  max_momentum_adj: 0.12
+
+  # Maximale Anpassung durch Preisbewegung vs. Opening Price
+  # 0.15 = max. ±15% Anpassung wenn BTC stark gestiegen/gefallen ist
+  max_price_adj: 0.15
+
+  # ── Logging & Datenbank ──────────────────────────────────────────────────────
+  db_path: trades.db               # SQLite-Datenbankpfad
+  log_level: INFO                  # DEBUG, INFO, WARNING, ERROR
+  log_file: logs/mm_bot.log        # Log-Datei (wird erstellt falls nötig)
+  dashboard_refresh: 1.0           # Dashboard-Refresh in Sekunden
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Erweiterte Konfiguration (für Fortgeschrittene)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Diese Werte müssen in der Regel nicht geändert werden.
+# Sie steuern technische Parameter der Bot-Architektur.
+#
+# Binance WebSocket Verbindung:
+#   ws_url: wss://stream.binance.com:9443/ws/btcusdt@aggTrade
+#   reconnect_delay: 1.0 (Sekunden bis erste Reconnect-Versuche)
+#   max_reconnect_delay: 60.0 (Maximale Wartezeit zwischen Reconnects)
+#
+# Polymarket CLOB:
+#   clob_rest_url: https://clob.polymarket.com
+#   chain_id: 137 (Polygon Mainnet)
+#
+# Rate Limiting:
+#   max_orders_per_minute: 30 (CLOB API-Limit)
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Strategie-Erklärung & Erwartete Performance
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# FUNKTIONSWEISE:
+# ────────────────
+# 1. Wir berechnen den "fairen Wert" P(BTC Up) für den aktuellen Markt
+#    basierend auf: EMA5/15 Crossover, ATR Volatilität, Preistrend
+#
+# 2. Wir platzieren gleichzeitig:
+#    BID: Fair Value - (base_spread/2)   → Kauf wenn jemand zu niedrig verkauft
+#    ASK: Fair Value + (base_spread/2)   → Verkauf wenn jemand zu hoch kauft
+#
+# 3. Wenn beide Seiten gefüllt werden (Roundtrip):
+#    Einnahme ≈ base_spread = 4% des Orderwertes
+#
+# 4. Inventory Skewing verhindert einseitige Positionen
+#
+# ERWARTETE METRIKEN (bei normalem Markt):
+# ─────────────────────────────────────────
+# Roundtrip-Rate:    ~2-5 pro Stunde (pro Markt)
+# Spread pro Trade:  ~4-6% (nach Skewing)
+# Polymarket-Gebühr: 2% auf Gewinne (bei Marktauflösung)
+#
+# Nettorendite (geschätzt, vor Kapitalkosten):
+# Bei 50% Roundtrip-Quote und 5% Spread:
+#   Einnahme/h ≈ 5 Roundtrips × $5 × 4% = $1.00/h
+#   Abzüglich Verluste durch einseitige Positionen
+#
+# WICHTIG: Performance hängt stark von Marktliquidität und
+# der Qualität des Fair Value Models ab.
+#
+# RISIKEN:
+# ─────────
+# - Adverse Selection: Gegenpartei hat bessere Information → wir kaufen immer "falsch"
+# - Inventar-Risiko: Zu viele einseitige Positionen → Verlust bei Marktauflösung
+# - Geringe Liquidität: Wenige Fills → Positionen bleiben offen bis Marktablauf
+# - Fee-Erosion: Polymarket 2% Gewinner-Gebühr reduziert Margen
+#
+# ═══════════════════════════════════════════════════════════════════════════════
