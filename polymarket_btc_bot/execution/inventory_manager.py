@@ -648,15 +648,15 @@ class InventoryManager:
 
         if side == "buy" and imbalance > self.max_inventory_ratio:
             logger.warning(
-                "Kein Bieten [%s]: Long-Heavy (%.2%)",
-                market_id[:16], imbalance
+                "Kein Bieten [%s]: Long-Heavy (%.1f%%)",
+                market_id[:16], imbalance * 100
             )
             return True
 
         if side == "sell" and imbalance < -self.max_inventory_ratio:
             logger.warning(
-                "Kein Anbieten [%s]: Short-Heavy (%.2%)",
-                market_id[:16], imbalance
+                "Kein Anbieten [%s]: Short-Heavy (%.1f%%)",
+                market_id[:16], imbalance * 100
             )
             return True
 
