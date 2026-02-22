@@ -331,7 +331,7 @@ class InventoryManager:
 
         logger.info(
             "Fill registriert [%s]: %s %.3f @ %.4f | "
-            "YES=%.3f NO=%.3f Imbalance=%+.2%",
+            "YES=%.3f NO=%.3f Imbalance=%+.2f%%",
             market_id[:16],
             side.upper(),
             size_tokens,
