@@ -146,6 +146,10 @@ class MMConfig:
     max_session_loss_pct: float = 0.20  # Max. Verlust pro Session (20%)
     polymarket_fee: float = 0.02       # Polymarket Gebühr auf Gewinne (2%)
 
+    # ── Volatilitäts-Spread-Boost ──────────────────────────────────────────────
+    vola_spread_threshold: float = 0.0015  # Realized-Vola ab der Boost greift (0.15%)
+    vola_min_spread: float = 0.06          # Mindest-Spread bei hoher Vola (6%)
+
     # ── Simulation ────────────────────────────────────────────────────────────
     simulation_mode: bool = True       # True = keine echten Orders
 
@@ -295,12 +299,14 @@ class MarketMaker:
             str(fv_result),
         )
 
-        # ── Schritt 2: Spread-Breite festlegen ────────────────────────────────
+        # ── Schritt 2: Spread-Breite festlegen (inkl. Vola-Boost) ─────────────
         spread = self.fv_calc.compute_spread_width(
             confidence=fv_result.confidence,
             base_spread=self.config.base_spread,
             min_spread=self.config.min_spread,
             max_spread=self.config.max_spread,
+            vola_spread_threshold=self.config.vola_spread_threshold,
+            vola_min_spread=self.config.vola_min_spread,
         )
         half_spread = spread / 2.0
 

@@ -95,6 +95,7 @@ from polymarket_btc_bot.execution.order_manager import OrderManager
 from polymarket_btc_bot.monitoring.mm_dashboard import MMDashboard
 from polymarket_btc_bot.strategy.fair_value import FairValueCalc
 from polymarket_btc_bot.strategy.market_maker import MarketMaker, MMConfig
+from polymarket_btc_bot.strategy.volatility_filter import VolatilityGuard
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,14 @@ def load_config(config_path: Optional[str] = None) -> dict:
         "log_level": "INFO",
         "log_file": "mm_bot.log",
         "dashboard_refresh": 1.0,
+        # Volatilitäts-Filter
+        "vola_filter_threshold": 0.03,
+        "vola_filter_lookback": 900,
+        "vola_filter_cooldown": 300.0,
+        "vola_filter_vol_threshold": None,
+        "vola_filter_vol_lookback": 300,
+        "vola_spread_threshold": 0.0015,
+        "vola_min_spread": 0.06,
         # Fair Value Parameter
         "ema_short_period": 5,
         "ema_long_period": 15,
@@ -342,6 +351,8 @@ class MarketMakerBotMain:
             kelly_fraction=config.get("kelly_fraction", 0.25),
             max_session_loss_pct=config.get("max_session_loss_pct", 0.20),
             polymarket_fee=config.get("polymarket_fee", 0.02),
+            vola_spread_threshold=config.get("vola_spread_threshold", 0.0015),
+            vola_min_spread=config.get("vola_min_spread", 0.06),
             simulation_mode=(self._trading_mode == TradingMode.SIMULATION),
         )
 
@@ -351,6 +362,18 @@ class MarketMakerBotMain:
             fair_value_calc=self.fv_calc,
             inventory_manager=self.inv_mgr,
             order_manager=self.order_mgr,
+        )
+
+        # Volatilitäts-Filter (Stop-Quoting + Spread-Anpassung)
+        self.vola_guard = VolatilityGuard(
+            binance_feed=self.binance,
+            move_threshold=config.get("vola_filter_threshold", 0.03),
+            lookback_seconds=config.get("vola_filter_lookback", 900),
+            vol_threshold=config.get("vola_filter_vol_threshold", None),
+            vol_lookback_seconds=config.get("vola_filter_vol_lookback", 300),
+            cooldown_seconds=config.get("vola_filter_cooldown", 300.0),
+            base_spread=config.get("base_spread", 0.04),
+            vola_min_spread=config.get("vola_min_spread", 0.06),
         )
 
         # Risikomanagement
@@ -525,6 +548,24 @@ class MarketMakerBotMain:
                 self.risk_mgr.halt_reason
             )
             self.dashboard.set_status(f"HALT: {self.risk_mgr.halt_reason}")
+            return
+
+        # ── Volatilitäts-Filter ───────────────────────────────────────────────
+        vola_state = self.vola_guard.check()
+        if vola_state.is_high_vola:
+            logger.warning(
+                "VOLA-FILTER: Quoting pausiert | BTC: %+.1f%% in 15min | "
+                "Cooldown: %.0fs | Empf. Spread: %.1f%%",
+                vola_state.price_change_pct * 100,
+                vola_state.cooldown_remaining,
+                vola_state.spread_recommendation * 100,
+            )
+            self.dashboard.set_status(
+                f"VOLA-FILTER AKTIV — Cooldown: {vola_state.cooldown_remaining:.0f}s"
+            )
+            # Alle offenen Orders canceln während Hochvola-Event
+            for state in self.market_maker.get_all_states():
+                await self.market_maker._cancel_all_orders(state)
             return
 
         if not self._active_markets:
@@ -763,11 +804,12 @@ class MarketMakerBotMain:
         active_orders = self.order_mgr.get_active_orders()
 
         for order in active_orders:
-            # Im Simulationsmodus: Simuliere Fills
             if self._trading_mode == TradingMode.SIMULATION:
                 await self._simulate_fill_check(order)
+            elif self._trading_mode == TradingMode.PAPER:
+                await self._paper_fill_check(order)
             else:
-                # Live/Paper: Order-Status aus CLOB API abfragen
+                # Live: Order-Status aus CLOB API abfragen
                 await self._live_fill_check(order)
 
     async def _simulate_fill_check(self, order):
@@ -834,10 +876,102 @@ class MarketMakerBotMain:
                     order.status = type('Status', (), {'value': 'filled'})()
                     break
 
+    async def _paper_fill_check(self, order):
+        """
+        Paper-Trading Fill-Simulation mit Fair-Value-basierter Logik.
+
+        Realistischer als die rein zufällige Simulation:
+        - BID-Order füllt wenn aktueller FV > Bid-Preis (Markt bewertet Up höher)
+        - ASK-Order füllt wenn aktueller FV < Ask-Preis (Markt bewertet Down höher)
+        - Wahrscheinlichkeit steigt mit Abstand FV ↔ Order-Preis und Orderalter
+
+        Kein echtes CLOB. Alle Fills bleiben lokal.
+        """
+        import random
+
+        if not order.is_active:
+            return
+
+        current_price = self.binance.current_price
+        if current_price <= 0:
+            return
+
+        for market_id, market_info in self._active_markets.items():
+            if order.token_id != market_info.up_token_id:
+                continue
+
+            # FV für diesen Markt berechnen (aus Cache wenn möglich)
+            fv_result = self.fv_calc.compute(
+                opening_price=market_info.opening_price or current_price,
+                time_remaining_seconds=market_info.time_remaining,
+                market_duration_seconds=market_info.duration_seconds,
+                use_cache=True,
+            )
+            current_fv = fv_result.fair_value
+            order_age_s = time.time() - order.created_at
+
+            should_fill = False
+
+            if order.side.value == "BUY":
+                # BID füllt wenn FV über Bid liegt (jemand verkauft zu unserem Preis)
+                if current_fv > order.price:
+                    fv_distance = current_fv - order.price
+                    # Basis-Wahrscheinlichkeit: 0–40% je nach Abstand
+                    fill_prob = min(0.40, fv_distance * 5.0)
+                    # Zeitbonus: nach 2 Min max. +20% zusätzlich
+                    time_bonus = min(0.20, order_age_s / 120.0 * 0.20)
+                    should_fill = random.random() < (fill_prob + time_bonus)
+
+            elif order.side.value == "SELL":
+                # ASK füllt wenn FV unter Ask liegt (jemand kauft zu unserem Preis)
+                if current_fv < order.price:
+                    fv_distance = order.price - current_fv
+                    fill_prob = min(0.40, fv_distance * 5.0)
+                    time_bonus = min(0.20, order_age_s / 120.0 * 0.20)
+                    should_fill = random.random() < (fill_prob + time_bonus)
+
+            if should_fill:
+                from polymarket_btc_bot.execution.order_manager import OrderStatus
+                mm_side = "buy" if order.side.value == "BUY" else "sell"
+                fill_size = order.size
+                fill_price = order.price
+
+                self.market_maker.process_fill(
+                    market_id=market_id,
+                    order_id=order.order_id,
+                    filled_size=fill_size,
+                    fill_price=fill_price,
+                )
+
+                self.db.log_fill(
+                    order_id=order.order_id,
+                    market_id=market_id,
+                    mm_side=mm_side,
+                    filled_tokens=fill_size,
+                    fill_price=fill_price,
+                    btc_price=current_price,
+                )
+
+                order.status = OrderStatus.FILLED
+                order.filled_size = fill_size
+                order.avg_fill_price = fill_price
+                order.updated_at = time.time()
+
+                logger.info(
+                    "[PAPER] Fill: %s %.4f @ %.4f | FV=%.4f | BTC=$%.2f",
+                    mm_side.upper(),
+                    fill_size,
+                    fill_price,
+                    current_fv,
+                    current_price,
+                )
+
+            break  # Nur ersten passenden Markt verarbeiten
+
     async def _live_fill_check(self, order):
         """
         Prüfe Fill-Status über Polymarket CLOB-API.
-        (Für Paper- und Live-Trading)
+        (Nur für Live-Trading)
         """
         if not self.order_mgr._clob_client or not order.clob_order_id:
             return
@@ -1047,6 +1181,13 @@ def main():
     logger.info("  Modus:          %s", config.get("mode"))
     logger.info("  Kapital:        $%.2f", config.get("capital", 100))
     logger.info("  Basis-Spread:   %.1f%%", config.get("base_spread", 0.04) * 100)
+    logger.info("  Vola-Min-Spread:%.1f%% (ab %.2f%% realized vol)",
+                config.get("vola_min_spread", 0.06) * 100,
+                config.get("vola_spread_threshold", 0.0015) * 100)
+    logger.info("  Vola-Filter:    %.0f%% in %.0fmin | Cooldown %.0fs",
+                config.get("vola_filter_threshold", 0.03) * 100,
+                config.get("vola_filter_lookback", 900) / 60,
+                config.get("vola_filter_cooldown", 300))
     logger.info("  Refresh:        %.0fs", config.get("refresh_seconds", 30))
     logger.info("  Max-Orders:     %d", config.get("max_open_orders", 4))
     logger.info("  Kelly-Fraction: %.0f%%", config.get("kelly_fraction", 0.25) * 100)

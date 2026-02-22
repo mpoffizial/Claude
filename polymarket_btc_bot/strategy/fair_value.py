@@ -465,25 +465,57 @@ class FairValueCalc:
         base_spread: float = 0.04,
         min_spread: float = 0.02,
         max_spread: float = 0.10,
+        vola_spread_threshold: float = 0.0015,
+        vola_min_spread: float = 0.06,
     ) -> float:
         """
-        Berechne optimale Spread-Breite basierend auf Konfidenz.
+        Berechne optimale Spread-Breite basierend auf Konfidenz und Volatilität.
 
-        Logik:
-        - Hohe Konfidenz (wenig Unsicherheit) → engerer Spread → mehr Fills
-        - Niedrige Konfidenz (hohe Unsicherheit) → breiterer Spread → mehr Schutz
+        Zwei Einflussgrößen:
+
+        1. Konfidenz-Anpassung:
+           - Hohe Konfidenz → engerer Spread → mehr Fills
+           - Niedrige Konfidenz → breiterer Spread → mehr Schutz
+
+        2. Volatilitäts-Boost (automatisch aus Binance-Feed):
+           - Realized-Vola ≤ 0.15% → kein Boost (base_spread gilt)
+           - 0.15%–0.30% → linear bis vola_min_spread
+           - > 0.30% → vola_min_spread (z.B. 6–8%)
 
         Args:
-            confidence:   Konfidenzwert aus compute() [0.0–1.0]
-            base_spread:  Basis-Spread-Breite (Standard: 4%)
-            min_spread:   Minimaler Spread (Standard: 2%)
-            max_spread:   Maximaler Spread (Standard: 10%)
+            confidence:            Konfidenzwert aus compute() [0.0–1.0]
+            base_spread:           Basis-Spread-Breite (Standard: 4%)
+            min_spread:            Minimaler Spread (Standard: 2%)
+            max_spread:            Maximaler Spread (Standard: 10%)
+            vola_spread_threshold: Realized-Vola ab der Boost greift (Standard: 0.0015 = 0.15%)
+            vola_min_spread:       Mindest-Spread bei hoher Vola (Standard: 0.06 = 6%)
 
         Returns:
-            Spread-Breite in Dezimal (z.B. 0.04 = 4%)
+            Spread-Breite in Dezimal (z.B. 0.06 = 6%)
         """
-        # Niedrige Konfidenz → breiter Spread (bis zu 2x base_spread)
+        # ── Konfidenz-Anpassung ───────────────────────────────────────────────
+        # Niedrige Konfidenz → breiter Spread (bis zu 2.5x base_spread)
         uncertainty_factor = 1.0 + (1.0 - confidence) * 1.5
         spread = base_spread * uncertainty_factor
+
+        # ── Volatilitäts-Boost (aus Binance-Feed) ────────────────────────────
+        realized_vol = self.feed.get_volatility(seconds=300)
+        if realized_vol is not None and realized_vol > vola_spread_threshold:
+            # Linear interpolieren: von vola_spread_threshold bis 2× davon
+            high_vol_threshold = vola_spread_threshold * 2.0
+            ratio = min(
+                1.0,
+                (realized_vol - vola_spread_threshold)
+                / (high_vol_threshold - vola_spread_threshold),
+            )
+            vola_boosted = base_spread + ratio * (vola_min_spread - base_spread)
+            if vola_boosted > spread:
+                logger.debug(
+                    "Spread-Boost durch Vola: %.1f%% → %.1f%% (realized_vol=%.4f%%)",
+                    spread * 100,
+                    vola_boosted * 100,
+                    realized_vol * 100,
+                )
+                spread = vola_boosted
 
         return max(min_spread, min(max_spread, spread))

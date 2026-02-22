@@ -96,6 +96,39 @@ market_making:
   # Diese wird in der PnL-Berechnung berücksichtigt
   polymarket_fee: 0.02
 
+  # ── Volatilitäts-Filter ──────────────────────────────────────────────────────
+  #
+  # Stoppt Quoting bei explosiven BTC-Moves. Schützt vor Adverse Selection
+  # und Inventar-Verlusten in turbulenten Marktphasen.
+  #
+  # Trigger 1 — Preis-Move-Filter:
+  #   |BTC-Δ in 15 Min| > vola_filter_threshold → Quoting gestoppt
+  #   Danach: vola_filter_cooldown Sekunden Pause (auch wenn Markt sich beruhigt)
+  #
+  vola_filter_threshold: 0.03       # 3% BTC-Move in 15 Min → Stop-Quoting
+  vola_filter_lookback: 900         # Lookback: 15 Minuten (in Sekunden)
+  vola_filter_cooldown: 300.0       # Cooldown nach Trigger: 5 Minuten
+  #
+  # Trigger 2 — Realized-Vola-Filter (optional):
+  #   Realized Vol = std der Tick-Returns in 5 Min
+  #   null = deaktiviert | 0.003 = aktiviert bei 0.3% Vola
+  #
+  vola_filter_vol_threshold: null   # Realized-Vola-Trigger (null = deaktiviert)
+  vola_filter_vol_lookback: 300     # 5 Minuten Lookback für Vola-Berechnung
+
+  # ── Volatilitäts-Spread-Boost ─────────────────────────────────────────────────
+  #
+  # Spread wird bei erhöhter Vola automatisch verbreitert (auch ohne Stop-Quoting).
+  # Schützt vor Fills zu schlechten Preisen in volatilen Phasen.
+  #
+  # Beispiel (base_spread=4%, vola_min_spread=6%):
+  #   Realized-Vola 0.10% → Spread 4.0% (normal)
+  #   Realized-Vola 0.22% → Spread 5.0% (interpoliert)
+  #   Realized-Vola 0.30% → Spread 6.0% (Maximum)
+  #
+  vola_spread_threshold: 0.0015     # 0.15% Realized-Vola ab der Boost greift
+  vola_min_spread: 0.06             # Mindest-Spread bei hoher Vola: 6%
+
   # ── Fair Value Berechnung ────────────────────────────────────────────────────
   #
   # EMA-Perioden für Momentum-Berechnung
