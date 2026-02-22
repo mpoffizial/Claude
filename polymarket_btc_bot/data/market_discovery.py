@@ -4,12 +4,12 @@ Fetches market metadata including condition_id, token_ids, start/end times.
 """
 
 import asyncio
+import json as _json
 import logging
 import time
+import urllib.request as _urllib_req
 from dataclasses import dataclass
 from typing import Optional
-
-import aiohttp
 
 from polymarket_btc_bot.config import PolymarketConfig
 
@@ -54,18 +54,13 @@ class MarketDiscovery:
 
     def __init__(self, config: PolymarketConfig):
         self.config = config
-        self._session: Optional[aiohttp.ClientSession] = None
         self._current_market: Optional[MarketInfo] = None
         self._next_market: Optional[MarketInfo] = None
 
     async def start(self):
-        self._session = aiohttp.ClientSession()
         logger.info("MarketDiscovery started")
 
     async def stop(self):
-        if self._session:
-            await self._session.close()
-            self._session = None
         logger.info("MarketDiscovery stopped")
 
     @property
@@ -76,54 +71,49 @@ class MarketDiscovery:
     def next_market(self) -> Optional[MarketInfo]:
         return self._next_market
 
+    def _http_get_json(self, url: str, timeout: int = 10) -> Optional[dict]:
+        """Synchroner HTTP GET via urllib (funktioniert ohne asyncio DNS)."""
+        try:
+            req = _urllib_req.Request(
+                url,
+                headers={"User-Agent": "polymarket-mm-bot/1.0", "Accept": "application/json"},
+            )
+            with _urllib_req.urlopen(req, timeout=timeout) as resp:
+                return _json.loads(resp.read())
+        except Exception as e:
+            logger.error("HTTP GET fehlgeschlagen (%s): %s", url[:60], e)
+            return None
+
     async def fetch_active_markets(self) -> list[dict]:
         """Fetch active BTC up/down 15m markets from Gamma API."""
-        if not self._session:
-            raise RuntimeError("MarketDiscovery not started")
+        url = (
+            f"{self.config.gamma_api_url}/events"
+            "?limit=10&active=true&closed=false&tag=btc"
+        )
 
-        url = f"{self.config.gamma_api_url}/events"
-        params = {
-            "limit": 10,
-            "active": "true",
-            "closed": "false",
-            "tag": "btc",
-        }
+        loop = asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, self._http_get_json, url)
 
-        try:
-            async with self._session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                if resp.status != 200:
-                    logger.error("Gamma API returned status %d", resp.status)
-                    return []
-                data = await resp.json()
-                # Filter for BTC up/down 15m markets
-                btc_15m = []
-                for event in data:
-                    slug = event.get("slug", "")
-                    title = event.get("title", "").lower()
-                    if "btc" in slug and "15m" in slug and ("up" in title or "down" in title):
-                        btc_15m.append(event)
-                    elif "btc" in title and "15" in title and ("up" in title or "down" in title):
-                        btc_15m.append(event)
-                return btc_15m
-        except Exception as e:
-            logger.error("Error fetching active markets: %s", e)
+        if not data or not isinstance(data, list):
+            logger.warning("No active BTC 15m markets found")
             return []
+
+        # Filter für BTC Up/Down 15min Märkte
+        btc_15m = []
+        for event in data:
+            slug = event.get("slug", "")
+            title = event.get("title", "").lower()
+            if "btc" in slug and "15m" in slug and ("up" in title or "down" in title):
+                btc_15m.append(event)
+            elif "btc" in title and "15" in title and ("up" in title or "down" in title):
+                btc_15m.append(event)
+        return btc_15m
 
     async def fetch_market_details(self, condition_id: str) -> Optional[dict]:
         """Fetch detailed market info from CLOB API."""
-        if not self._session:
-            raise RuntimeError("MarketDiscovery not started")
-
         url = f"{self.config.clob_rest_url}/markets/{condition_id}"
-        try:
-            async with self._session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                if resp.status != 200:
-                    logger.error("CLOB market fetch returned status %d", resp.status)
-                    return None
-                return await resp.json()
-        except Exception as e:
-            logger.error("Error fetching market details: %s", e)
-            return None
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._http_get_json, url)
 
     def _parse_timestamp_from_slug(self, slug: str) -> Optional[int]:
         """Extract unix timestamp from market slug like 'btc-updown-15m-1771443900'."""

@@ -1,6 +1,9 @@
 """
 Binance WebSocket handler for real-time BTC/USDT price data.
 Maintains a rolling price buffer and computes momentum scores.
+
+Fallback: Wenn Binance WebSocket nicht erreichbar ist (z.B. HTTP 403),
+wird automatisch auf Kraken/Coinbase REST-Polling (alle 5s) umgeschaltet.
 """
 
 import asyncio
@@ -10,6 +13,9 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable, Optional
+
+import json as _json
+import urllib.request as _urllib_req
 
 import websockets
 from websockets.exceptions import ConnectionClosed
@@ -37,7 +43,28 @@ class MomentumData:
 
 
 class BinanceFeed:
-    """Real-time BTC/USDT price feed from Binance aggTrades WebSocket."""
+    """
+    Real-time BTC/USDT price feed.
+
+    Primär: Binance aggTrades WebSocket.
+    Fallback: Kraken/Coinbase REST-Polling alle 5s wenn WebSocket blockiert ist.
+    """
+
+    # REST-Fallback Endpunkte (werden der Reihe nach probiert)
+    _REST_SOURCES = [
+        {
+            "name": "Kraken",
+            "url": "https://api.kraken.com/0/public/Ticker?pair=BTCUSD",
+            "parser": lambda d: float(d["result"]["XXBTZUSD"]["c"][0]),
+        },
+        {
+            "name": "Coinbase",
+            "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+            "parser": lambda d: float(d["data"]["amount"]),
+        },
+    ]
+    _REST_POLL_INTERVAL = 5.0   # Sekunden zwischen REST-Abfragen
+    _WS_FAIL_THRESHOLD = 3      # Anzahl WS-Fehler bevor auf REST umgeschaltet wird
 
     def __init__(self, config: BinanceConfig, lookback_seconds: int = 60):
         self.config = config
@@ -49,6 +76,10 @@ class BinanceFeed:
         self._callbacks: list[Callable] = []
         self._reconnect_delay = config.reconnect_delay
         self._last_trade_time: float = 0.0
+
+        # Fallback-Tracking
+        self._ws_fail_count: int = 0
+        self._using_rest_fallback: bool = False
 
     @property
     def current_price(self) -> float:
@@ -179,10 +210,18 @@ class BinanceFeed:
             logger.warning("Invalid Binance message: %s", e)
 
     async def connect(self):
-        """Connect to Binance WebSocket with auto-reconnect."""
+        """
+        Verbinde mit Binance WebSocket. Bei wiederholten Fehlern (HTTP 403 etc.)
+        automatischer Wechsel auf Kraken/Coinbase REST-Polling.
+        """
         self._running = True
 
         while self._running:
+            # REST-Fallback aktiv?
+            if self._using_rest_fallback:
+                await self._rest_polling_loop()
+                return
+
             try:
                 logger.info("Connecting to Binance WebSocket: %s", self.config.ws_url)
                 async with websockets.connect(
@@ -193,6 +232,7 @@ class BinanceFeed:
                 ) as ws:
                     self._ws = ws
                     self._reconnect_delay = self.config.reconnect_delay
+                    self._ws_fail_count = 0
                     logger.info("Connected to Binance WebSocket")
 
                     async for message in ws:
@@ -202,10 +242,23 @@ class BinanceFeed:
 
             except ConnectionClosed as e:
                 logger.warning("Binance WS closed: %s", e)
+                self._ws_fail_count += 1
             except Exception as e:
                 logger.error("Binance WS error: %s", e)
+                self._ws_fail_count += 1
 
             self._ws = None
+
+            # Nach mehreren Fehlern auf REST umschalten
+            if self._ws_fail_count >= self._WS_FAIL_THRESHOLD:
+                logger.warning(
+                    "Binance WebSocket %d× fehlgeschlagen — wechsle auf REST-Fallback "
+                    "(Kraken/Coinbase)",
+                    self._ws_fail_count,
+                )
+                self._using_rest_fallback = True
+                await self._rest_polling_loop()
+                return
 
             if self._running:
                 logger.info("Reconnecting in %.1fs...", self._reconnect_delay)
@@ -215,8 +268,66 @@ class BinanceFeed:
                     self.config.max_reconnect_delay,
                 )
 
+    async def _rest_polling_loop(self):
+        """
+        REST-Polling Fallback: Fragt Kraken/Coinbase alle 5s nach dem BTC-Preis.
+
+        Nutzt urllib (synchron) via run_in_executor, da asyncio's DNS-Resolver
+        in manchen Umgebungen nicht verfügbar ist. Schreibt in denselben
+        _price_buffer wie der WebSocket-Handler.
+        """
+        logger.info(
+            "REST-Polling gestartet (Intervall: %.0fs) | Quellen: %s",
+            self._REST_POLL_INTERVAL,
+            ", ".join(s["name"] for s in self._REST_SOURCES),
+        )
+
+        # Sicherstellen dass _running gesetzt ist
+        if not self._running:
+            self._running = True
+
+        loop = asyncio.get_event_loop()
+
+        while self._running:
+            price = await loop.run_in_executor(None, self._fetch_rest_price_sync)
+            if price and price > 0:
+                now = time.time()
+                point = PricePoint(timestamp=now, price=price, quantity=1.0)
+                self._price_buffer.append(point)
+                self._current_price = price
+                self._last_trade_time = now
+
+                for cb in self._callbacks:
+                    try:
+                        result = cb(point)
+                        if asyncio.iscoroutine(result):
+                            await result
+                    except Exception as e:
+                        logger.error("Price callback error: %s", e)
+
+            await asyncio.sleep(self._REST_POLL_INTERVAL)
+
+    def _fetch_rest_price_sync(self) -> Optional[float]:
+        """Synchroner BTC-Preis-Abruf via urllib (Kraken → Coinbase Fallback)."""
+        for source in self._REST_SOURCES:
+            try:
+                req = _urllib_req.Request(
+                    source["url"],
+                    headers={"User-Agent": "polymarket-mm-bot/1.0"},
+                )
+                with _urllib_req.urlopen(req, timeout=6) as resp:
+                    data = _json.loads(resp.read())
+                    price = source["parser"](data)
+                    logger.debug("[%s] BTC = $%.2f", source["name"], price)
+                    return price
+            except Exception as e:
+                logger.debug("[%s] Fehler: %s", source["name"], e)
+                continue
+        logger.warning("REST-Fallback: Alle Quellen fehlgeschlagen")
+        return None
+
     async def stop(self):
-        """Disconnect from WebSocket."""
+        """Disconnect from WebSocket and stop REST polling."""
         self._running = False
         if self._ws:
             await self._ws.close()
