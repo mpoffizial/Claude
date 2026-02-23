@@ -131,8 +131,8 @@ def load_config(config_path: Optional[str] = None) -> dict:
         "refresh_seconds": 30.0,
         "max_order_age_seconds": 60.0,
         "stale_threshold": 0.5,
-        "max_open_orders": 4,
-        "max_markets": 2,
+        "max_open_orders": 8,
+        "max_markets": 4,
         "skew_factor": 0.50,
         "max_inventory_ratio": 0.60,
         "kelly_fraction": 0.25,
@@ -685,39 +685,52 @@ class MarketMakerBotMain:
             await asyncio.sleep(10.0)
 
     async def _discover_markets(self):
-        """Suche und registriere aktive Märkte."""
-        max_markets = self.config.get("max_markets", 2)
+        """Suche und registriere aktive Märkte (5m + 15m)."""
+        max_markets = self.config.get("max_markets", 4)
 
         if len(self._active_markets) >= max_markets:
             return  # Bereits genug Märkte aktiv
 
+        # 5m- und 15m-Märkte suchen
+        candidates = []
         try:
-            market = await self.discovery.discover_current_market()
-
-            if market and market.market_slug not in self._active_markets:
-                logger.info(
-                    "Neuer Markt gefunden: %s | Verbleibend: %.0fs",
-                    market.market_slug,
-                    market.time_remaining,
-                )
-
-                # Opening Price setzen
-                if not market.opening_price:
-                    market.opening_price = self.binance.current_price
-                    logger.info(
-                        "Opening-Preis gesetzt: $%.2f (BTC aktuell)",
-                        market.opening_price
-                    )
-
-                self._active_markets[market.market_slug] = market
-
-                # Dashboard informieren
-                self.dashboard.set_status(
-                    f"Neuer Markt: {market.market_slug[-20:]}"
-                )
-
+            market_5m = await self.discovery.discover_current_market()
+            if market_5m:
+                candidates.append(market_5m)
         except Exception as e:
-            logger.debug("Discovery-Fehler (normal bei keinen verfügbaren Märkten): %s", e)
+            logger.debug("5m Discovery-Fehler: %s", e)
+
+        try:
+            market_15m = await self.discovery.discover_current_15m_market()
+            if market_15m:
+                candidates.append(market_15m)
+        except Exception as e:
+            logger.debug("15m Discovery-Fehler: %s", e)
+
+        for market in candidates:
+            if len(self._active_markets) >= max_markets:
+                break
+            if market.market_slug in self._active_markets:
+                continue
+
+            logger.info(
+                "Neuer Markt gefunden: %s | Verbleibend: %.0fs",
+                market.market_slug,
+                market.time_remaining,
+            )
+
+            # Opening Price setzen
+            if not market.opening_price:
+                market.opening_price = self.binance.current_price
+                logger.info(
+                    "Opening-Preis gesetzt: $%.2f (BTC aktuell)",
+                    market.opening_price
+                )
+
+            self._active_markets[market.market_slug] = market
+            self.dashboard.set_status(
+                f"Neuer Markt: {market.market_slug[-20:]}"
+            )
 
     async def _handle_market_expiry(self, market_info: MarketInfo):
         """
