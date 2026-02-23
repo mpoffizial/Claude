@@ -706,12 +706,15 @@ class MarketMakerBotMain:
         for market in candidates:
             if len(self._active_markets) >= max_markets:
                 break
-            if market.market_slug in self._active_markets:
+            if market.condition_id in self._active_markets:
                 continue
+
+            # Kurze Anzeige: letzten ~25 Zeichen der Frage (z.B. "6:35AM-6:40AM ET")
+            short_label = market.question[-32:] if market.question else market.condition_id[:16]
 
             logger.info(
                 "Neuer Markt gefunden: %s | Verbleibend: %.0fs",
-                market.market_slug,
+                short_label,
                 market.time_remaining,
             )
 
@@ -722,9 +725,9 @@ class MarketMakerBotMain:
                     market.opening_price
                 )
 
-            self._active_markets[market.market_slug] = market
+            self._active_markets[market.condition_id] = market
             self.dashboard.set_status(
-                f"Neuer Markt: {market.market_slug[-20:]}"
+                f"Neuer Markt: {short_label}"
             )
 
     async def _handle_market_expiry(self, market_info: MarketInfo):
@@ -735,7 +738,7 @@ class MarketMakerBotMain:
         3. Ergebnis in Datenbank speichern
         4. Markt aus aktiver Liste entfernen
         """
-        market_id = market_info.market_slug
+        market_id = market_info.condition_id
         current_price = self.binance.current_price
         opening_price = market_info.opening_price or 0.0
 
