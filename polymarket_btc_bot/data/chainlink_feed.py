@@ -44,7 +44,7 @@ class ChainlinkFeed:
         return self._latest_price.price if self._latest_price else None
 
     async def start(self):
-        self._session = aiohttp.ClientSession()
+        self._session = aiohttp.ClientSession(trust_env=True)
         logger.info("ChainlinkFeed started")
 
     async def stop(self):

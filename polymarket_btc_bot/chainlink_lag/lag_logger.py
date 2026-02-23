@@ -214,7 +214,7 @@ class MarketTracker:
         self.current_market: Optional[ActiveMarket] = None
 
     async def start(self):
-        self._session = aiohttp.ClientSession()
+        self._session = aiohttp.ClientSession(trust_env=True)
 
     async def stop(self):
         if self._session:

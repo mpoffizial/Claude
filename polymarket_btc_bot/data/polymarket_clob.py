@@ -6,10 +6,12 @@ Tracks best bid/ask for Up and Down tokens of the active 15m market.
 import asyncio
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
+import aiohttp
 import websockets
 from websockets.exceptions import ConnectionClosed
 
@@ -247,73 +249,120 @@ class PolymarketCLOB:
         logger.info("Subscribed to tokens: %s", tokens)
 
     async def connect(self):
-        """Connect to Polymarket CLOB WebSocket with auto-reconnect."""
+        """
+        Connect to Polymarket CLOB WebSocket.
+        Falls back to REST polling when the WebSocket is blocked (HTTP 403).
+        """
         self._running = True
+        proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
 
-        while self._running:
-            try:
-                logger.info("Connecting to Polymarket CLOB WebSocket")
-                async with websockets.connect(
-                    self.config.clob_ws_url,
-                    ping_interval=30,
-                    ping_timeout=15,
-                    close_timeout=5,
-                ) as ws:
-                    self._ws = ws
-                    self._reconnect_delay = 1.0
-                    logger.info("Connected to Polymarket CLOB WebSocket")
+        ws_failed = False
+        try:
+            logger.info("Connecting to Polymarket CLOB WebSocket")
+            async with websockets.connect(
+                self.config.clob_ws_url,
+                proxy=proxy,
+                open_timeout=8,
+                ping_interval=30,
+                ping_timeout=15,
+                close_timeout=5,
+            ) as ws:
+                self._ws = ws
+                self._reconnect_delay = 1.0
+                logger.info("Connected to Polymarket CLOB WebSocket")
 
-                    await self._subscribe(ws)
+                await self._subscribe(ws)
 
-                    async for message in ws:
-                        if not self._running:
-                            break
-                        await self._handle_message(message)
+                async for message in ws:
+                    if not self._running:
+                        break
+                    await self._handle_message(message)
 
-            except ConnectionClosed as e:
-                logger.warning("Polymarket WS closed: %s", e)
-            except Exception as e:
-                logger.error("Polymarket WS error: %s", e)
+        except ConnectionClosed as e:
+            logger.warning("Polymarket WS closed: %s", e)
+        except Exception as e:
+            logger.warning("Polymarket WS unavailable (%s) — switching to REST polling", e)
+            ws_failed = True
 
-            self._ws = None
+        self._ws = None
 
-            if self._running:
-                logger.info("Reconnecting in %.1fs...", self._reconnect_delay)
-                await asyncio.sleep(self._reconnect_delay)
-                self._reconnect_delay = min(self._reconnect_delay * 2, 60.0)
+        if not self._running:
+            return
+
+        if ws_failed:
+            await self._poll_rest_loop()
+        else:
+            logger.info("Reconnecting in %.1fs...", self._reconnect_delay)
+            await asyncio.sleep(self._reconnect_delay)
+            self._reconnect_delay = min(self._reconnect_delay * 2, 60.0)
+            await self.connect()   # recurse
+
+    async def _poll_rest_loop(self, poll_interval: float = 3.0):
+        """Poll CLOB REST API for orderbook when WebSocket is blocked."""
+        logger.info("Polymarket CLOB REST polling started (interval: %.1fs)", poll_interval)
+        async with aiohttp.ClientSession(trust_env=True) as session:
+            while self._running:
+                await self._refresh_orderbook_rest(session)
+                await asyncio.sleep(poll_interval)
+
+    async def _refresh_orderbook_rest(self, session: aiohttp.ClientSession):
+        """Fetch fresh orderbook snapshots for both tracked tokens via REST."""
+        for token_id in [self._up_token_id, self._down_token_id]:
+            if not token_id:
+                continue
+            book = await self.fetch_orderbook_rest(token_id, session=session)
+            if book:
+                self._orderbooks[token_id] = book
+
+        ob = self.market_orderbook
+        if ob:
+            for cb in self._callbacks:
+                try:
+                    result = cb(ob)
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as e:
+                    logger.error("Orderbook callback error: %s", e)
 
     async def stop(self):
-        """Disconnect from WebSocket."""
+        """Disconnect from WebSocket / stop polling."""
         self._running = False
         if self._ws:
             await self._ws.close()
             self._ws = None
         logger.info("Polymarket CLOB feed stopped")
 
-    async def fetch_orderbook_rest(self, token_id: str) -> Optional[OrderbookSnapshot]:
-        """Fallback: fetch orderbook via REST API."""
-        import aiohttp
-
+    async def fetch_orderbook_rest(
+        self,
+        token_id: str,
+        session: Optional[aiohttp.ClientSession] = None,
+    ) -> Optional[OrderbookSnapshot]:
+        """Fetch orderbook via REST API."""
         url = f"{self.config.clob_rest_url}/book"
         params = {"token_id": token_id}
 
+        async def _do_fetch(s: aiohttp.ClientSession) -> Optional[OrderbookSnapshot]:
+            async with s.get(url, params=params, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                if resp.status != 200:
+                    return None
+                data = await resp.json()
+                book = OrderbookSnapshot(token_id=token_id)
+                book.bids = [
+                    OrderbookLevel(price=float(b["price"]), size=float(b["size"]))
+                    for b in data.get("bids", [])
+                ]
+                book.asks = [
+                    OrderbookLevel(price=float(a["price"]), size=float(a["size"]))
+                    for a in data.get("asks", [])
+                ]
+                book.timestamp = time.time()
+                return book
+
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                    if resp.status != 200:
-                        return None
-                    data = await resp.json()
-                    book = OrderbookSnapshot(token_id=token_id)
-                    book.bids = [
-                        OrderbookLevel(price=float(b["price"]), size=float(b["size"]))
-                        for b in data.get("bids", [])
-                    ]
-                    book.asks = [
-                        OrderbookLevel(price=float(a["price"]), size=float(a["size"]))
-                        for a in data.get("asks", [])
-                    ]
-                    book.timestamp = time.time()
-                    return book
+            if session is not None:
+                return await _do_fetch(session)
+            async with aiohttp.ClientSession(trust_env=True) as s:
+                return await _do_fetch(s)
         except Exception as e:
             logger.error("REST orderbook fetch error: %s", e)
             return None

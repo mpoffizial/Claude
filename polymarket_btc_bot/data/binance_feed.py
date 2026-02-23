@@ -1,20 +1,28 @@
 """
-Binance WebSocket handler for real-time BTC/USDT price data.
-Maintains a rolling price buffer and computes momentum scores.
+BTC/USDT price feed.
+
+Primary:  Binance aggTrades WebSocket
+Fallback: Kraken REST API polled every 2 s (used when WebSocket is blocked)
 """
 
 import asyncio
 import json
 import logging
+import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
+import aiohttp
 import websockets
 from websockets.exceptions import ConnectionClosed
 
 from polymarket_btc_bot.config import BinanceConfig
+
+# Kraken REST endpoint – used as fallback when Binance WS is unavailable
+_KRAKEN_TICKER_URL = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
+_REST_POLL_INTERVAL = 2.0   # seconds between Kraken polls
 
 logger = logging.getLogger(__name__)
 
@@ -179,44 +187,95 @@ class BinanceFeed:
             logger.warning("Invalid Binance message: %s", e)
 
     async def connect(self):
-        """Connect to Binance WebSocket with auto-reconnect."""
+        """
+        Connect to Binance WebSocket.  If the connection is rejected (common
+        on cloud/proxy servers), automatically fall back to Kraken REST polling.
+        """
         self._running = True
 
-        while self._running:
-            try:
-                logger.info("Connecting to Binance WebSocket: %s", self.config.ws_url)
-                async with websockets.connect(
-                    self.config.ws_url,
-                    ping_interval=20,
-                    ping_timeout=10,
-                    close_timeout=5,
-                ) as ws:
-                    self._ws = ws
-                    self._reconnect_delay = self.config.reconnect_delay
-                    logger.info("Connected to Binance WebSocket")
+        # Try WebSocket first; on first hard failure switch to REST
+        ws_failed = False
+        try:
+            proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+            logger.info("Connecting to Binance WebSocket: %s", self.config.ws_url)
+            async with websockets.connect(
+                self.config.ws_url,
+                proxy=proxy,
+                open_timeout=8,
+                ping_interval=20,
+                ping_timeout=10,
+                close_timeout=5,
+            ) as ws:
+                self._ws = ws
+                self._reconnect_delay = self.config.reconnect_delay
+                logger.info("Connected to Binance WebSocket")
 
-                    async for message in ws:
-                        if not self._running:
-                            break
-                        await self._handle_message(message)
+                async for message in ws:
+                    if not self._running:
+                        break
+                    await self._handle_message(message)
 
-            except ConnectionClosed as e:
-                logger.warning("Binance WS closed: %s", e)
-            except Exception as e:
-                logger.error("Binance WS error: %s", e)
+        except ConnectionClosed as e:
+            logger.warning("Binance WS closed: %s", e)
+        except Exception as e:
+            logger.warning("Binance WS unavailable (%s) — switching to Kraken REST polling", e)
+            ws_failed = True
 
-            self._ws = None
+        self._ws = None
 
-            if self._running:
-                logger.info("Reconnecting in %.1fs...", self._reconnect_delay)
-                await asyncio.sleep(self._reconnect_delay)
-                self._reconnect_delay = min(
-                    self._reconnect_delay * 2,
-                    self.config.max_reconnect_delay,
-                )
+        if not self._running:
+            return
+
+        if ws_failed:
+            # Fall back permanently to REST polling for this session
+            await self._poll_rest_loop()
+        else:
+            # Normal reconnect for transient disconnects
+            logger.info("Reconnecting in %.1fs...", self._reconnect_delay)
+            await asyncio.sleep(self._reconnect_delay)
+            self._reconnect_delay = min(
+                self._reconnect_delay * 2, self.config.max_reconnect_delay
+            )
+            await self.connect()   # recurse
+
+    async def _poll_rest_loop(self):
+        """Poll Kraken REST API for BTC price when WebSocket is unavailable."""
+        logger.info("Kraken REST polling started (interval: %.1fs)", _REST_POLL_INTERVAL)
+        async with aiohttp.ClientSession(trust_env=True) as session:
+            while self._running:
+                try:
+                    async with session.get(
+                        _KRAKEN_TICKER_URL,
+                        timeout=aiohttp.ClientTimeout(total=5),
+                    ) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            price_str = data["result"]["XXBTZUSD"]["c"][0]
+                            price = float(price_str)
+                            self._current_price = price
+                            self._last_trade_time = time.time()
+                            point = PricePoint(
+                                timestamp=time.time(),
+                                price=price,
+                                quantity=1.0,   # REST has no individual trade size
+                            )
+                            self._price_buffer.append(point)
+                            for cb in self._callbacks:
+                                try:
+                                    result = cb(point)
+                                    if asyncio.iscoroutine(result):
+                                        await result
+                                except Exception as exc:
+                                    logger.error("Price callback error: %s", exc)
+                        else:
+                            logger.warning("Kraken REST returned %d", resp.status)
+                except Exception as e:
+                    logger.warning("Kraken REST poll error: %s", e)
+
+                await asyncio.sleep(_REST_POLL_INTERVAL)
 
     async def stop(self):
-        """Disconnect from WebSocket."""
+        """Disconnect from WebSocket / stop polling."""
         self._running = False
         if self._ws:
             await self._ws.close()

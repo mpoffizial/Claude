@@ -59,7 +59,7 @@ class MarketDiscovery:
         self._next_market: Optional[MarketInfo] = None
 
     async def start(self):
-        self._session = aiohttp.ClientSession()
+        self._session = aiohttp.ClientSession(trust_env=True)
         logger.info("MarketDiscovery started")
 
     async def stop(self):

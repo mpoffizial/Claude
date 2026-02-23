@@ -122,7 +122,7 @@ class OrderManager:
 
     async def start(self):
         """Initialize HTTP session and CLOB client."""
-        self._session = aiohttp.ClientSession()
+        self._session = aiohttp.ClientSession(trust_env=True)
 
         if self.mode != TradingMode.SIMULATION:
             try:

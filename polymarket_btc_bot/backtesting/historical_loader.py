@@ -103,7 +103,7 @@ class HistoricalLoader:
         conn.close()
 
     async def start(self):
-        self._session = aiohttp.ClientSession()
+        self._session = aiohttp.ClientSession(trust_env=True)
 
     async def stop(self):
         if self._session:
