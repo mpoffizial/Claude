@@ -155,7 +155,8 @@ class TradingBot:
             try:
                 market = await self.discovery.discover_current_market()
 
-                if market and market != self._current_market:
+                current_slug = self._current_market.market_slug if self._current_market else None
+                if market and market.market_slug != current_slug:
                     await self._on_new_market(market)
 
                 # If current market expired, handle resolution
