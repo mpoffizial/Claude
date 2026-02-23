@@ -1,0 +1,481 @@
+
+==============================================================
+  POLYMARKET BTC 15m BOT — LIVE BACKTEST
+  Kapital: $100  |  Laufzeit: 60 min
+  Gestartet: 2026-02-23 06:32:21 UTC
+==============================================================
+
+06:32:21 [INFO   ] root                      | Logging initialized: console=INFO file=backtest_logs/bot.log
+06:32:21 [INFO   ] root                      | Logging initialized: console=INFO file=backtest_logs/bot.log
+06:32:21 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:32:21 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Polymarket BTC 15m Trading Bot Starting
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Polymarket BTC 15m Trading Bot Starting
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Mode: simulation | Trade Size: $10.00
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Mode: simulation | Trade Size: $10.00
+06:32:21 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:32:21 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:32:21 [INFO   ] polymarket_btc_bot.data.market_discovery | MarketDiscovery started
+06:32:21 [INFO   ] polymarket_btc_bot.data.market_discovery | MarketDiscovery started
+06:32:21 [INFO   ] polymarket_btc_bot.data.chainlink_feed | ChainlinkFeed started
+06:32:21 [INFO   ] polymarket_btc_bot.data.chainlink_feed | ChainlinkFeed started
+06:32:21 [INFO   ] polymarket_btc_bot.execution.order_manager | OrderManager started in simulation mode
+06:32:21 [INFO   ] polymarket_btc_bot.execution.order_manager | OrderManager started in simulation mode
+06:32:21 [INFO   ] polymarket_btc_bot.main   | All tasks started. Waiting for data feeds...
+06:32:21 [INFO   ] polymarket_btc_bot.main   | All tasks started. Waiting for data feeds...
+06:32:21 [INFO   ] polymarket_btc_bot.data.binance_feed | Connecting to Binance WebSocket: wss://stream.binance.com:9443/ws/btcusdt@aggTrade
+06:32:21 [INFO   ] polymarket_btc_bot.data.binance_feed | Connecting to Binance WebSocket: wss://stream.binance.com:9443/ws/btcusdt@aggTrade
+06:32:21 [INFO   ] polymarket_btc_bot.data.chainlink_feed | Starting Chainlink polling loop (interval: 10.0s)
+06:32:21 [INFO   ] polymarket_btc_bot.data.chainlink_feed | Starting Chainlink polling loop (interval: 10.0s)
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Market discovery loop started
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Market discovery loop started
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Trading loop started
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Trading loop started
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Market-maker loop started | levels=3 | spacing=0.020 | size=$3.00/level | refresh=30s
+06:32:21 [INFO   ] polymarket_btc_bot.main   | Market-maker loop started | levels=3 | spacing=0.020 | size=$3.00/level | refresh=30s
+06:32:21 [WARNING] polymarket_btc_bot.data.binance_feed | Binance WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to Kraken REST polling
+06:32:21 [WARNING] polymarket_btc_bot.data.binance_feed | Binance WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to Kraken REST polling
+06:32:21 [INFO   ] polymarket_btc_bot.data.binance_feed | Kraken REST polling started (interval: 2.0s)
+06:32:21 [INFO   ] polymarket_btc_bot.data.binance_feed | Kraken REST polling started (interval: 2.0s)
+06:32:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (158s remaining)
+06:32:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (158s remaining)
+06:32:22 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 158s
+06:32:22 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 158s
+06:32:22 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:22 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:22 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:22 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:22 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:22 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:22 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:22 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:22 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:22 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:22 [INFO   ] polymarket_btc_bot.main   | Binance feed active: BTC = $65320.00
+06:32:22 [INFO   ] polymarket_btc_bot.main   | Binance feed active: BTC = $65320.00
+06:32:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (153s remaining)
+06:32:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (153s remaining)
+06:32:27 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 153s
+06:32:27 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 153s
+06:32:27 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:27 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:27 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:27 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:27 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:27 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:27 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:27 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:27 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:27 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:32 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:32:32 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:32:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (148s remaining)
+06:32:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (148s remaining)
+06:32:32 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 148s
+06:32:32 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 148s
+06:32:32 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:32 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:32 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:32 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:32 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:32 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:32 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:32 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:32 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:32 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (142s remaining)
+06:32:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (142s remaining)
+06:32:37 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 142s
+06:32:37 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 142s
+06:32:37 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:37 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:37 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:37 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:37 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:37 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:37 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:37 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:37 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:37 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:42 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:32:42 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:32:42 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (137s remaining)
+06:32:42 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (137s remaining)
+06:32:42 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 137s
+06:32:42 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 137s
+06:32:42 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:42 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:42 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:42 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:42 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:42 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:42 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:42 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:42 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:42 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (132s remaining)
+06:32:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (132s remaining)
+06:32:47 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 132s
+06:32:47 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 132s
+06:32:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:48 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:48 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:48 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:48 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:48 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:48 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:51 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.630–0.590 | DOWN 3 levels @ 0.360–0.320
+06:32:51 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.630–0.590 | DOWN 3 levels @ 0.360–0.320
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 4.76 @ 0.6300
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 4.76 @ 0.6300
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.76 @ 0.6300
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.76 @ 0.6300
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 4.92 @ 0.6100
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 4.92 @ 0.6100
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.92 @ 0.6100
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.92 @ 0.6100
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 5.08 @ 0.5900
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 5.08 @ 0.5900
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.08 @ 0.5900
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.08 @ 0.5900
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 8.33 @ 0.3600
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 8.33 @ 0.3600
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.33 @ 0.3600
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.33 @ 0.3600
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 8.82 @ 0.3400
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 8.82 @ 0.3400
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.82 @ 0.3400
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.82 @ 0.3400
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 9.38 @ 0.3200
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 9.38 @ 0.3200
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 9.38 @ 0.3200
+06:32:51 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 9.38 @ 0.3200
+06:32:51 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771828200 | UP=3 orders | DOWN=3 orders | total_active=0
+06:32:51 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771828200 | UP=3 orders | DOWN=3 orders | total_active=0
+06:32:52 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:32:52 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:32:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (127s remaining)
+06:32:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (127s remaining)
+06:32:53 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 127s
+06:32:53 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 127s
+06:32:53 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:53 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:53 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:53 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:53 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:53 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:53 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:53 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:53 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:53 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (122s remaining)
+06:32:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (122s remaining)
+06:32:58 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 122s
+06:32:58 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 122s
+06:32:58 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:58 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:32:58 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:58 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:32:58 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:58 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:32:58 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:58 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:32:58 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:32:58 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:02 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:33:02 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:33:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (117s remaining)
+06:33:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (117s remaining)
+06:33:03 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 117s
+06:33:03 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 117s
+06:33:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:03 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:03 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:03 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:03 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:08 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (111s remaining)
+06:33:08 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (111s remaining)
+06:33:08 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 111s
+06:33:08 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 111s
+06:33:08 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:08 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:08 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:08 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:08 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:08 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:08 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:08 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:08 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:08 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:12 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:33:12 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:33:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (106s remaining)
+06:33:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (106s remaining)
+06:33:13 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 106s
+06:33:13 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 106s
+06:33:13 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:13 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:13 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:13 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:13 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:13 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:13 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:13 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:13 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:13 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (101s remaining)
+06:33:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (101s remaining)
+06:33:18 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 101s
+06:33:18 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 101s
+06:33:18 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:18 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:18 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:18 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:19 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:19 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:19 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:19 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:19 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:19 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+
+─── [01:00 / 60:00 | verbleibend 59:00] ─────
+  BTC Preis  : $ 65,334.50
+  Markt      : btc-updown-15m-1771828200
+  Verbleibend: 98s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:33:21 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.600–0.560 | DOWN 3 levels @ 0.390–0.350
+06:33:21 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.600–0.560 | DOWN 3 levels @ 0.390–0.350
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.00 @ 0.6000
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.00 @ 0.6000
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.00 @ 0.6000
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.00 @ 0.6000
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.17 @ 0.5800
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.17 @ 0.5800
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.17 @ 0.5800
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.17 @ 0.5800
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 5.36 @ 0.5600
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 5.36 @ 0.5600
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.36 @ 0.5600
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 5.36 @ 0.5600
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 7.69 @ 0.3900
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 7.69 @ 0.3900
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 7.69 @ 0.3900
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 7.69 @ 0.3900
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 8.11 @ 0.3700
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 8.11 @ 0.3700
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.11 @ 0.3700
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.11 @ 0.3700
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 8.57 @ 0.3500
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 8.57 @ 0.3500
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.57 @ 0.3500
+06:33:21 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 8.57 @ 0.3500
+06:33:21 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771828200 | UP=3 orders | DOWN=3 orders | total_active=0
+06:33:21 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771828200 | UP=3 orders | DOWN=3 orders | total_active=0
+06:33:22 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:33:22 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:33:24 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (96s remaining)
+06:33:24 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (96s remaining)
+06:33:24 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 96s
+06:33:24 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 96s
+06:33:24 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:24 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:24 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:24 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:24 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:24 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65281.00
+06:33:24 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:24 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:24 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:24 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+
+Signal SIGTERM empfangen — stoppe Backtest...
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ POLYMARKET BTC 15M BOT  [SIMULATION]                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────── Market ───────────────╮╭──────────── Performance ─────────────╮
+│             Market Data              ││             Performance              │
+│ ┌────────────────┬─────────────────┐ ││ ┌──────────────────────┬───────────┐ │
+│ │ BTC Price      │ $65,334.50      │ ││ │ Total PnL            │ $0.00     │ │
+│ │ Momentum (60s) │ +0.00001        │ ││ │ Total Trades         │ 0         │ │
+│ │ Up Ask         │ $0.6200         │ ││ │ Win Rate             │ 0.0%      │ │
+│ │ Down Ask       │ $0.3900         │ ││ │ Avg PnL/Trade        │ $0.0000   │ │
+│ │ Combined Ask   │ $1.0100         │ ││ │ Max Drawdown         │ $0.00     │ │
+│ │ Time Remaining │ 1:33            │ ││ │ Sharpe Ratio         │ 0.00      │ │
+│ │ Market         │ pdown-15m-1771… │ ││ │ Open Positions       │ 0         │ │
+│ │ Last Signal    │ Lag: Momentum   │ ││ │ Open Exposure        │ $0.00     │ │
+│ │                │ too weak:       │ ││ └──────────────────────┴───────────┘ │
+│ │                │ 0.00001         │ ││                                      │
+│ │                │ (threshold:     │ ││                                      │
+│ │                │ 0.002)          │ ││                                      │
+│ └────────────────┴─────────────────┘ ││                                      │
+╰──────────────────────────────────────╯╰──────────────────────────────────────╯
+╭─────────────────────────────────── Status ───────────────────────────────────╮
+│ Binance: Disconnected  |  CLOB: Disconnected  |  Trade Size: $10             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='bot' coro=<TradingBot.start() running at /home/user/Claude/polymarket_btc_bot/main.py:111> wait_for=<_GatheringFuture finished exception=CancelledError()>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='bot' coro=<TradingBot.start() running at /home/user/Claude/polymarket_btc_bot/main.py:111> wait_for=<_GatheringFuture finished exception=CancelledError()>>
+06:33:26 [INFO   ] polymarket_btc_bot.main   | Stopping bot...
+06:33:26 [INFO   ] polymarket_btc_bot.main   | Stopping bot...
+06:33:26 [INFO   ] polymarket_btc_bot.execution.order_manager | Cancelled 0 active orders
+06:33:26 [INFO   ] polymarket_btc_bot.execution.order_manager | Cancelled 0 active orders
+Exception ignored in: <coroutine object TradingBot.start at 0x7eef9e596570>
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 679, in close
+    self._ready.clear()
+RuntimeError: coroutine ignored GeneratorExit
+06:33:26 [ERROR  ] asyncio                   | Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7eef9f99cc50>
+06:33:26 [ERROR  ] asyncio                   | Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7eef9f99cc50>
+06:33:26 [ERROR  ] asyncio                   | Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x7eef9d9b1470>, 225.837624326)])']
+connector: <aiohttp.connector.TCPConnector object at 0x7eef9e97d0d0>
+06:33:26 [ERROR  ] asyncio                   | Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x7eef9d9b1470>, 225.837624326)])']
+connector: <aiohttp.connector.TCPConnector object at 0x7eef9e97d0d0>
+06:33:26 [ERROR  ] asyncio                   | Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7eef9e960610>
+06:33:26 [ERROR  ] asyncio                   | Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7eef9e960610>
+06:33:26 [ERROR  ] asyncio                   | Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x7eef9d9b1160>, 225.885383893)])']
+connector: <aiohttp.connector.TCPConnector object at 0x7eef9e5e0c10>
+06:33:26 [ERROR  ] asyncio                   | Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x7eef9d9b1160>, 225.885383893)])']
+connector: <aiohttp.connector.TCPConnector object at 0x7eef9e5e0c10>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='binance' coro=<BinanceFeed.connect() running at /home/user/Claude/polymarket_btc_bot/data/binance_feed.py:231> wait_for=<Task pending name='Task-26' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]> cb=[gather.<locals>._done_callback() at /usr/lib/python3.11/asyncio/tasks.py:764]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='binance' coro=<BinanceFeed.connect() running at /home/user/Claude/polymarket_btc_bot/data/binance_feed.py:231> wait_for=<Task pending name='Task-26' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]> cb=[gather.<locals>._done_callback() at /usr/lib/python3.11/asyncio/tasks.py:764]>
+06:33:26 [ERROR  ] asyncio                   | _GatheringFuture exception was never retrieved
+future: <_GatheringFuture finished exception=CancelledError()>
+Traceback (most recent call last):
+  File "/home/user/Claude/polymarket_btc_bot/data/chainlink_feed.py", line 178, in run_polling_loop
+    await asyncio.sleep(self.config.poll_interval_seconds)
+  File "/usr/lib/python3.11/asyncio/tasks.py", line 649, in sleep
+    return await future
+           ^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+06:33:26 [ERROR  ] asyncio                   | _GatheringFuture exception was never retrieved
+future: <_GatheringFuture finished exception=CancelledError()>
+Traceback (most recent call last):
+  File "/home/user/Claude/polymarket_btc_bot/data/chainlink_feed.py", line 178, in run_polling_loop
+    await asyncio.sleep(self.config.poll_interval_seconds)
+  File "/usr/lib/python3.11/asyncio/tasks.py", line 649, in sleep
+    return await future
+           ^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-25' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-25' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-35' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-35' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-27' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-27' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-32' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-32' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-30' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-30' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-36' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-36' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-34' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-34' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-33' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-33' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-34' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-34' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-35' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-35' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-36' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-36' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-31' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-31' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-28' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-28' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-24' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-24' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-33' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-33' coro=<_wait_for_close() done, defined at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:136> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-29' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task cancelling name='clob' coro=<PolymarketCLOB.connect() running at /home/user/Claude/polymarket_btc_bot/data/polymarket_clob.py:293> wait_for=<Task pending name='Task-29' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-24' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-24' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-25' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-25' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-26' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-26' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-27' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-27' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-28' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-28' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-29' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-29' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-30' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-30' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-31' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-31' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-32' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+06:33:26 [ERROR  ] asyncio                   | Task was destroyed but it is pending!
+task: <Task pending name='Task-32' coro=<_wait_for_close() running at /usr/local/lib/python3.11/dist-packages/aiohttp/connector.py:138> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>

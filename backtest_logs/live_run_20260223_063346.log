@@ -1,0 +1,982 @@
+
+==============================================================
+  POLYMARKET BTC 15m BOT — LIVE BACKTEST
+  Kapital: $100  |  Laufzeit: 60 min
+  Gestartet: 2026-02-23 06:33:46 UTC
+==============================================================
+
+06:33:46 [INFO   ] root                      | Logging initialized: console=INFO file=backtest_logs/bot.log
+06:33:46 [INFO   ] root                      | Logging initialized: console=INFO file=backtest_logs/bot.log
+06:33:46 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:33:46 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Polymarket BTC 15m Trading Bot Starting
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Polymarket BTC 15m Trading Bot Starting
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Mode: simulation | Trade Size: $10.00
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Mode: simulation | Trade Size: $10.00
+06:33:46 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:33:46 [INFO   ] polymarket_btc_bot.main   | ============================================================
+06:33:46 [INFO   ] polymarket_btc_bot.data.market_discovery | MarketDiscovery started
+06:33:46 [INFO   ] polymarket_btc_bot.data.market_discovery | MarketDiscovery started
+06:33:46 [INFO   ] polymarket_btc_bot.data.chainlink_feed | ChainlinkFeed started
+06:33:46 [INFO   ] polymarket_btc_bot.data.chainlink_feed | ChainlinkFeed started
+06:33:46 [INFO   ] polymarket_btc_bot.execution.order_manager | OrderManager started in simulation mode
+06:33:46 [INFO   ] polymarket_btc_bot.execution.order_manager | OrderManager started in simulation mode
+06:33:46 [INFO   ] polymarket_btc_bot.main   | All tasks started. Waiting for data feeds...
+06:33:46 [INFO   ] polymarket_btc_bot.main   | All tasks started. Waiting for data feeds...
+06:33:46 [INFO   ] polymarket_btc_bot.data.binance_feed | Connecting to Binance WebSocket: wss://stream.binance.com:9443/ws/btcusdt@aggTrade
+06:33:46 [INFO   ] polymarket_btc_bot.data.binance_feed | Connecting to Binance WebSocket: wss://stream.binance.com:9443/ws/btcusdt@aggTrade
+06:33:46 [INFO   ] polymarket_btc_bot.data.chainlink_feed | Starting Chainlink polling loop (interval: 10.0s)
+06:33:46 [INFO   ] polymarket_btc_bot.data.chainlink_feed | Starting Chainlink polling loop (interval: 10.0s)
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Market discovery loop started
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Market discovery loop started
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Trading loop started
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Trading loop started
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Market-maker loop started | levels=3 | spacing=0.020 | size=$3.00/level | refresh=30s
+06:33:46 [INFO   ] polymarket_btc_bot.main   | Market-maker loop started | levels=3 | spacing=0.020 | size=$3.00/level | refresh=30s
+06:33:46 [WARNING] polymarket_btc_bot.data.binance_feed | Binance WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to Kraken REST polling
+06:33:46 [WARNING] polymarket_btc_bot.data.binance_feed | Binance WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to Kraken REST polling
+06:33:46 [INFO   ] polymarket_btc_bot.data.binance_feed | Kraken REST polling started (interval: 2.0s)
+06:33:46 [INFO   ] polymarket_btc_bot.data.binance_feed | Kraken REST polling started (interval: 2.0s)
+06:33:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (73s remaining)
+06:33:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (73s remaining)
+06:33:47 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 73s
+06:33:47 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771828200 | Duration: 300s | Time remaining: 73s
+06:33:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=115087678802322056192316487807268505137160374496936837430620052391045867202204 Down=25317303874175549505316480207300807933963081269747646958927086213797803799625
+06:33:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:33:47 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:47 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:33:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:47 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:33:47 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65300.00
+06:33:47 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65300.00
+06:33:47 [INFO   ] polymarket_btc_bot.main   | Binance feed active: BTC = $65334.50
+06:33:47 [INFO   ] polymarket_btc_bot.main   | Binance feed active: BTC = $65334.50
+06:33:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (68s remaining)
+06:33:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (68s remaining)
+06:33:57 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (63s remaining)
+06:33:57 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (63s remaining)
+06:34:02 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (58s remaining)
+06:34:02 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (58s remaining)
+06:34:02 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 57s)
+06:34:02 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 57s)
+06:34:07 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (52s remaining)
+06:34:07 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (52s remaining)
+06:34:07 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 52s)
+06:34:07 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 52s)
+06:34:12 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (47s remaining)
+06:34:12 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (47s remaining)
+06:34:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 47s)
+06:34:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 47s)
+06:34:16 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.720–0.680 | DOWN 3 levels @ 0.270–0.230
+06:34:16 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.720–0.680 | DOWN 3 levels @ 0.270–0.230
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 4.17 @ 0.7200
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 4.17 @ 0.7200
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.17 @ 0.7200
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.17 @ 0.7200
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 4.29 @ 0.7000
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 4.29 @ 0.7000
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.29 @ 0.7000
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.29 @ 0.7000
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 4.41 @ 0.6800
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 4.41 @ 0.6800
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.41 @ 0.6800
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 11508767 4.41 @ 0.6800
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 11.11 @ 0.2700
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 11.11 @ 0.2700
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 11.11 @ 0.2700
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 11.11 @ 0.2700
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 12.00 @ 0.2500
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 12.00 @ 0.2500
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 12.00 @ 0.2500
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 12.00 @ 0.2500
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 13.04 @ 0.2300
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 13.04 @ 0.2300
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 13.04 @ 0.2300
+06:34:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 25317303 13.04 @ 0.2300
+06:34:16 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771828200 | UP=3 orders | DOWN=3 orders | total_active=0
+06:34:16 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771828200 | UP=3 orders | DOWN=3 orders | total_active=0
+06:34:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (42s remaining)
+06:34:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (42s remaining)
+06:34:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 42s)
+06:34:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 42s)
+06:34:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (37s remaining)
+06:34:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (37s remaining)
+06:34:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 36s)
+06:34:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 36s)
+06:34:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (31s remaining)
+06:34:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (31s remaining)
+06:34:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 31s)
+06:34:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 31s)
+06:34:33 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (26s remaining)
+06:34:33 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (26s remaining)
+06:34:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 26s)
+06:34:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 26s)
+06:34:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (21s remaining)
+06:34:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (21s remaining)
+06:34:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 21s)
+06:34:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 21s)
+06:34:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (16s remaining)
+06:34:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (16s remaining)
+06:34:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 15s)
+06:34:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 15s)
+
+─── [01:00 / 60:00 | verbleibend 59:00] ─────
+  BTC Preis  : $ 65,375.60
+  Markt      : btc-updown-15m-1771828200
+  Verbleibend: 13s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:34:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (10s remaining)
+06:34:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (10s remaining)
+06:34:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 10s)
+06:34:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 10s)
+06:34:54 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (5s remaining)
+06:34:54 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771828200 (5s remaining)
+06:34:55 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 5s)
+06:34:55 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828500 (starts in 5s)
+06:34:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:34:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:35:00 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (300s remaining)
+06:35:00 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (300s remaining)
+06:35:00 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-5m-1771828500 | Duration: 300s | Time remaining: 300s
+06:35:00 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-5m-1771828500 | Duration: 300s | Time remaining: 300s
+06:35:00 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=52324372353601385550992285312978387331899368363196800062001506625647511315476 Down=21263502960590953510707345245894546296881519748289218539424034074816086366777
+06:35:00 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=52324372353601385550992285312978387331899368363196800062001506625647511315476 Down=21263502960590953510707345245894546296881519748289218539424034074816086366777
+06:35:00 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:35:00 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:35:00 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65300.00
+06:35:00 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65300.00
+06:35:00 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:35:00 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:35:00 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:35:00 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:35:00 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.40 | deviation=+0.00116 | ask=0.500 | edge=0.9600 | remaining=300s
+06:35:00 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.40 | deviation=+0.00116 | ask=0.500 | edge=0.9600 | remaining=300s
+06:35:05 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (295s remaining)
+06:35:05 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (295s remaining)
+06:35:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:35:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:35:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (290s remaining)
+06:35:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (290s remaining)
+06:35:15 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.45 | deviation=+0.00161 | ask=0.540 | edge=0.8148 | remaining=285s
+06:35:15 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.45 | deviation=+0.00161 | ask=0.540 | edge=0.8148 | remaining=285s
+06:35:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (284s remaining)
+06:35:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (284s remaining)
+06:35:16 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.530–0.490 | DOWN 3 levels @ 0.460–0.420
+06:35:16 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.530–0.490 | DOWN 3 levels @ 0.460–0.420
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.66 @ 0.5300
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.66 @ 0.5300
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.66 @ 0.5300
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.66 @ 0.5300
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.88 @ 0.5100
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.88 @ 0.5100
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.88 @ 0.5100
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.88 @ 0.5100
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 6.12 @ 0.4900
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 6.12 @ 0.4900
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 6.12 @ 0.4900
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 6.12 @ 0.4900
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 6.52 @ 0.4600
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 6.52 @ 0.4600
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 6.52 @ 0.4600
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 6.52 @ 0.4600
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 6.82 @ 0.4400
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 6.82 @ 0.4400
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 6.82 @ 0.4400
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 6.82 @ 0.4400
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 7.14 @ 0.4200
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 7.14 @ 0.4200
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 7.14 @ 0.4200
+06:35:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 7.14 @ 0.4200
+06:35:16 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=3 orders | DOWN=3 orders | total_active=0
+06:35:16 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=3 orders | DOWN=3 orders | total_active=0
+06:35:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:35:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:35:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (279s remaining)
+06:35:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (279s remaining)
+06:35:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (274s remaining)
+06:35:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (274s remaining)
+06:35:30 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.47 | deviation=+0.00161 | ask=0.570 | edge=0.7193 | remaining=270s
+06:35:30 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.47 | deviation=+0.00161 | ask=0.570 | edge=0.7193 | remaining=270s
+06:35:30 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (269s remaining)
+06:35:30 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (269s remaining)
+06:35:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (264s remaining)
+06:35:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (264s remaining)
+06:35:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (259s remaining)
+06:35:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (259s remaining)
+06:35:45 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.49 | deviation=+0.00168 | ask=0.570 | edge=0.7193 | remaining=254s
+06:35:45 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.49 | deviation=+0.00168 | ask=0.570 | edge=0.7193 | remaining=254s
+06:35:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (254s remaining)
+06:35:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (254s remaining)
+
+─── [02:00 / 60:00 | verbleibend 58:00] ─────
+  BTC Preis  : $ 65,410.00
+  Markt      : btc-updown-5m-1771828500
+  Verbleibend: 253s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:35:46 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.570–0.530 | DOWN 3 levels @ 0.410–0.370
+06:35:46 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.570–0.530 | DOWN 3 levels @ 0.410–0.370
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.26 @ 0.5700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.26 @ 0.5700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.26 @ 0.5700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.26 @ 0.5700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.45 @ 0.5500
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.45 @ 0.5500
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.45 @ 0.5500
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.45 @ 0.5500
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 5.66 @ 0.5300
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 5.66 @ 0.5300
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.66 @ 0.5300
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 5.66 @ 0.5300
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 7.32 @ 0.4100
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 7.32 @ 0.4100
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 7.32 @ 0.4100
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 7.32 @ 0.4100
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 7.69 @ 0.3900
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 7.69 @ 0.3900
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 7.69 @ 0.3900
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 7.69 @ 0.3900
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 8.11 @ 0.3700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 8.11 @ 0.3700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 8.11 @ 0.3700
+06:35:46 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 8.11 @ 0.3700
+06:35:46 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=3 orders | DOWN=3 orders | total_active=0
+06:35:46 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=3 orders | DOWN=3 orders | total_active=0
+06:35:51 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (248s remaining)
+06:35:51 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (248s remaining)
+06:35:56 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (243s remaining)
+06:35:56 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (243s remaining)
+06:35:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:35:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:00 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.50 | deviation=+0.00167 | ask=0.530 | edge=0.8491 | remaining=239s
+06:36:00 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.50 | deviation=+0.00167 | ask=0.530 | edge=0.8491 | remaining=239s
+06:36:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (238s remaining)
+06:36:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (238s remaining)
+06:36:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (233s remaining)
+06:36:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (233s remaining)
+06:36:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:11 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (228s remaining)
+06:36:11 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (228s remaining)
+06:36:15 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.51 | deviation=+0.00161 | ask=0.740 | edge=0.3243 | remaining=224s
+06:36:15 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.51 | deviation=+0.00161 | ask=0.740 | edge=0.3243 | remaining=224s
+06:36:16 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.770–0.730 | DOWN 3 levels @ 0.260–0.220
+06:36:16 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.770–0.730 | DOWN 3 levels @ 0.260–0.220
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 3.90 @ 0.7700
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 3.90 @ 0.7700
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 3.90 @ 0.7700
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 3.90 @ 0.7700
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 4.00 @ 0.7500
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 4.00 @ 0.7500
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 4.00 @ 0.7500
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 4.00 @ 0.7500
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 4.11 @ 0.7300
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 4.11 @ 0.7300
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 4.11 @ 0.7300
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 4.11 @ 0.7300
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 11.54 @ 0.2600
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 11.54 @ 0.2600
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 11.54 @ 0.2600
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 11.54 @ 0.2600
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 12.50 @ 0.2400
+06:36:16 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 12.50 @ 0.2400
+06:36:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 12.50 @ 0.2400
+06:36:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 12.50 @ 0.2400
+06:36:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 13.64 @ 0.2200
+06:36:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 13.64 @ 0.2200
+06:36:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 13.64 @ 0.2200
+06:36:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 21263502 13.64 @ 0.2200
+06:36:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=3 orders | DOWN=3 orders | total_active=0
+06:36:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=3 orders | DOWN=3 orders | total_active=0
+06:36:17 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (223s remaining)
+06:36:17 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (223s remaining)
+06:36:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (218s remaining)
+06:36:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (218s remaining)
+06:36:26 [INFO   ] polymarket_btc_bot.strategy.intra_arbitrage | ARB SIGNAL: combined=0.9700 | profit=0.0100 | up=0.8600 down=0.1100
+06:36:26 [INFO   ] polymarket_btc_bot.strategy.intra_arbitrage | ARB SIGNAL: combined=0.9700 | profit=0.0100 | up=0.8600 down=0.1100
+06:36:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (213s remaining)
+06:36:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (213s remaining)
+06:36:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (208s remaining)
+06:36:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (208s remaining)
+06:36:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (202s remaining)
+06:36:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (202s remaining)
+06:36:42 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (197s remaining)
+06:36:42 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (197s remaining)
+
+─── [03:00 / 60:00 | verbleibend 57:00] ─────
+  BTC Preis  : $ 65,480.00
+  Markt      : btc-updown-5m-1771828500
+  Verbleibend: 193s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:36:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 2 levels @ 0.900–0.880 | DOWN 0 levels @ 0.000–0.000
+06:36:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 2 levels @ 0.900–0.880 | DOWN 0 levels @ 0.000–0.000
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/2: BUY 3.33 @ 0.9000
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/2: BUY 3.33 @ 0.9000
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 3.33 @ 0.9000
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 3.33 @ 0.9000
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/2: BUY 3.41 @ 0.8800
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/2: BUY 3.41 @ 0.8800
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 3.41 @ 0.8800
+06:36:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 52324372 3.41 @ 0.8800
+06:36:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=2 orders | DOWN=0 orders | total_active=0
+06:36:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828500 | UP=2 orders | DOWN=0 orders | total_active=0
+06:36:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (192s remaining)
+06:36:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (192s remaining)
+06:36:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (187s remaining)
+06:36:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (187s remaining)
+06:36:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:36:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (182s remaining)
+06:36:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (182s remaining)
+06:37:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (177s remaining)
+06:37:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (177s remaining)
+06:37:08 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (172s remaining)
+06:37:08 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (172s remaining)
+06:37:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (167s remaining)
+06:37:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (167s remaining)
+06:37:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (161s remaining)
+06:37:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (161s remaining)
+06:37:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (156s remaining)
+06:37:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (156s remaining)
+06:37:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (151s remaining)
+06:37:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (151s remaining)
+06:37:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (146s remaining)
+06:37:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (146s remaining)
+06:37:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:37:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:37:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (141s remaining)
+06:37:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (141s remaining)
+06:37:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (136s remaining)
+06:37:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (136s remaining)
+
+─── [04:00 / 60:00 | verbleibend 56:00] ─────
+  BTC Preis  : $ 65,573.30
+  Markt      : btc-updown-5m-1771828500
+  Verbleibend: 133s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:37:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:37:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:37:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (131s remaining)
+06:37:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (131s remaining)
+06:37:54 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (125s remaining)
+06:37:54 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (125s remaining)
+06:37:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:37:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:37:59 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (120s remaining)
+06:37:59 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (120s remaining)
+06:38:04 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (115s remaining)
+06:38:04 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (115s remaining)
+06:38:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:09 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (110s remaining)
+06:38:09 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (110s remaining)
+06:38:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (105s remaining)
+06:38:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (105s remaining)
+06:38:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (100s remaining)
+06:38:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (100s remaining)
+06:38:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (95s remaining)
+06:38:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (95s remaining)
+06:38:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:30 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (90s remaining)
+06:38:30 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (90s remaining)
+06:38:35 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (84s remaining)
+06:38:35 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (84s remaining)
+06:38:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:38:40 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (79s remaining)
+06:38:40 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (79s remaining)
+06:38:45 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (74s remaining)
+06:38:45 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (74s remaining)
+
+─── [05:00 / 60:00 | verbleibend 55:00] ─────
+  BTC Preis  : $ 65,623.50
+  Markt      : btc-updown-5m-1771828500
+  Verbleibend: 73s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:38:50 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (69s remaining)
+06:38:50 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (69s remaining)
+06:38:56 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (64s remaining)
+06:38:56 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (64s remaining)
+06:39:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (59s remaining)
+06:39:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (59s remaining)
+06:39:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 59s)
+06:39:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 59s)
+06:39:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (54s remaining)
+06:39:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (54s remaining)
+06:39:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 54s)
+06:39:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 54s)
+06:39:11 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (48s remaining)
+06:39:11 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (48s remaining)
+06:39:11 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 48s)
+06:39:11 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 48s)
+06:39:16 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (43s remaining)
+06:39:16 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (43s remaining)
+06:39:16 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 43s)
+06:39:16 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 43s)
+06:39:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (38s remaining)
+06:39:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (38s remaining)
+06:39:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 38s)
+06:39:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 38s)
+06:39:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (33s remaining)
+06:39:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (33s remaining)
+06:39:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 33s)
+06:39:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 33s)
+06:39:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (27s remaining)
+06:39:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (27s remaining)
+06:39:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 27s)
+06:39:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 27s)
+06:39:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (22s remaining)
+06:39:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (22s remaining)
+06:39:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 22s)
+06:39:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 22s)
+06:39:43 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (17s remaining)
+06:39:43 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (17s remaining)
+06:39:43 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 17s)
+06:39:43 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 17s)
+
+─── [06:00 / 60:00 | verbleibend 54:00] ─────
+  BTC Preis  : $ 65,600.60
+  Markt      : btc-updown-5m-1771828500
+  Verbleibend: 13s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:39:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:48 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (12s remaining)
+06:39:48 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (12s remaining)
+06:39:48 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 12s)
+06:39:48 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 12s)
+06:39:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (7s remaining)
+06:39:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (7s remaining)
+06:39:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 6s)
+06:39:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 6s)
+06:39:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:57 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:39:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (1s remaining)
+06:39:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828500 (1s remaining)
+06:39:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 1s)
+06:39:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-5m-1771828800 (starts in 1s)
+06:40:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (296s remaining)
+06:40:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (296s remaining)
+06:40:03 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-5m-1771828800 | Duration: 300s | Time remaining: 296s
+06:40:03 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-5m-1771828800 | Duration: 300s | Time remaining: 296s
+06:40:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=24567998366921380739776085878038250946332894745827357762518103647671349746150 Down=39075987386026698873132746530510667556219158970180405087739341246154119068603
+06:40:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=24567998366921380739776085878038250946332894745827357762518103647671349746150 Down=39075987386026698873132746530510667556219158970180405087739341246154119068603
+06:40:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:40:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:40:03 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65495.00
+06:40:03 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65495.00
+06:40:03 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:40:03 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:40:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:40:03 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:40:04 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.44 | deviation=+0.00160 | ask=0.540 | edge=0.8148 | remaining=296s
+06:40:04 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.44 | deviation=+0.00160 | ask=0.540 | edge=0.8148 | remaining=296s
+06:40:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:40:07 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:40:09 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (291s remaining)
+06:40:09 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (291s remaining)
+06:40:14 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (286s remaining)
+06:40:14 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (286s remaining)
+06:40:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.540–0.500 | DOWN 3 levels @ 0.450–0.410
+06:40:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.540–0.500 | DOWN 3 levels @ 0.450–0.410
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.56 @ 0.5400
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 5.56 @ 0.5400
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 5.56 @ 0.5400
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 5.56 @ 0.5400
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.77 @ 0.5200
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 5.77 @ 0.5200
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 5.77 @ 0.5200
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 5.77 @ 0.5200
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 6.00 @ 0.5000
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 6.00 @ 0.5000
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.00 @ 0.5000
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.00 @ 0.5000
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 6.67 @ 0.4500
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 6.67 @ 0.4500
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.67 @ 0.4500
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.67 @ 0.4500
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 6.98 @ 0.4300
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 6.98 @ 0.4300
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.98 @ 0.4300
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.98 @ 0.4300
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 7.32 @ 0.4100
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 7.32 @ 0.4100
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 7.32 @ 0.4100
+06:40:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 7.32 @ 0.4100
+06:40:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:40:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:40:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:40:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:40:19 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.47 | deviation=+0.00181 | ask=0.500 | edge=0.9600 | remaining=281s
+06:40:19 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.47 | deviation=+0.00181 | ask=0.500 | edge=0.9600 | remaining=281s
+06:40:19 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (281s remaining)
+06:40:19 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (281s remaining)
+06:40:24 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (275s remaining)
+06:40:24 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (275s remaining)
+06:40:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:40:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:40:29 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (270s remaining)
+06:40:29 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (270s remaining)
+06:40:34 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.49 | deviation=+0.00180 | ask=0.460 | edge=1.1304 | remaining=266s
+06:40:34 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.49 | deviation=+0.00180 | ask=0.460 | edge=1.1304 | remaining=266s
+06:40:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (265s remaining)
+06:40:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (265s remaining)
+06:40:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (260s remaining)
+06:40:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (260s remaining)
+06:40:39 [INFO   ] polymarket_btc_bot.strategy.intra_arbitrage | ARB SIGNAL: combined=0.9700 | profit=0.0100 | up=0.3900 down=0.5800
+06:40:39 [INFO   ] polymarket_btc_bot.strategy.intra_arbitrage | ARB SIGNAL: combined=0.9700 | profit=0.0100 | up=0.3900 down=0.5800
+06:40:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (255s remaining)
+06:40:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (255s remaining)
+
+─── [07:00 / 60:00 | verbleibend 53:00] ─────
+  BTC Preis  : $ 65,600.10
+  Markt      : btc-updown-5m-1771828800
+  Verbleibend: 253s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:40:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.480–0.440 | DOWN 3 levels @ 0.510–0.470
+06:40:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.480–0.440 | DOWN 3 levels @ 0.510–0.470
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 6.25 @ 0.4800
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 6.25 @ 0.4800
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.25 @ 0.4800
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.25 @ 0.4800
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 6.52 @ 0.4600
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 6.52 @ 0.4600
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.52 @ 0.4600
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.52 @ 0.4600
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 6.82 @ 0.4400
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 6.82 @ 0.4400
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.82 @ 0.4400
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 6.82 @ 0.4400
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 5.88 @ 0.5100
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 5.88 @ 0.5100
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 5.88 @ 0.5100
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 5.88 @ 0.5100
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 6.12 @ 0.4900
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 6.12 @ 0.4900
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.12 @ 0.4900
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.12 @ 0.4900
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 6.38 @ 0.4700
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 6.38 @ 0.4700
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.38 @ 0.4700
+06:40:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 6.38 @ 0.4700
+06:40:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:40:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:40:49 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.48 | deviation=+0.00160 | ask=0.400 | edge=1.4500 | remaining=251s
+06:40:49 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.48 | deviation=+0.00160 | ask=0.400 | edge=1.4500 | remaining=251s
+06:40:50 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (250s remaining)
+06:40:50 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (250s remaining)
+06:40:55 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (245s remaining)
+06:40:55 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (245s remaining)
+06:41:00 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (240s remaining)
+06:41:00 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (240s remaining)
+06:41:04 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.49 | deviation=+0.00149 | ask=0.310 | edge=2.1613 | remaining=236s
+06:41:04 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.49 | deviation=+0.00149 | ask=0.310 | edge=2.1613 | remaining=236s
+06:41:05 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (235s remaining)
+06:41:05 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (235s remaining)
+06:41:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (229s remaining)
+06:41:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (229s remaining)
+06:41:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (224s remaining)
+06:41:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (224s remaining)
+06:41:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.370–0.330 | DOWN 3 levels @ 0.610–0.570
+06:41:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.370–0.330 | DOWN 3 levels @ 0.610–0.570
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 8.11 @ 0.3700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 8.11 @ 0.3700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 8.11 @ 0.3700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 8.11 @ 0.3700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 8.57 @ 0.3500
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 8.57 @ 0.3500
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 8.57 @ 0.3500
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 8.57 @ 0.3500
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 9.09 @ 0.3300
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 9.09 @ 0.3300
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 9.09 @ 0.3300
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 9.09 @ 0.3300
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 4.92 @ 0.6100
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 4.92 @ 0.6100
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 4.92 @ 0.6100
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 4.92 @ 0.6100
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 5.08 @ 0.5900
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 5.08 @ 0.5900
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 5.08 @ 0.5900
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 5.08 @ 0.5900
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 5.26 @ 0.5700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 5.26 @ 0.5700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 5.26 @ 0.5700
+06:41:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 5.26 @ 0.5700
+06:41:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:41:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:41:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:17 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:19 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.47 | deviation=+0.00101 | ask=0.420 | edge=1.3333 | remaining=221s
+06:41:19 [INFO   ] polymarket_btc_bot.strategy.late_momentum | LATE SIGNAL: UP | confidence=0.47 | deviation=+0.00101 | ask=0.420 | edge=1.3333 | remaining=221s
+06:41:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (219s remaining)
+06:41:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (219s remaining)
+06:41:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (214s remaining)
+06:41:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (214s remaining)
+06:41:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:27 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:31 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (209s remaining)
+06:41:31 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (209s remaining)
+06:41:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (204s remaining)
+06:41:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (204s remaining)
+06:41:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:37 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (199s remaining)
+06:41:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (199s remaining)
+06:41:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (194s remaining)
+06:41:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (194s remaining)
+
+─── [08:00 / 60:00 | verbleibend 52:00] ─────
+  BTC Preis  : $ 65,518.80
+  Markt      : btc-updown-5m-1771828800
+  Verbleibend: 193s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:41:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 2 levels @ 0.130–0.110 | DOWN 3 levels @ 0.860–0.820
+06:41:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 2 levels @ 0.130–0.110 | DOWN 3 levels @ 0.860–0.820
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/2: BUY 23.08 @ 0.1300
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/2: BUY 23.08 @ 0.1300
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 23.08 @ 0.1300
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 23.08 @ 0.1300
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/2: BUY 27.27 @ 0.1100
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/2: BUY 27.27 @ 0.1100
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 27.27 @ 0.1100
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 27.27 @ 0.1100
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 3.49 @ 0.8600
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 3.49 @ 0.8600
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.49 @ 0.8600
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.49 @ 0.8600
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 3.57 @ 0.8400
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 3.57 @ 0.8400
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.57 @ 0.8400
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.57 @ 0.8400
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 3.66 @ 0.8200
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 3.66 @ 0.8200
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.66 @ 0.8200
+06:41:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.66 @ 0.8200
+06:41:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=2 orders | DOWN=3 orders | total_active=0
+06:41:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=2 orders | DOWN=3 orders | total_active=0
+06:41:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:47 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:51 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (188s remaining)
+06:41:51 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (188s remaining)
+06:41:56 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (183s remaining)
+06:41:56 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (183s remaining)
+06:41:58 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:41:58 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (178s remaining)
+06:42:01 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (178s remaining)
+06:42:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (173s remaining)
+06:42:06 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (173s remaining)
+06:42:08 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:08 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:12 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (168s remaining)
+06:42:12 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (168s remaining)
+06:42:17 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (163s remaining)
+06:42:17 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (163s remaining)
+06:42:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 0 levels @ 0.000–0.000 | DOWN 3 levels @ 0.900–0.860
+06:42:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 0 levels @ 0.000–0.000 | DOWN 3 levels @ 0.900–0.860
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 3.33 @ 0.9000
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 3.33 @ 0.9000
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.33 @ 0.9000
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.33 @ 0.9000
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 3.41 @ 0.8800
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 3.41 @ 0.8800
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.41 @ 0.8800
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.41 @ 0.8800
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 3.49 @ 0.8600
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 3.49 @ 0.8600
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.49 @ 0.8600
+06:42:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.49 @ 0.8600
+06:42:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=0 orders | DOWN=3 orders | total_active=0
+06:42:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=0 orders | DOWN=3 orders | total_active=0
+06:42:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (158s remaining)
+06:42:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (158s remaining)
+06:42:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (153s remaining)
+06:42:27 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (153s remaining)
+06:42:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (147s remaining)
+06:42:32 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (147s remaining)
+06:42:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (142s remaining)
+06:42:37 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (142s remaining)
+06:42:42 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (137s remaining)
+06:42:42 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (137s remaining)
+
+─── [09:00 / 60:00 | verbleibend 51:00] ─────
+  BTC Preis  : $ 65,520.40
+  Markt      : btc-updown-5m-1771828800
+  Verbleibend: 133s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:42:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 0 levels @ 0.000–0.000 | DOWN 2 levels @ 0.890–0.870
+06:42:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 0 levels @ 0.000–0.000 | DOWN 2 levels @ 0.890–0.870
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/2: BUY 3.37 @ 0.8900
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/2: BUY 3.37 @ 0.8900
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.37 @ 0.8900
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.37 @ 0.8900
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/2: BUY 3.45 @ 0.8700
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/2: BUY 3.45 @ 0.8700
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.45 @ 0.8700
+06:42:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.45 @ 0.8700
+06:42:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=0 orders | DOWN=2 orders | total_active=0
+06:42:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=0 orders | DOWN=2 orders | total_active=0
+06:42:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (132s remaining)
+06:42:47 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (132s remaining)
+06:42:48 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:48 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (127s remaining)
+06:42:53 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (127s remaining)
+06:42:58 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:58 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:42:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (122s remaining)
+06:42:58 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (122s remaining)
+06:43:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (117s remaining)
+06:43:03 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (117s remaining)
+06:43:08 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:08 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:08 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (112s remaining)
+06:43:08 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (112s remaining)
+06:43:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (106s remaining)
+06:43:13 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (106s remaining)
+06:43:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 0 levels @ 0.000–0.000 | DOWN 2 levels @ 0.890–0.870
+06:43:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 0 levels @ 0.000–0.000 | DOWN 2 levels @ 0.890–0.870
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/2: BUY 3.37 @ 0.8900
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/2: BUY 3.37 @ 0.8900
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.37 @ 0.8900
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.37 @ 0.8900
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/2: BUY 3.45 @ 0.8700
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/2: BUY 3.45 @ 0.8700
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.45 @ 0.8700
+06:43:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.45 @ 0.8700
+06:43:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=0 orders | DOWN=2 orders | total_active=0
+06:43:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=0 orders | DOWN=2 orders | total_active=0
+06:43:18 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:18 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (101s remaining)
+06:43:18 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (101s remaining)
+06:43:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (96s remaining)
+06:43:23 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (96s remaining)
+06:43:28 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:28 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (91s remaining)
+06:43:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (91s remaining)
+06:43:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (86s remaining)
+06:43:34 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (86s remaining)
+06:43:38 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:38 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (81s remaining)
+06:43:39 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (81s remaining)
+06:43:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (76s remaining)
+06:43:44 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (76s remaining)
+
+─── [10:00 / 60:00 | verbleibend 50:00] ─────
+  BTC Preis  : $ 65,547.00
+  Markt      : btc-updown-5m-1771828800
+  Verbleibend: 73s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:43:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.180–0.140 | DOWN 3 levels @ 0.820–0.780
+06:43:47 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.180–0.140 | DOWN 3 levels @ 0.820–0.780
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 16.67 @ 0.1800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 16.67 @ 0.1800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 16.67 @ 0.1800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 16.67 @ 0.1800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 18.75 @ 0.1600
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 18.75 @ 0.1600
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 18.75 @ 0.1600
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 18.75 @ 0.1600
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 21.43 @ 0.1400
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 21.43 @ 0.1400
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 21.43 @ 0.1400
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 24567998 21.43 @ 0.1400
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 3.66 @ 0.8200
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 3.66 @ 0.8200
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.66 @ 0.8200
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.66 @ 0.8200
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 3.75 @ 0.8000
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 3.75 @ 0.8000
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.75 @ 0.8000
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.75 @ 0.8000
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 3.85 @ 0.7800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 3.85 @ 0.7800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.85 @ 0.7800
+06:43:47 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 39075987 3.85 @ 0.7800
+06:43:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:43:47 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-5m-1771828800 | UP=3 orders | DOWN=3 orders | total_active=0
+06:43:48 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:48 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:43:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (71s remaining)
+06:43:49 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (71s remaining)
+06:43:54 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (65s remaining)
+06:43:54 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (65s remaining)
+06:43:58 [INFO   ] polymarket_btc_bot.strategy.intra_arbitrage | ARB SIGNAL: combined=0.9600 | profit=0.0200 | up=0.1400 down=0.8200
+06:43:58 [INFO   ] polymarket_btc_bot.strategy.intra_arbitrage | ARB SIGNAL: combined=0.9600 | profit=0.0200 | up=0.1400 down=0.8200
+06:43:59 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (60s remaining)
+06:43:59 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (60s remaining)
+06:44:04 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (55s remaining)
+06:44:04 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (55s remaining)
+06:44:04 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 55s)
+06:44:04 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 55s)
+06:44:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (50s remaining)
+06:44:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (50s remaining)
+06:44:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 50s)
+06:44:10 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 50s)
+06:44:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (45s remaining)
+06:44:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (45s remaining)
+06:44:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 45s)
+06:44:15 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 45s)
+06:44:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (39s remaining)
+06:44:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (39s remaining)
+06:44:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 39s)
+06:44:20 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 39s)
+06:44:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (34s remaining)
+06:44:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (34s remaining)
+06:44:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 34s)
+06:44:25 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 34s)
+06:44:31 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (29s remaining)
+06:44:31 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (29s remaining)
+06:44:31 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 29s)
+06:44:31 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 29s)
+06:44:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (24s remaining)
+06:44:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (24s remaining)
+06:44:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 24s)
+06:44:36 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 24s)
+06:44:38 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:44:38 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:44:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (18s remaining)
+06:44:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (18s remaining)
+06:44:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 18s)
+06:44:41 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 18s)
+06:44:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (13s remaining)
+06:44:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (13s remaining)
+
+─── [11:00 / 60:00 | verbleibend 49:00] ─────
+  BTC Preis  : $ 65,519.50
+  Markt      : btc-updown-5m-1771828800
+  Verbleibend: 13s in diesem 15m-Fenster
+  Virtuelles Kapital: $  100.00  (Start: $100)
+  Offene Positionen : 0  (Exposure: $0.00)
+  Trades abgeschlossen: 0
+
+06:44:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 13s)
+06:44:46 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 13s)
+06:44:48 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:44:48 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:44:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (8s remaining)
+06:44:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (8s remaining)
+06:44:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 8s)
+06:44:52 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 8s)
+06:44:57 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (3s remaining)
+06:44:57 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-5m-1771828800 (3s remaining)
+06:44:57 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 3s)
+06:44:57 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered next market: btc-updown-15m-1771829100 (starts in 3s)
+06:44:58 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:44:58 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:45:02 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (298s remaining)
+06:45:02 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (298s remaining)
+06:45:02 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771829100 | Duration: 300s | Time remaining: 298s
+06:45:02 [INFO   ] polymarket_btc_bot.main   | New market active: btc-updown-15m-1771829100 | Duration: 300s | Time remaining: 298s
+06:45:02 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=77853857706389940419495369298505957855743306522868914357506945054171817129391 Down=31216648874967818477973684245028025204286209998367339734307803011255311314207
+06:45:02 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Tracking market: Up=77853857706389940419495369298505957855743306522868914357506945054171817129391 Down=31216648874967818477973684245028025204286209998367339734307803011255311314207
+06:45:02 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:45:02 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Connecting to Polymarket CLOB WebSocket
+06:45:02 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65534.00
+06:45:02 [INFO   ] polymarket_btc_bot.main   | Market opening BTC price: $65534.00
+06:45:02 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:45:02 [WARNING] polymarket_btc_bot.data.polymarket_clob | Polymarket WS unavailable (server rejected WebSocket connection: HTTP 403) — switching to REST polling
+06:45:02 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:45:02 [INFO   ] polymarket_btc_bot.data.polymarket_clob | Polymarket CLOB REST polling started (interval: 3.0s)
+06:45:07 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (292s remaining)
+06:45:07 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (292s remaining)
+06:45:08 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:45:08 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:45:12 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (287s remaining)
+06:45:12 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (287s remaining)
+06:45:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.460–0.420 | DOWN 3 levels @ 0.530–0.490
+06:45:17 [INFO   ] polymarket_btc_bot.strategy.market_maker | MM quote | UP 3 levels @ 0.460–0.420 | DOWN 3 levels @ 0.530–0.490
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 6.52 @ 0.4600
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 1/3: BUY 6.52 @ 0.4600
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 77853857 6.52 @ 0.4600
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 77853857 6.52 @ 0.4600
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 6.82 @ 0.4400
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 2/3: BUY 6.82 @ 0.4400
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 77853857 6.82 @ 0.4400
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 77853857 6.82 @ 0.4400
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 7.14 @ 0.4200
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [up] level 3/3: BUY 7.14 @ 0.4200
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 77853857 7.14 @ 0.4200
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 77853857 7.14 @ 0.4200
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 5.66 @ 0.5300
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 1/3: BUY 5.66 @ 0.5300
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 31216648 5.66 @ 0.5300
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 31216648 5.66 @ 0.5300
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 5.88 @ 0.5100
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 2/3: BUY 5.88 @ 0.5100
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 31216648 5.88 @ 0.5100
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 31216648 5.88 @ 0.5100
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 6.12 @ 0.4900
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | MM ladder [down] level 3/3: BUY 6.12 @ 0.4900
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 31216648 6.12 @ 0.4900
+06:45:17 [INFO   ] polymarket_btc_bot.execution.order_manager | SIMULATED FILL: BUY 31216648 6.12 @ 0.4900
+06:45:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771829100 | UP=3 orders | DOWN=3 orders | total_active=0
+06:45:17 [INFO   ] polymarket_btc_bot.main   | MM refresh complete | market=btc-updown-15m-1771829100 | UP=3 orders | DOWN=3 orders | total_active=0
+06:45:17 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (282s remaining)
+06:45:17 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (282s remaining)
+06:45:18 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:45:18 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:45:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (277s remaining)
+06:45:22 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (277s remaining)
+06:45:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (272s remaining)
+06:45:28 [INFO   ] polymarket_btc_bot.data.market_discovery | Discovered active market: btc-updown-15m-1771829100 (272s remaining)
+06:45:28 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
+06:45:28 [WARNING] polymarket_btc_bot.data.chainlink_feed | Chainlink API returned 429
