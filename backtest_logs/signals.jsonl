@@ -7,3 +7,4 @@
 {"action": "buy_up", "strategy": "late_momentum", "confidence": 0.17512276131594035, "edge": 1.0416666666666667, "price": 0.48, "size": 5.04, "btc_price": 66330.8, "time_remaining": 251.02155351638794, "logged_at": "2026-02-23T13:10:48.979211Z"}
 {"action": "buy_both", "strategy": "intra_arbitrage", "confidence": 1.0, "edge": 0.030000000000000027, "price": 0.95, "size": 8.42, "btc_price": 66200.1, "time_remaining": 121.51070070266724, "logged_at": "2026-02-23T13:17:58.490276Z"}
 {"action": "buy_down", "strategy": "late_momentum", "confidence": 0.25321222969084806, "edge": 0.4000000000000001, "price": 0.7, "size": 8.81, "btc_price": 66117.1, "time_remaining": 77.8824942111969, "logged_at": "2026-02-23T13:18:42.118610Z"}
+{"action": "buy_both", "strategy": "intra_arbitrage", "confidence": 0.5000000000000004, "edge": 0.010000000000000009, "price": 0.97, "size": 8.25, "btc_price": 66222.2, "time_remaining": 164.24776196479797, "logged_at": "2026-02-23T13:22:15.753147Z"}
