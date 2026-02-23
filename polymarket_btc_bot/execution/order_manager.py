@@ -199,6 +199,9 @@ class OrderManager:
         if self.mode == TradingMode.SIMULATION:
             return await self._simulate_order(order)
 
+        if self.mode == TradingMode.PAPER:
+            return await self._paper_order(order)
+
         # Rate limit
         await self._rate_limiter.wait_for_token()
 
@@ -223,6 +226,24 @@ class OrderManager:
         logger.info(
             "SIMULATED FILL: %s %s %.2f @ %.4f",
             order.side.value, order.token_id[:8], order.filled_size, order.avg_fill_price,
+        )
+
+        return order
+
+    async def _paper_order(self, order: Order) -> Order:
+        """
+        Paper-Trading: Order wird lokal als OPEN erfasst, aber NICHT ans CLOB übermittelt.
+
+        Die Fill-Simulation erfolgt separat via VolatilityGuard/FairValue in mm_main.py.
+        """
+        await asyncio.sleep(0.005)  # Minimale simulierte Latenz
+
+        order.status = OrderStatus.OPEN
+        order.updated_at = time.time()
+
+        logger.info(
+            "[PAPER] Order erfasst (nicht übermittelt): %s %s %.2f @ %.4f",
+            order.side.value, order.token_id[:8], order.size, order.price,
         )
 
         return order
@@ -325,7 +346,7 @@ class OrderManager:
         if not order or not order.is_active:
             return False
 
-        if self.mode == TradingMode.SIMULATION:
+        if self.mode in (TradingMode.SIMULATION, TradingMode.PAPER):
             order.status = OrderStatus.CANCELLED
             order.updated_at = time.time()
             return True

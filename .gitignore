@@ -11,6 +11,10 @@ backtest_data/
 optimization_output/
 logs/
 
+# Bot-Laufzeitdaten (werden beim Start erstellt)
+*.db
+*.log
+
 # IDE
 .vscode/
 .idea/

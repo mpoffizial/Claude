@@ -1,17 +1,29 @@
 """
-Polymarket BTC 15-Minute Trading Bot
+Polymarket BTC Trading Bot
 
-A fully automated trading bot for Polymarket's BTC Up/Down 15-minute
-prediction markets. Implements three strategy layers:
+Vollständige Trading-Bot-Suite für Polymarket BTC Up/Down Märkte.
+Enthält zwei Haupt-Strategien:
 
-1. Chainlink Lag Arbitrage - Exploits orderbook delay vs spot price
-2. Intra-Market Arbitrage - Risk-free arb when P(Up)+P(Down) < 1
-3. Late-Period Momentum - Capitalizes on mispricing in final minutes
+1. DIREKTIONALE STRATEGIEN (main.py):
+   - Chainlink Lag Arbitrage: Nutzt Orderbook-Verzögerung vs. Spot-Preis
+   - Intra-Market Arbitrage: Risikofreie Arb wenn P(Up)+P(Down) < 1
+   - Late-Period Momentum: Nutzt Fehlbewertung in den letzten Minuten
 
-Usage:
+2. MARKET MAKING (mm_main.py):
+   - Kontinuierliches Quoten beider Seiten (BID + ASK) mit definiertem Spread
+   - Fair Value Berechnung via EMA5/15, ATR-Volatilität
+   - Inventory Skewing bei einseitigen Positionen
+   - Kelly Criterion für Positionsgrößen
+   - SQLite Trade-Logging
+
+Verwendung:
+    # Direktionale Strategie:
     python -m polymarket_btc_bot.main --mode simulation
-    python -m polymarket_btc_bot.main --mode paper --size 10
-    python -m polymarket_btc_bot.main --mode live --size 50
+
+    # Market Making:
+    python -m polymarket_btc_bot.mm_main --config config.yaml
+    python -m polymarket_btc_bot.mm_main --mode simulation
+    python -m polymarket_btc_bot.mm_main --mode live --capital 100
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
