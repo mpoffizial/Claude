@@ -4,6 +4,7 @@ Fetches market metadata including condition_id, token_ids, start/end times.
 """
 
 import asyncio
+import json
 import logging
 import time
 from dataclasses import dataclass
@@ -77,42 +78,43 @@ class MarketDiscovery:
         return self._next_market
 
     async def fetch_active_markets(self) -> list[dict]:
-        """Fetch active BTC up/down 5m and 15m markets from Gamma API."""
+        """
+        Fetch active BTC up/down 5m and 15m markets from Gamma API.
+
+        These markets use a predictable slug pattern:
+            btc-updown-15m-{timestamp}  (timestamp = floor(now / 900) * 900)
+            btc-updown-5m-{timestamp}   (timestamp = floor(now / 300) * 300)
+
+        We fetch the current window and the next window for each duration.
+        """
         if not self._session:
             raise RuntimeError("MarketDiscovery not started")
 
-        url = f"{self.config.gamma_api_url}/events"
-        params = {
-            "limit": 20,
-            "active": "true",
-            "closed": "false",
-            "tag": "btc",
-        }
+        now = int(time.time())
+        slugs_to_check = []
 
-        try:
-            async with self._session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                if resp.status != 200:
-                    logger.error("Gamma API returned status %d", resp.status)
-                    return []
-                data = await resp.json()
-                # Filter for BTC up/down 5m and 15m markets
-                btc_markets = []
-                for event in data:
-                    slug = event.get("slug", "")
-                    title = event.get("title", "").lower()
-                    is_btc = "btc" in slug or "btc" in title
-                    is_updown = "up" in title or "down" in title
-                    is_short = (
-                        "5m" in slug or "15m" in slug
-                        or ("5" in title and "min" in title)
-                        or ("15" in title and "min" in title)
-                    )
-                    if is_btc and is_updown and is_short:
-                        btc_markets.append(event)
-                return btc_markets
-        except Exception as e:
-            logger.error("Error fetching active markets: %s", e)
-            return []
+        for duration, interval in [("15m", 900), ("5m", 300)]:
+            current_ts = (now // interval) * interval
+            for ts in [current_ts, current_ts + interval]:
+                slugs_to_check.append(f"btc-updown-{duration}-{ts}")
+
+        events = []
+        for slug in slugs_to_check:
+            try:
+                url = f"{self.config.gamma_api_url}/events"
+                params = {"slug": slug}
+                async with self._session.get(
+                    url, params=params, timeout=aiohttp.ClientTimeout(total=10)
+                ) as resp:
+                    if resp.status != 200:
+                        continue
+                    data = await resp.json()
+                    if data:
+                        events.extend(data)
+            except Exception as e:
+                logger.warning("Error fetching market slug %s: %s", slug, e)
+
+        return events
 
     async def fetch_market_details(self, condition_id: str) -> Optional[dict]:
         """Fetch detailed market info from CLOB API."""
@@ -150,8 +152,13 @@ class MarketDiscovery:
             condition_id = market.get("conditionId") or market.get("condition_id", "")
             slug = event.get("slug", "")
 
-            # Extract tokens
+            # Extract tokens – field may be a JSON-encoded string or a list
             tokens = market.get("clobTokenIds")
+            if isinstance(tokens, str):
+                try:
+                    tokens = json.loads(tokens)
+                except Exception:
+                    tokens = None
             if not tokens or len(tokens) < 2:
                 # Try outcomes approach
                 outcomes = market.get("outcomes", ["Up", "Down"])
