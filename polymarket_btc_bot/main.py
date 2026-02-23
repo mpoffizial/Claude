@@ -153,15 +153,20 @@ class TradingBot:
 
         while self._running:
             try:
+                # Save old market BEFORE discovery (expiry check uses this)
+                old_market = self._current_market
                 market = await self.discovery.discover_current_market()
 
+                # Check if the OLD market just expired (new slug appeared)
+                new_slug = market.market_slug if market else None
+                old_slug = old_market.market_slug if old_market else None
+                if old_market and old_market.is_expired and new_slug != old_slug:
+                    await self._on_market_expired()
+
+                # Handle new market
                 current_slug = self._current_market.market_slug if self._current_market else None
                 if market and market.market_slug != current_slug:
                     await self._on_new_market(market)
-
-                # If current market expired, handle resolution
-                if self._current_market and self._current_market.is_expired:
-                    await self._on_market_expired()
 
                 # Pre-fetch next market
                 if self._current_market and self._current_market.time_remaining < 60:
