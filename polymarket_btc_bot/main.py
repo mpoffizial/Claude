@@ -32,7 +32,7 @@ from polymarket_btc_bot.data.chainlink_feed import ChainlinkFeed
 from polymarket_btc_bot.data.market_discovery import MarketDiscovery, MarketInfo
 from polymarket_btc_bot.strategy.signal_aggregator import SignalAggregator, TradeAction
 from polymarket_btc_bot.strategy.market_maker import MarketMaker
-from polymarket_btc_bot.execution.order_manager import OrderManager, OrderSide, OrderType
+from polymarket_btc_bot.execution.order_manager import OrderManager, OrderSide, OrderStatus, OrderType
 from polymarket_btc_bot.execution.position_tracker import PositionTracker
 from polymarket_btc_bot.execution.risk_manager import RiskManager
 from polymarket_btc_bot.monitoring.logger import setup_logging, TradeLogger
@@ -360,7 +360,7 @@ class TradingBot:
                 size=size / signal.target_price,  # Convert USDC to tokens
                 order_type=OrderType.GTC,
             )
-            if order.status.value in ("filled", "open"):
+            if order.status == OrderStatus.FILLED:
                 self.position_tracker.open_position(
                     order, market.market_slug, "up", signal.source_strategy
                 )
@@ -373,7 +373,7 @@ class TradingBot:
                 size=size / signal.target_price,
                 order_type=OrderType.GTC,
             )
-            if order.status.value in ("filled", "open"):
+            if order.status == OrderStatus.FILLED:
                 self.position_tracker.open_position(
                     order, market.market_slug, "down", signal.source_strategy
                 )
@@ -392,11 +392,11 @@ class TradingBot:
                 size=token_size,
             )
 
-            if up_order.status.value in ("filled", "open"):
+            if up_order.status == OrderStatus.FILLED:
                 self.position_tracker.open_position(
                     up_order, market.market_slug, "up", "intra_arbitrage"
                 )
-            if down_order.status.value in ("filled", "open"):
+            if down_order.status == OrderStatus.FILLED:
                 self.position_tracker.open_position(
                     down_order, market.market_slug, "down", "intra_arbitrage"
                 )
@@ -493,7 +493,7 @@ class TradingBot:
                 tag="up",
             )
             for order in up_orders:
-                if order.status.value in ("filled", "open"):
+                if order.status == OrderStatus.FILLED:
                     self.position_tracker.open_position(
                         order, market.market_slug, "up", "market_maker"
                     )
@@ -512,7 +512,7 @@ class TradingBot:
                 tag="down",
             )
             for order in down_orders:
-                if order.status.value in ("filled", "open"):
+                if order.status == OrderStatus.FILLED:
                     self.position_tracker.open_position(
                         order, market.market_slug, "down", "market_maker"
                     )

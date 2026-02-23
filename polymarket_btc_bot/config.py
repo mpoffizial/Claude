@@ -101,6 +101,11 @@ class ExecutionConfig:
     max_retries: int = 3                         # Max retries on failure
     slippage_tolerance: float = 0.005            # 0.5% slippage tolerance
     use_limit_orders: bool = True                # Prefer limit orders for rebates
+    # Simulation fill model: probability that a MM limit order actually fills.
+    # Uses price-distance decay: fill_prob = sim_base_fill_rate * exp(-distance/0.05)
+    # where distance = max(0, fair_value - limit_price).
+    # Set to 1.0 for instant 100 % fill (original behaviour).
+    sim_base_fill_rate: float = 1.0
 
 
 @dataclass

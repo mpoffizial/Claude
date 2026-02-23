@@ -79,6 +79,10 @@ def build_config() -> BotConfig:
         max_retries             = 3,
         slippage_tolerance      = 0.005,
         use_limit_orders        = True,
+        # Realistic MM fill model: 60 % base rate, decays with distance from 0.50.
+        # Level 1 (1 ct below ask, ~0.49): ~57 %  Level 2 (~0.47): ~49 %
+        # Level 3 (~0.45): ~42 %  Deep orders (0.30): ~6 %
+        sim_base_fill_rate      = 0.60,
     )
 
     cfg.monitoring = MonitoringConfig(

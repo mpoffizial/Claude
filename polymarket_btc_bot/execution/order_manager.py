@@ -211,10 +211,40 @@ class OrderManager:
             return order
 
     async def _simulate_order(self, order: Order) -> Order:
-        """Simulate order fill for backtesting/simulation mode."""
+        """Simulate order fill for backtesting/simulation mode.
+
+        For MM limit orders the fill probability decays exponentially with the
+        distance between the limit price and the fair value (0.50).  This
+        models the realistic situation where orders far from fair value rarely
+        attract a counterparty within the short market window.
+
+        Formula:  fill_prob = base_rate * exp(-distance / 0.06)
+        where distance = max(0, 0.50 - limit_price)   [for BUY orders]
+
+        When sim_base_fill_rate == 1.0 (default) every order fills instantly,
+        preserving the original behaviour.
+        """
+        import math, random
+
         await asyncio.sleep(0.01)  # Minimal simulated latency
 
-        # In simulation, assume full fill at limit price
+        base_rate = self.exec_config.sim_base_fill_rate
+        is_mm = order.order_id.startswith("mm_")
+
+        if base_rate < 1.0 and is_mm:
+            # Distance of limit price from fair value (0.50)
+            distance = max(0.0, 0.50 - order.price)
+            fill_prob = base_rate * math.exp(-distance / 0.06)
+            if random.random() > fill_prob:
+                # Order stays OPEN — will be cancelled at market expiry
+                order.status = OrderStatus.OPEN
+                order.updated_at = time.time()
+                logger.debug(
+                    "SIM NO-FILL (prob=%.2f): %s %.2f @ %.4f",
+                    fill_prob, order.side.value, order.size, order.price,
+                )
+                return order
+
         order.status = OrderStatus.FILLED
         order.filled_size = order.size
         order.avg_fill_price = order.price
