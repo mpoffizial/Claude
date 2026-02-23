@@ -24,6 +24,7 @@ import logging
 import os
 import time
 import urllib.request as _urllib_req
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Optional
 
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 _BACKTEST_FILE = os.path.join("backtest_data", "polymarket_btc_markets_30d.json")
 
 # Wie viele Gamma-IDs wir beim Scan nach vorne/hinten probieren
-_GAMMA_SCAN_RANGE = 50
+_GAMMA_SCAN_RANGE = 5000
 
 
 @dataclass
@@ -274,13 +275,48 @@ class MarketDiscovery:
     # Gamma API ID-Scan                                                    #
     # ------------------------------------------------------------------ #
 
+    def _fetch_latest_btc_gamma_id(self) -> Optional[int]:
+        """
+        Fragt die Gamma-API nach dem neuesten BTC Up/Down Markt
+        (sortiert nach ID absteigend) und gibt die ID zurück.
+        Wird als Anker für den ID-Scan genutzt.
+        """
+        url = f"{self.config.gamma_api_url}/markets?order=id&ascending=false&limit=50"
+        data = self._http_get_json(url, timeout=10)
+        if not isinstance(data, list):
+            return None
+        for m in data:
+            if "Bitcoin Up or Down" in m.get("question", ""):
+                gid = m.get("id")
+                if gid:
+                    logger.debug("Neueste BTC-Markt-ID von API: %s", gid)
+                    return int(gid)
+        return None
+
     def _scan_gamma_for_btc_market(
         self, target_start_ts: int, scan_range: int = _GAMMA_SCAN_RANGE
     ) -> Optional[MarketInfo]:
         """
         Scannt Gamma-API-IDs rund um _last_known_gamma_id, um den Markt
         mit passendem eventStartTime zu finden.
+
+        Strategie:
+        1. Aktualisiere den Anker via API falls der lokale Anker zu alt ist
+        2. Scanne vorwärts und rückwärts um den Anker
         """
+        # Anker via API aktualisieren wenn möglich
+        latest_id = self._fetch_latest_btc_gamma_id()
+        if latest_id and (
+            self._last_known_gamma_id is None
+            or latest_id > self._last_known_gamma_id
+        ):
+            logger.info(
+                "Gamma-ID-Anker aktualisiert: %s → %s",
+                self._last_known_gamma_id,
+                latest_id,
+            )
+            self._last_known_gamma_id = latest_id
+
         if self._last_known_gamma_id is None:
             logger.warning("Kein Gamma-ID-Ankerpunkt bekannt — überspringe Scan")
             return None
@@ -293,37 +329,86 @@ class MarketDiscovery:
             scan_range,
         )
 
-        # Zuerst vorwärts (neuere Märkte), dann rückwärts
-        ids_to_check = list(range(base_id + 1, base_id + scan_range + 1)) + list(
-            range(base_id, base_id - scan_range, -1)
-        )
-
-        found = None
-        for gid in ids_to_check:
+        def _fetch_one(gid: int):
             url = f"{self.config.gamma_api_url}/markets/{gid}"
             data = self._http_get_json(url, timeout=5)
             if not data or "Bitcoin Up or Down" not in data.get("question", ""):
-                continue
+                return None
+            return self._parse_gamma_market(data)
 
-            info = self._parse_gamma_market(data)
-            if info is None:
-                continue
+        # Stufe 1: Grober paralleler Scan (Schritt 5, 50 Threads)
+        # Zuerst rückwärts von aktuellster ID (Märkte werden zeitlich gespeichert)
+        coarse_ids = list(range(base_id, max(0, base_id - scan_range), -5)) + list(
+            range(base_id + 5, base_id + min(500, scan_range) + 1, 5)
+        )
 
-            # Update letzter bekannter ID
-            if info.gamma_id and info.gamma_id > (self._last_known_gamma_id or 0):
-                self._last_known_gamma_id = info.gamma_id
+        found_5m_markets: list[tuple[int, "MarketInfo"]] = []
 
-            # Zum Index hinzufügen
-            self._local_index[info.start_timestamp] = info
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            future_map = {executor.submit(_fetch_one, gid): gid for gid in coarse_ids}
+            for future in as_completed(future_map):
+                info = future.result()
+                if info is None:
+                    continue
+                if info.gamma_id and info.gamma_id > (self._last_known_gamma_id or 0):
+                    self._last_known_gamma_id = info.gamma_id
+                dur = info.end_timestamp - info.start_timestamp
+                if 240 <= dur <= 360:
+                    self._local_index[info.start_timestamp] = info
+                    found_5m_markets.append((future_map[future], info))
+                    if info.start_timestamp == target_start_ts:
+                        logger.info(
+                            "Gamma-Scan (grob): Markt direkt gefunden (ID=%d): %s",
+                            future_map[future],
+                            info.question,
+                        )
 
-            if info.start_timestamp == target_start_ts:
-                found = info
-                logger.info(
-                    "Gamma-Scan: Markt gefunden (ID=%d): %s",
-                    gid,
-                    info.question,
-                )
-                break
+        # Prüfe ob direkter Treffer
+        direct_hits = [
+            (gid, info) for gid, info in found_5m_markets
+            if info.start_timestamp == target_start_ts
+        ]
+        if direct_hits:
+            return direct_hits[0][1]
+
+        if not found_5m_markets:
+            logger.warning("Gamma-Scan: Kein BTC 5m-Markt im groben Scan gefunden")
+            return None
+
+        # Besten Nachbar finden (5m-Markt mit kleinstem Timestamp-Abstand)
+        best_gid, best_info = min(
+            found_5m_markets,
+            key=lambda x: abs(x[1].start_timestamp - target_start_ts),
+        )
+        best_ts_diff = abs(best_info.start_timestamp - target_start_ts)
+        logger.debug(
+            "Gamma-Scan: Bester Nachbar ID=%d (ts-diff=%ds), Feinsuche ±100",
+            best_gid,
+            best_ts_diff,
+        )
+
+        # Stufe 2: Feine parallele Suche ±100 um besten Nachbar
+        fine_ids = list(range(best_gid - 100, best_gid + 101))
+        found = None
+
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            future_map = {executor.submit(_fetch_one, gid): gid for gid in fine_ids}
+            for future in as_completed(future_map):
+                info = future.result()
+                if info is None:
+                    continue
+                if info.gamma_id and info.gamma_id > (self._last_known_gamma_id or 0):
+                    self._last_known_gamma_id = info.gamma_id
+                dur = info.end_timestamp - info.start_timestamp
+                if 240 <= dur <= 360:
+                    self._local_index[info.start_timestamp] = info
+                    if info.start_timestamp == target_start_ts and found is None:
+                        found = info
+                        logger.info(
+                            "Gamma-Scan (fein): Markt gefunden (ID=%d): %s",
+                            future_map[future],
+                            info.question,
+                        )
 
         return found
 
