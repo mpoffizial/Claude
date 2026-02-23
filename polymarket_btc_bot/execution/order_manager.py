@@ -365,3 +365,113 @@ class OrderManager:
     def clear_history(self):
         """Clear non-active orders from history."""
         self._orders = {oid: o for oid, o in self._orders.items() if o.is_active}
+
+    # ------------------------------------------------------------------
+    # Market-maker multi-order helpers
+    # ------------------------------------------------------------------
+
+    def get_mm_orders(self, tag: str) -> list[Order]:
+        """Return active market-maker orders that carry the given tag prefix."""
+        return [
+            o for o in self._orders.values()
+            if o.is_active and (o.clob_order_id or "").startswith(f"MM:{tag}:")
+               or (o.order_id.startswith(f"mm_{tag}_") and o.is_active)
+        ]
+
+    async def place_ladder(
+        self,
+        token_id: str,
+        levels: list[tuple[float, float]],   # (price, size_tokens) per level
+        side: OrderSide = OrderSide.BUY,
+        tag: str = "",
+    ) -> list[Order]:
+        """
+        Place a staircase of limit orders for the given token.
+
+        Args:
+            token_id:  Outcome token to trade
+            levels:    List of (price, token_size) tuples, one per rung
+            side:      BUY or SELL (almost always BUY for prediction markets)
+            tag:       Identifier used to track which orders belong to this ladder
+                       (stored in order_id prefix so we can cancel them later)
+
+        Returns:
+            List of Order objects (one per level, in the same order as *levels*)
+        """
+        orders: list[Order] = []
+        for i, (price, size) in enumerate(levels):
+            order_id_prefix = f"mm_{tag}_{i}_" if tag else f"mm_{i}_"
+            order = Order(
+                order_id=order_id_prefix + str(int(time.time() * 1000)),
+                token_id=token_id,
+                side=side,
+                price=round(price, 4),
+                size=round(size, 2),
+                order_type=OrderType.GTC,
+            )
+            self._orders[order.order_id] = order
+
+            logger.info(
+                "MM ladder [%s] level %d/%d: %s %.2f @ %.4f",
+                tag, i + 1, len(levels), side.value, size, price,
+            )
+
+            if self.mode == TradingMode.SIMULATION:
+                await self._simulate_order(order)
+            else:
+                await self._rate_limiter.wait_for_token()
+                try:
+                    await self._submit_order(order)
+                except Exception as e:
+                    order.status = OrderStatus.FAILED
+                    order.error = str(e)
+                    logger.error("Ladder order placement error: %s", e)
+
+            orders.append(order)
+
+        return orders
+
+    async def cancel_ladder(self, tag: str) -> int:
+        """
+        Cancel all active orders whose order_id starts with the given tag prefix.
+
+        Returns:
+            Number of orders cancelled
+        """
+        prefix = f"mm_{tag}_"
+        targets = [
+            order_id for order_id, o in self._orders.items()
+            if order_id.startswith(prefix) and o.is_active
+        ]
+        for order_id in targets:
+            await self.cancel_order(order_id)
+        if targets:
+            logger.info("Cancelled %d MM orders [tag=%s]", len(targets), tag)
+        return len(targets)
+
+    async def cancel_stale_mm_orders(self, max_age_seconds: float) -> int:
+        """
+        Cancel any active market-maker orders older than *max_age_seconds*.
+
+        Returns:
+            Number of orders cancelled
+        """
+        cutoff = time.time() - max_age_seconds
+        stale = [
+            o.order_id for o in self._orders.values()
+            if o.is_active
+            and o.order_id.startswith("mm_")
+            and o.created_at < cutoff
+        ]
+        for order_id in stale:
+            await self.cancel_order(order_id)
+        if stale:
+            logger.info("Cancelled %d stale MM orders (age > %.0fs)", len(stale), max_age_seconds)
+        return len(stale)
+
+    def count_active_mm_orders(self) -> int:
+        """Return number of currently active market-maker orders."""
+        return sum(
+            1 for o in self._orders.values()
+            if o.is_active and o.order_id.startswith("mm_")
+        )

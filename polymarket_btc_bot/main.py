@@ -31,6 +31,7 @@ from polymarket_btc_bot.data.polymarket_clob import PolymarketCLOB
 from polymarket_btc_bot.data.chainlink_feed import ChainlinkFeed
 from polymarket_btc_bot.data.market_discovery import MarketDiscovery, MarketInfo
 from polymarket_btc_bot.strategy.signal_aggregator import SignalAggregator, TradeAction
+from polymarket_btc_bot.strategy.market_maker import MarketMaker
 from polymarket_btc_bot.execution.order_manager import OrderManager, OrderSide, OrderType
 from polymarket_btc_bot.execution.position_tracker import PositionTracker
 from polymarket_btc_bot.execution.risk_manager import RiskManager
@@ -58,6 +59,7 @@ class TradingBot:
         self.discovery = MarketDiscovery(config.polymarket)
 
         self.aggregator = SignalAggregator(config.strategy, config.risk)
+        self.market_maker = MarketMaker(config.market_maker, config.risk)
         self.order_manager = OrderManager(config.polymarket, config.execution, config.mode)
         self.position_tracker = PositionTracker(config.risk)
         self.risk_manager = RiskManager(config.risk, config.execution, self.position_tracker)
@@ -96,6 +98,7 @@ class TradingBot:
             asyncio.create_task(self.chainlink.run_polling_loop(), name="chainlink"),
             asyncio.create_task(self._market_loop(), name="market_loop"),
             asyncio.create_task(self._trading_loop(), name="trading_loop"),
+            asyncio.create_task(self._market_maker_loop(), name="market_maker_loop"),
             asyncio.create_task(self.dashboard.run(), name="dashboard"),
         ]
 
@@ -180,6 +183,10 @@ class TradingBot:
             market.time_remaining,
         )
 
+        # Cancel any MM orders left over from the previous market
+        await self.order_manager.cancel_ladder("up")
+        await self.order_manager.cancel_ladder("down")
+
         self._current_market = market
 
         # Set up CLOB tracking for this market
@@ -204,6 +211,7 @@ class TradingBot:
 
         # Reset strategies for new market
         self.aggregator.reset()
+        self.market_maker.reset()
 
         if self.dashboard:
             self.dashboard.set_market(market)
@@ -386,6 +394,120 @@ class TradingBot:
                 self.position_tracker.open_position(
                     down_order, market.market_slug, "down", "intra_arbitrage"
                 )
+
+    # ------------------------------------------------------------------
+    # Market-maker limit-order ladder loop
+    # ------------------------------------------------------------------
+
+    async def _market_maker_loop(self):
+        """
+        Continuously maintains a ladder of limit orders on both UP and DOWN
+        tokens for the active market.
+
+        Runs independently of the signal-based trading loop so that limit
+        orders are refreshed on a predictable cadence even when no momentum
+        signal fires.
+        """
+        mm_cfg = self.config.market_maker
+        if not mm_cfg.enabled:
+            logger.info("Market-maker disabled in config — skipping loop")
+            return
+
+        logger.info(
+            "Market-maker loop started | levels=%d | spacing=%.3f | size=$%.2f/level | "
+            "refresh=%.0fs",
+            mm_cfg.num_levels,
+            mm_cfg.level_spacing,
+            mm_cfg.size_per_level,
+            mm_cfg.refresh_interval_seconds,
+        )
+
+        while self._running:
+            try:
+                await self._run_market_maker_cycle()
+                await asyncio.sleep(mm_cfg.refresh_interval_seconds)
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error("Market-maker loop error: %s", e, exc_info=True)
+                await asyncio.sleep(5)
+
+    async def _run_market_maker_cycle(self):
+        """Single market-maker evaluation cycle."""
+        market = self._current_market
+        mm_cfg = self.config.market_maker
+
+        if not market or not market.is_active:
+            return
+
+        orderbook = self.clob.market_orderbook
+        if not orderbook:
+            return
+
+        # Force-cancel stale MM orders before evaluating new ones
+        await self.order_manager.cancel_stale_mm_orders(mm_cfg.max_order_age_seconds)
+
+        # Check if hard cap on active MM orders is reached
+        active_count = self.order_manager.count_active_mm_orders()
+        if active_count >= mm_cfg.max_active_orders:
+            logger.debug(
+                "MM order cap reached (%d/%d) — skipping cycle",
+                active_count,
+                mm_cfg.max_active_orders,
+            )
+            return
+
+        # Let the strategy decide whether to refresh
+        if not self.market_maker.should_refresh(orderbook):
+            return
+
+        quote = self.market_maker.compute_quote(
+            orderbook=orderbook,
+            time_elapsed=market.time_elapsed,
+            time_remaining=market.time_remaining,
+        )
+
+        if not quote.is_valid:
+            logger.debug("MM: no valid quote — %s", quote.reason)
+            return
+
+        # --- UP side ---
+        if quote.up_levels:
+            await self.order_manager.cancel_ladder("up")
+            up_levels = [
+                (lvl.price, round(lvl.size_usdc / lvl.price, 2))
+                for lvl in quote.up_levels
+            ]
+            await self.order_manager.place_ladder(
+                token_id=market.up_token_id,
+                levels=up_levels,
+                side=OrderSide.BUY,
+                tag="up",
+            )
+
+        # --- DOWN side ---
+        if quote.down_levels:
+            await self.order_manager.cancel_ladder("down")
+            down_levels = [
+                (lvl.price, round(lvl.size_usdc / lvl.price, 2))
+                for lvl in quote.down_levels
+            ]
+            await self.order_manager.place_ladder(
+                token_id=market.down_token_id,
+                levels=down_levels,
+                side=OrderSide.BUY,
+                tag="down",
+            )
+
+        logger.info(
+            "MM refresh complete | market=%s | UP=%d orders | DOWN=%d orders | "
+            "total_active=%d",
+            market.market_slug,
+            len(quote.up_levels),
+            len(quote.down_levels),
+            self.order_manager.count_active_mm_orders(),
+        )
 
 
 async def run_backtest(config: BotConfig, days: int):

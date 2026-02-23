@@ -103,6 +103,41 @@ class ExecutionConfig:
 
 
 @dataclass
+class MarketMakerConfig:
+    """
+    Configuration for the limit-order ladder market-making strategy.
+
+    The market maker continuously maintains a staircase of buy limit orders
+    on both sides (UP / DOWN) throughout the full 5- or 15-minute window.
+    It cancels stale orders and replaces them whenever the mid-price drifts
+    beyond the reprice threshold.
+    """
+    enabled: bool = True
+
+    # --- Order ladder ---
+    num_levels: int = 3                          # Levels per side (UP + DOWN)
+    level_spacing: float = 0.02                  # Price gap between levels (e.g. 0.02 = 2 cents)
+    size_per_level: float = 5.0                  # USDC per limit order level
+    # First level is placed this far below the current best ask
+    first_level_offset: float = 0.01             # 1 cent inside the spread
+
+    # --- Timing ---
+    refresh_interval_seconds: float = 30.0       # Re-evaluate orders every 30 s
+    max_order_age_seconds: float = 60.0          # Force-cancel orders older than this
+    min_time_remaining: float = 90.0             # Stop placing in last 90 s of market
+    start_after_seconds: float = 30.0            # Wait before placing first orders
+
+    # --- Repricing ---
+    reprice_threshold: float = 0.01              # Reprice if mid moved >= 1 cent since last quote
+    max_active_orders: int = 12                  # Hard cap on total open MM orders
+
+    # --- Risk ---
+    max_position_per_side: float = 30.0          # Max total USDC exposure per side
+    min_ask_price: float = 0.10                  # Never buy above 90 % probability
+    max_ask_price: float = 0.90                  # Never buy below 10 % probability
+
+
+@dataclass
 class BacktestConfig:
     data_dir: str = "backtest_data"
     lookback_days: int = 30
@@ -131,6 +166,7 @@ class BotConfig:
     strategy: StrategyConfig = field(default_factory=StrategyConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
     execution: ExecutionConfig = field(default_factory=ExecutionConfig)
+    market_maker: MarketMakerConfig = field(default_factory=MarketMakerConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
 
