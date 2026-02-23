@@ -43,7 +43,9 @@ class AggregatedSignal:
 
     @property
     def is_actionable(self) -> bool:
-        return self.action != TradeAction.HOLD and self.confidence > 0.3
+        # Individual strategies apply their own quality filters before
+        # returning a signal; the aggregator should trust them.
+        return self.action != TradeAction.HOLD
 
 
 class SignalAggregator:

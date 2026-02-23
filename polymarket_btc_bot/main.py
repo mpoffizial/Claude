@@ -481,12 +481,17 @@ class TradingBot:
                 (lvl.price, round(lvl.size_usdc / lvl.price, 2))
                 for lvl in quote.up_levels
             ]
-            await self.order_manager.place_ladder(
+            up_orders = await self.order_manager.place_ladder(
                 token_id=market.up_token_id,
                 levels=up_levels,
                 side=OrderSide.BUY,
                 tag="up",
             )
+            for order in up_orders:
+                if order.status.value in ("filled", "open"):
+                    self.position_tracker.open_position(
+                        order, market.market_slug, "up", "market_maker"
+                    )
 
         # --- DOWN side ---
         if quote.down_levels:
@@ -495,12 +500,17 @@ class TradingBot:
                 (lvl.price, round(lvl.size_usdc / lvl.price, 2))
                 for lvl in quote.down_levels
             ]
-            await self.order_manager.place_ladder(
+            down_orders = await self.order_manager.place_ladder(
                 token_id=market.down_token_id,
                 levels=down_levels,
                 side=OrderSide.BUY,
                 tag="down",
             )
+            for order in down_orders:
+                if order.status.value in ("filled", "open"):
+                    self.position_tracker.open_position(
+                        order, market.market_slug, "down", "market_maker"
+                    )
 
         logger.info(
             "MM refresh complete | market=%s | UP=%d orders | DOWN=%d orders | "
