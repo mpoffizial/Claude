@@ -116,29 +116,37 @@ class MarketMaker:
         orderbook: MarketOrderbook,
         time_elapsed: float,
         time_remaining: float,
+        market_duration: int = 900,
     ) -> MarketMakerQuote:
         """
         Compute the full desired ladder for the current market state.
 
         Args:
-            orderbook:      Current Polymarket orderbook snapshot
-            time_elapsed:   Seconds since market open
-            time_remaining: Seconds until market close
+            orderbook:        Current Polymarket orderbook snapshot
+            time_elapsed:     Seconds since market open
+            time_remaining:   Seconds until market close
+            market_duration:  Total market duration in seconds (300 for 5m, 900 for 15m)
 
         Returns:
             MarketMakerQuote with the target limit-order levels on each side
         """
         quote = MarketMakerQuote()
 
+        # Scale timing guards proportionally to market duration so the bot
+        # is equally active in both 5-minute and 15-minute markets.
+        scale = market_duration / 900.0          # 1.0 for 15m, 0.333 for 5m
+        start_guard = self.config.start_after_seconds * scale
+        end_guard = self.config.min_time_remaining * scale
+
         # --- Timing guards ---
-        if time_elapsed < self.config.start_after_seconds:
+        if time_elapsed < start_guard:
             quote.reason = (
                 f"Waiting for market to settle ({time_elapsed:.0f}s / "
-                f"{self.config.start_after_seconds}s elapsed)"
+                f"{start_guard:.0f}s elapsed)"
             )
             return quote
 
-        if time_remaining < self.config.min_time_remaining:
+        if time_remaining < end_guard:
             quote.reason = (
                 f"Too close to market close ({time_remaining:.0f}s remaining)"
             )

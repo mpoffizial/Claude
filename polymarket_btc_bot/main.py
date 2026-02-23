@@ -466,6 +466,7 @@ class TradingBot:
             orderbook=orderbook,
             time_elapsed=market.time_elapsed,
             time_remaining=market.time_remaining,
+            market_duration=market.duration_seconds,
         )
 
         if not quote.is_valid:

@@ -77,13 +77,13 @@ class MarketDiscovery:
         return self._next_market
 
     async def fetch_active_markets(self) -> list[dict]:
-        """Fetch active BTC up/down 15m markets from Gamma API."""
+        """Fetch active BTC up/down 5m and 15m markets from Gamma API."""
         if not self._session:
             raise RuntimeError("MarketDiscovery not started")
 
         url = f"{self.config.gamma_api_url}/events"
         params = {
-            "limit": 10,
+            "limit": 20,
             "active": "true",
             "closed": "false",
             "tag": "btc",
@@ -95,16 +95,21 @@ class MarketDiscovery:
                     logger.error("Gamma API returned status %d", resp.status)
                     return []
                 data = await resp.json()
-                # Filter for BTC up/down 15m markets
-                btc_15m = []
+                # Filter for BTC up/down 5m and 15m markets
+                btc_markets = []
                 for event in data:
                     slug = event.get("slug", "")
                     title = event.get("title", "").lower()
-                    if "btc" in slug and "15m" in slug and ("up" in title or "down" in title):
-                        btc_15m.append(event)
-                    elif "btc" in title and "15" in title and ("up" in title or "down" in title):
-                        btc_15m.append(event)
-                return btc_15m
+                    is_btc = "btc" in slug or "btc" in title
+                    is_updown = "up" in title or "down" in title
+                    is_short = (
+                        "5m" in slug or "15m" in slug
+                        or ("5" in title and "min" in title)
+                        or ("15" in title and "min" in title)
+                    )
+                    if is_btc and is_updown and is_short:
+                        btc_markets.append(event)
+                return btc_markets
         except Exception as e:
             logger.error("Error fetching active markets: %s", e)
             return []
@@ -181,7 +186,12 @@ class MarketDiscovery:
                 logger.warning("Could not determine start timestamp for %s", slug)
                 return None
 
-            end_ts = start_ts + 900  # 15 minutes = 900 seconds
+            # Detect market duration from slug (5m = 300s, default 15m = 900s)
+            if "5m" in slug or ("5" in slug and "min" in slug.lower()):
+                duration_seconds = 300
+            else:
+                duration_seconds = 900
+            end_ts = start_ts + duration_seconds
 
             return MarketInfo(
                 condition_id=condition_id,
