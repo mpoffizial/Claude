@@ -1,2 +1,3 @@
 {"action": "buy_both", "strategy": "intra_arbitrage", "confidence": 1.0, "edge": 0.020000000000000018, "price": 0.96, "size": 8.33, "btc_price": 66193.4, "time_remaining": 266.59968996047974, "logged_at": "2026-02-23T11:45:33.401100Z"}
 {"action": "buy_both", "strategy": "intra_arbitrage", "confidence": 1.0, "edge": 0.030000000000000027, "price": 0.95, "size": 8.42, "btc_price": 66154.4, "time_remaining": 194.90155291557312, "logged_at": "2026-02-23T11:46:45.099200Z"}
+{"action": "buy_both", "strategy": "intra_arbitrage", "confidence": 1.0, "edge": 0.030000000000000027, "price": 0.95, "size": 8.42, "btc_price": 66154.0, "time_remaining": 35.44345498085022, "logged_at": "2026-02-23T11:49:24.557569Z"}
