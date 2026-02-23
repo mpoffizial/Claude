@@ -98,9 +98,22 @@ class MarketDiscovery:
         self._last_known_gamma_id: Optional[int] = None
 
     async def start(self):
-        """Lade lokalen Index aus Backtest-Datei."""
+        """Lade lokalen Index aus Backtest-Datei und aktualisiere falls veraltet."""
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._build_local_index)
+
+        # Index-Aktualität prüfen: neuester 5m-Markt darf höchstens 2h alt sein
+        if self._local_index:
+            latest_ts = max(self._local_index.keys())
+            now = time.time()
+            age_hours = (now - latest_ts) / 3600
+            if age_hours > 2.0:
+                logger.info(
+                    "Lokaler Index veraltet (%.1fh): Starte paralleles Update via Gamma-API",
+                    age_hours,
+                )
+                await loop.run_in_executor(None, self._refresh_index_from_api)
+
         logger.info(
             "MarketDiscovery started | Lokaler Index: %d Märkte",
             len(self._local_index),
@@ -160,6 +173,61 @@ class MarketDiscovery:
         logger.debug(
             "Lokaler Index aufgebaut: %d 5m-Märkte, %d 15m-Märkte geladen",
             loaded_5m, loaded_15m
+        )
+
+    def _refresh_index_from_api(self):
+        """
+        Aktualisiert den lokalen Index für die aktuelle und nächste Handelsstunde.
+        Scannt nur einen begrenzten ID-Bereich um den aktuellen Zeitpunkt,
+        um schnelle Startzeiten zu gewährleisten (~10-20s).
+        """
+        # Anker: neueste ID aus API holen
+        latest_id = self._fetch_latest_btc_gamma_id()
+        if latest_id is None:
+            logger.warning("Index-Refresh: Konnte neueste ID nicht abrufen")
+            return
+
+        # Scan-Bereich: ~6500 IDs rückwärts = ~1 Tag BTC-Märkte (bei ~17 IDs/Markt)
+        # Schritt 3: reduziert auf ~2200 HTTP-Anfragen → ~30-40s mit 50 Threads
+        scan_start = max(1, latest_id - 6500)
+        scan_end = latest_id
+
+        logger.info(
+            "Index-Refresh: Scanne IDs %d → %d (Schritt 3, 50 Threads)",
+            scan_start,
+            scan_end,
+        )
+
+        def _fetch_one(gid: int):
+            url = f"{self.config.gamma_api_url}/markets/{gid}"
+            data = self._http_get_json(url, timeout=5)
+            if not data or "Bitcoin Up or Down" not in data.get("question", ""):
+                return None
+            return self._parse_gamma_market(data)
+
+        # Schritt 3 passt zu BTC-Markt-Abstand (~7 IDs → mindestens 2-3 Treffer/Cluster)
+        ids = list(range(scan_start, scan_end + 1, 3))
+        new_5m = 0
+        new_15m = 0
+
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            for info in executor.map(_fetch_one, ids):
+                if info is None:
+                    continue
+                if info.gamma_id and info.gamma_id > (self._last_known_gamma_id or 0):
+                    self._last_known_gamma_id = info.gamma_id
+                dur = info.end_timestamp - info.start_timestamp
+                if 240 <= dur <= 360:
+                    self._local_index[info.start_timestamp] = info
+                    new_5m += 1
+                elif 600 <= dur <= 1200:
+                    self._local_15m_index[info.start_timestamp] = info
+                    new_15m += 1
+
+        logger.info(
+            "Index-Refresh abgeschlossen: +%d 5m-Märkte, +%d 15m-Märkte",
+            new_5m,
+            new_15m,
         )
 
     def _parse_gamma_market(self, raw: dict) -> Optional["MarketInfo"]:
