@@ -23,7 +23,7 @@ market_making:
   # "simulation" : Keine echten Orders, Preise simuliert
   # "paper"      : Echte Marktdaten, simulierte Order-Ausführung
   # "live"       : Echter Handel (API-Keys in Umgebungsvariablen nötig!)
-  mode: simulation
+  mode: paper
 
   # ── Kapital & Positionsgröße ─────────────────────────────────────────────────
   capital: 100.0                   # Verfügbares Kapital in USDC
@@ -44,18 +44,18 @@ market_making:
   # Breiterer Spread = mehr Marge, aber weniger Fills
   # Engerer Spread  = mehr Fills, aber weniger Marge pro Roundtrip
   #
-  base_spread: 0.04                # Basis-Spread (4%)
-  min_spread: 0.025                # Minimaler Spread (2.5%) — unter niedrige Konfidenz
+  base_spread: 0.03                # Basis-Spread (3%) — enger für mehr Fills
+  min_spread: 0.018                # Minimaler Spread (1.8%) — kompetitiver
   max_spread: 0.10                 # Maximaler Spread (10%) — bei hoher Unsicherheit
 
   # ── Refresh & Timing ─────────────────────────────────────────────────────────
-  refresh_seconds: 30.0            # Sekunden zwischen Quote-Updates (30s empfohlen)
-  max_order_age_seconds: 60.0      # Order-Alter vor automatischem Cancel (60s)
+  refresh_seconds: 15.0            # Sekunden zwischen Quote-Updates (15s — reaktiver)
+  max_order_age_seconds: 30.0      # Order-Alter vor automatischem Cancel (30s)
 
   # Threshold für "stale" Order-Detection:
   # 0.5 = Order wird gecancelt wenn FV sich um mehr als 50% des half_spread verschiebt
   # Beispiel: half_spread=0.02, stale_threshold=0.5 → Cancel bei FV-Shift > 0.01
-  stale_threshold: 0.5
+  stale_threshold: 0.3
 
   # ── Order-Limits ─────────────────────────────────────────────────────────────
   max_open_orders: 4               # Gesamt max. offene Orders (2 BID + 2 ASK)
