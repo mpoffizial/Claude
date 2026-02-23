@@ -40,8 +40,9 @@ class PolymarketConfig:
 
 @dataclass
 class ChainlinkConfig:
-    api_url: str = "https://data.chain.link/streams/btc-usd"
-    poll_interval_seconds: float = 5.0
+    # CoinGecko simple price API (returns JSON, no auth required)
+    api_url: str = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+    poll_interval_seconds: float = 10.0
 
 
 @dataclass

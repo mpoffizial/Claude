@@ -77,8 +77,10 @@ class ChainlinkFeed:
                 timestamp = time.time()
 
                 if isinstance(data, dict):
-                    # Try different response formats
-                    if "answer" in data:
+                    # CoinGecko format: {"bitcoin": {"usd": 65000}}
+                    if "bitcoin" in data:
+                        price = float(data["bitcoin"]["usd"])
+                    elif "answer" in data:
                         price = float(data["answer"])
                         if "updatedAt" in data:
                             timestamp = float(data["updatedAt"])
