@@ -685,13 +685,9 @@ class MarketMakerBotMain:
             await asyncio.sleep(10.0)
 
     async def _discover_markets(self):
-        """Suche und registriere aktive Märkte (5m + 15m)."""
+        """Suche und registriere aktive Märkte (5m + 15m parallel)."""
         max_markets = self.config.get("max_markets", 4)
 
-        if len(self._active_markets) >= max_markets:
-            return  # Bereits genug Märkte aktiv
-
-        # 5m- und 15m-Märkte suchen
         candidates = []
         try:
             market_5m = await self.discovery.discover_current_market()
@@ -719,7 +715,6 @@ class MarketMakerBotMain:
                 market.time_remaining,
             )
 
-            # Opening Price setzen
             if not market.opening_price:
                 market.opening_price = self.binance.current_price
                 logger.info(

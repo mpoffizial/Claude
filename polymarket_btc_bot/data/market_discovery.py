@@ -81,18 +81,18 @@ class MarketDiscovery:
     """
 
     # Intervall der BTC Up/Down Märkte in Sekunden
-    MARKET_INTERVAL = 300       # 5 Minuten
-    MARKET_15M_INTERVAL = 900   # 15 Minuten
+    MARKET_INTERVAL = 300        # 5 Minuten
+    MARKET_15M_INTERVAL = 900    # 15 Minuten
 
     def __init__(self, config: PolymarketConfig):
         self.config = config
         self._current_market: Optional[MarketInfo] = None
         self._next_market: Optional[MarketInfo] = None
+        self._current_market_15m: Optional[MarketInfo] = None
 
-        # Lokaler Index: start_timestamp → MarketInfo (5m)
-        self._local_index: dict[int, MarketInfo] = {}
-        # Separater 15m-Index: start_timestamp → MarketInfo (15m)
-        self._local_15m_index: dict[int, MarketInfo] = {}
+        # Getrennte Indizes: start_timestamp → MarketInfo
+        self._local_index: dict[int, MarketInfo] = {}       # 5m Märkte
+        self._local_15m_index: dict[int, MarketInfo] = {}   # 15m Märkte
         # Letzter bekannter Gamma-ID-Bereich (für Scan)
         self._last_known_gamma_id: Optional[int] = None
 
@@ -138,25 +138,27 @@ class MarketDiscovery:
             logger.error("Fehler beim Laden der Backtest-Datei: %s", e)
             return
 
-        loaded = 0
+        loaded_5m = 0
+        loaded_15m = 0
         for raw in raw_markets:
             info = self._parse_gamma_market(raw)
             if info:
-                slug = info.market_slug or ""
-                if "15m" in slug:
-                    self._local_15m_index[info.start_timestamp] = info
-                else:
+                duration = info.end_timestamp - info.start_timestamp
+                if 240 <= duration <= 360:  # ~5 min
                     self._local_index[info.start_timestamp] = info
+                    loaded_5m += 1
+                elif 600 <= duration <= 1200:  # ~15 min
+                    self._local_15m_index[info.start_timestamp] = info
+                    loaded_15m += 1
+                # Stunden- oder andere Märkte ignorieren
                 if self._last_known_gamma_id is None or (
                     info.gamma_id and info.gamma_id > self._last_known_gamma_id
                 ):
                     self._last_known_gamma_id = info.gamma_id
-                loaded += 1
 
         logger.debug(
-            "Lokaler Index aufgebaut: %d / %d Einträge geladen (%d×5m, %d×15m)",
-            loaded, len(raw_markets),
-            len(self._local_index), len(self._local_15m_index),
+            "Lokaler Index aufgebaut: %d 5m-Märkte, %d 15m-Märkte geladen",
+            loaded_5m, loaded_15m
         )
 
     def _parse_gamma_market(self, raw: dict) -> Optional["MarketInfo"]:
@@ -367,6 +369,11 @@ class MarketDiscovery:
         now = int(time.time())
         return (now // self.MARKET_INTERVAL) * self.MARKET_INTERVAL
 
+    def _current_slot_ts_15m(self) -> int:
+        """Gibt den Unix-Timestamp des aktuellen 15-Minuten-Slots zurück."""
+        now = int(time.time())
+        return (now // self.MARKET_15M_INTERVAL) * self.MARKET_15M_INTERVAL
+
     async def discover_current_market(self) -> Optional[MarketInfo]:
         """Findet den aktuell aktiven BTC 5min Up/Down Markt."""
         slot_ts = self._current_slot_ts()
@@ -410,30 +417,40 @@ class MarketDiscovery:
 
     async def discover_current_15m_market(self) -> Optional[MarketInfo]:
         """Findet den aktuell aktiven BTC 15min Up/Down Markt."""
-        now = int(time.time())
-        slot_ts = (now // self.MARKET_15M_INTERVAL) * self.MARKET_15M_INTERVAL
+        slot_ts = self._current_slot_ts_15m()
 
+        # Stufe 1: Lokaler 15m-Index
         info = self._local_15m_index.get(slot_ts)
-        if info is None:
-            logger.debug("Kein 15m-Markt im Index für ts=%d", slot_ts)
-            return None
+        if info:
+            logger.debug("Lokaler 15m-Index: Markt für ts=%d gefunden", slot_ts)
+        else:
+            # Stufe 2: Gamma-Scan mit Dauer-Filter
+            loop = asyncio.get_event_loop()
+            info = await loop.run_in_executor(
+                None, self._scan_gamma_for_btc_market, slot_ts
+            )
+            if info:
+                duration = info.end_timestamp - info.start_timestamp
+                if not (600 <= duration <= 1200):
+                    info = None  # Kein 15m-Markt
 
-        if not info.is_active:
-            logger.debug("15m-Markt ts=%d ist nicht aktiv (verbleibend=%.0fs)", slot_ts, info.time_remaining)
+        if info is None:
             return None
 
         # CLOB-Verifizierung
         loop = asyncio.get_event_loop()
         verified = await loop.run_in_executor(None, self._verify_via_clob, info)
+
         if verified is None:
             return None
 
+        self._current_market_15m = verified
         logger.info(
             "Aktiver 15m-Markt: %s | %.0fs verbleibend",
             verified.question,
             verified.time_remaining,
         )
-        return verified
+        return self._current_market_15m
 
     async def discover_next_market(self) -> Optional[MarketInfo]:
         """Lädt den nächsten (noch nicht begonnenen) Markt vor."""
