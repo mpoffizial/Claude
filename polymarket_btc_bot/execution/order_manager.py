@@ -127,16 +127,17 @@ class OrderManager:
         if self.mode != TradingMode.SIMULATION:
             try:
                 from py_clob_client.client import ClobClient
+                from py_clob_client.clob_types import ApiCreds
 
                 self._clob_client = ClobClient(
                     self.poly_config.clob_rest_url,
                     key=self.poly_config.private_key,
                     chain_id=self.poly_config.chain_id,
-                    creds={
-                        "apiKey": self.poly_config.api_key,
-                        "secret": self.poly_config.api_secret,
-                        "passphrase": self.poly_config.api_passphrase,
-                    },
+                    creds=ApiCreds(
+                        api_key=self.poly_config.api_key,
+                        api_secret=self.poly_config.api_secret,
+                        api_passphrase=self.poly_config.api_passphrase,
+                    ),
                 )
                 logger.info("CLOB client initialized for %s mode", self.mode.value)
             except ImportError:
@@ -266,27 +267,30 @@ class OrderManager:
 
         try:
             from py_clob_client.order_builder.constants import BUY, SELL
+            from py_clob_client.clob_types import OrderArgs, OrderType as ClobOrderType
 
             side = BUY if order.side == OrderSide.BUY else SELL
 
-            # Build signed order
-            signed_order = self._clob_client.create_and_sign_order({
-                "tokenID": order.token_id,
-                "price": order.price,
-                "size": order.size,
-                "side": side,
-            })
-
-            # Submit to CLOB
             order_type_map = {
-                OrderType.GTC: "GTC",
-                OrderType.FOK: "FOK",
-                OrderType.GTD: "GTD",
+                OrderType.GTC: ClobOrderType.GTC,
+                OrderType.FOK: ClobOrderType.FOK,
+                OrderType.GTD: ClobOrderType.GTD,
             }
 
+            order_args = OrderArgs(
+                token_id=order.token_id,
+                price=order.price,
+                size=order.size,
+                side=side,
+            )
+
+            # Build signed order
+            signed_order = self._clob_client.create_order(order_args)
+
+            # Submit to CLOB
             response = self._clob_client.post_order(
                 signed_order,
-                order_type=order_type_map[order.order_type],
+                orderType=order_type_map[order.order_type],
             )
 
             if response and hasattr(response, "id"):
