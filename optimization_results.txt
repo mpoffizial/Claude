@@ -1,94 +1,17 @@
-MGC1 Strategy Optimization Results
-====================================
-Date: 2026-02-14
-
-Data: 5000 bars (1H timeframe) of gold futures
-
-STRATEGIES TESTED:
-==================
-1. SuperTrend + MACD + RSI
-2. Ichimoku + SuperTrend
-3. Hull MA + VWAP + BB Squeeze
-4. EMA Crossover + ATR Trailing
-5. Combined Confluence (all indicators)
-
-GRID SEARCH RESULTS:
-=====================
-SuperTrend Strategy: 162 combinations tested
-Confluence Strategy: 96 combinations tested
-
-WINNER: Confluence Strategy (Long-Only)
+Optimization Results
 ========================================
+Symbol: BTC/USDT
+Timeframe: 15m
+Days: 540
+Bars: 51840
+Date range: 2024-12-23 to 2026-06-16
 
-Optimized Parameters:
-- Min Confluence Score: 5 (out of 8)
-- Stop Loss: 2.5x ATR
-- Take Profit: 6.0x ATR
-- Long Only: Yes
-- Trailing Stop: Activates after 1x risk in profit (0.6 factor)
+Best Strategy: SuperTrend (Optimized)
+Parameters: {'st_period': 14, 'st_mult': 2.0, 'sl_mult': 1.5, 'tp_mult': 4.0, 'long_only': True}
 
-Performance Metrics:
-- Total Trades:    101
-- Win Rate:        44.6%
-- Total PnL:       $6,639.43
-- Total Return:    +66.4%
-- Profit Factor:   1.43
-- Max Drawdown:    -15.3%
-- Sharpe Ratio:    2.28
-- Avg Winner:      $492.56
-- Avg Loser:       -$277.24
-- Risk/Reward:     1:1.78
-- Largest Winner:  $1,626.38
-- Largest Loser:   -$674.33
-- Max Consec Wins: 5
-- Max Consec Loss: 8
-- Final Equity:    $16,639.43
-
-Exit Reason Distribution:
-- Signal Exit:     43 (42.6%)
-- Trailing Stop:   38 (37.6%)
-- Stop Loss:       15 (14.9%)
-- Take Profit:      5 (5.0%)
-
-CONFLUENCE SCORING SYSTEM:
-==========================
-The strategy only enters when 5+ of these 8 indicators agree:
-
-| # | Indicator        | Weight | Logic                         |
-|---|------------------|--------|-------------------------------|
-| 1 | SuperTrend       | 2      | Direction (bullish/bearish)   |
-| 2 | Trend EMA (50)   | 1      | Price above/below             |
-| 3 | EMA Cross (9/21) | 1      | Fast above/below slow         |
-| 4 | Hull MA (20)     | 1      | Slope direction               |
-| 5 | MACD Histogram   | 1      | Positive/negative             |
-| 6 | RSI (14)         | 1      | Above/below 50                |
-| 7 | Volume           | 1      | Above 20-period average       |
-|   | TOTAL            | 8      | Min required: 5               |
-
-KEY INSIGHTS:
-=============
-1. LONG-ONLY is critical for gold (structural bullish bias)
-   - Long+Short: Most strategies lost money
-   - Long-only: Consistent profits
-
-2. WIDER STOPS prevent premature exits
-   - 1.5x ATR SL → more stops hit
-   - 2.5x ATR SL → optimal: gives trades room to breathe
-
-3. LET WINNERS RUN
-   - TP at 6.0x ATR outperformed 3.0x and 4.0x
-   - Trailing stop captures profits on big moves
-
-4. CONFLUENCE FILTERING is the key
-   - Single indicator strategies: inconsistent
-   - 5+ indicators agreeing: profitable and lower drawdown
-
-RECOMMENDED TIMEFRAMES:
-=======================
-Primary: 1H (tested and optimized)
-Alternative: 15min (more trades, smaller moves)
-Swing: 4H (fewer trades, bigger moves)
-
-NOTE: These results are based on backtesting with synthetic data calibrated
-to gold's actual volatility (~18% annual). For production use, validate on
-real TradingView data using the provided Pine Script.
+Win Rate:      66.0%
+Total Return:  4.5%
+Profit Factor: 1.69
+Max Drawdown:  -1.0%
+Sharpe Ratio:  3.39
+Final Equity:  $10,455.00
