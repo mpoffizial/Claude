@@ -1,0 +1,52 @@
+.magnetic {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.1rem 2.6rem;
+  border-radius: 100px;
+  background: transparent;
+  border: 1px solid var(--champagne-gold);
+  color: var(--champagne-gold);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  overflow: hidden;
+  will-change: transform;
+  transition: color 0.45s var(--ease-out);
+  isolation: isolate;
+}
+
+.magnetic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--champagne-gold);
+  transform: scale(0);
+  border-radius: 100px;
+  transform-origin: center;
+  transition: transform 0.5s var(--ease-out);
+  z-index: -1;
+}
+
+.magnetic:hover {
+  color: var(--amber-black);
+}
+
+.magnetic:hover::before {
+  transform: scale(1.05);
+}
+
+.magnetic__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  will-change: transform;
+}
+
+.magnetic:focus-visible {
+  outline: 2px solid var(--off-white);
+  outline-offset: 4px;
+}

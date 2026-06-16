@@ -17,3 +17,13 @@ logs/
 
 # Claude Code internal tooling
 .claude/
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
