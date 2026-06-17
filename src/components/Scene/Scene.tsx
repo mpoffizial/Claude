@@ -4,7 +4,6 @@ import { Float } from '@react-three/drei'
 import {
   EffectComposer,
   Bloom,
-  DepthOfField,
   Vignette,
 } from '@react-three/postprocessing'
 import { PerfumeBottle } from './PerfumeBottle'
@@ -69,50 +68,48 @@ export function Scene({ isMobile = false, reducedMotion = false }: SceneProps) {
       <color attach="background" args={['#15100c']} />
       <fog attach="fog" args={['#15100c', 8, 18]} />
 
+      {/* Lighting + HDRI in its own Suspense so a slow/failed fetch
+          never blocks the bottle from rendering */}
       <Suspense fallback={null}>
         <SceneLighting lowPower={isMobile} />
-
-        {isMobile ? (
-          // -------- Mobile: static, lightweight --------
-          <>
-            <Float
-              speed={reducedMotion ? 0 : 1.2}
-              rotationIntensity={reducedMotion ? 0 : 0.3}
-              floatIntensity={reducedMotion ? 0 : 0.4}
-            >
-              <PerfumeBottle lowPower reducedMotion={reducedMotion} />
-            </Float>
-            <ParticleField count={90} reducedMotion={reducedMotion} />
-            <CameraRig reducedMotion={reducedMotion} />
-          </>
-        ) : (
-          // -------- Desktop: scroll-driven + postprocessing --------
-          <>
-            <CameraRig
-              mouse={mouse}
-              reducedMotion={reducedMotion}
-              scrollProgress={scrollProgress}
-            />
-            <PerfumeBottle mouse={mouse} reducedMotion={reducedMotion} />
-            <ParticleField count={280} reducedMotion={reducedMotion} />
-
-            <EffectComposer enableNormalPass={false}>
-              <Bloom
-                luminanceThreshold={0.8}
-                intensity={0.4}
-                mipmapBlur
-                luminanceSmoothing={0.3}
-              />
-              <DepthOfField
-                focusDistance={0}
-                focalLength={0.02}
-                bokehScale={2}
-              />
-              <Vignette eskil={false} offset={0.2} darkness={0.85} />
-            </EffectComposer>
-          </>
-        )}
       </Suspense>
+
+      {/* Bottle, particles, and camera rig are immediately available */}
+      {isMobile ? (
+        // -------- Mobile: static, lightweight --------
+        <>
+          <Float
+            speed={reducedMotion ? 0 : 1.2}
+            rotationIntensity={reducedMotion ? 0 : 0.3}
+            floatIntensity={reducedMotion ? 0 : 0.4}
+          >
+            <PerfumeBottle lowPower reducedMotion={reducedMotion} />
+          </Float>
+          <ParticleField count={90} reducedMotion={reducedMotion} />
+          <CameraRig reducedMotion={reducedMotion} />
+        </>
+      ) : (
+        // -------- Desktop: scroll-driven + postprocessing --------
+        <>
+          <CameraRig
+            mouse={mouse}
+            reducedMotion={reducedMotion}
+            scrollProgress={scrollProgress}
+          />
+          <PerfumeBottle mouse={mouse} reducedMotion={reducedMotion} />
+          <ParticleField count={280} reducedMotion={reducedMotion} />
+
+          <EffectComposer enableNormalPass={false}>
+            <Bloom
+              luminanceThreshold={0.6}
+              intensity={0.6}
+              mipmapBlur
+              luminanceSmoothing={0.3}
+            />
+            <Vignette eskil={false} offset={0.3} darkness={0.55} />
+          </EffectComposer>
+        </>
+      )}
     </Canvas>
   )
 }

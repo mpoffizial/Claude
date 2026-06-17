@@ -108,20 +108,21 @@ export function PerfumeBottle({
             <MeshTransmissionMaterial
               transmission={1}
               roughness={0.05}
-              thickness={0.5}
-              chromaticAberration={0.06}
+              thickness={0.8}
+              chromaticAberration={0.08}
               ior={1.5}
               color="#c8956a"
               backside
               backsideThickness={0.3}
               anisotropicBlur={0.1}
-              distortion={0.1}
-              distortionScale={0.2}
-              temporalDistortion={0.1}
+              distortion={0.15}
+              distortionScale={0.3}
+              temporalDistortion={0.05}
               samples={lowPower ? 4 : 10}
               resolution={lowPower ? 256 : 512}
               attenuationColor="#e0b27a"
-              attenuationDistance={2}
+              attenuationDistance={1.5}
+              envMapIntensity={2}
             />
           )}
         </mesh>
