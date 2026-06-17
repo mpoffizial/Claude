@@ -1,0 +1,107 @@
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 var(--page-pad);
+  z-index: 2;
+}
+
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.1rem, 2.4vw, 1.8rem);
+}
+
+.hero__sub {
+  color: var(--champagne-gold);
+}
+
+.hero__title {
+  font-size: clamp(4rem, 16vw, 14rem);
+  font-weight: 300;
+  letter-spacing: clamp(0.04em, 1.2vw, 0.16em);
+  text-indent: clamp(0.04em, 1.2vw, 0.16em);
+  line-height: 0.9;
+  color: var(--off-white);
+  /* Subtle gold sheen along the wordmark */
+  background: linear-gradient(
+    180deg,
+    var(--off-white) 0%,
+    var(--off-white) 55%,
+    rgba(218, 184, 119, 0.85) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 80px rgba(218, 184, 119, 0.12);
+}
+
+.hero__tagline {
+  font-size: clamp(1.1rem, 2.4vw, 1.8rem);
+  color: var(--off-white-dim);
+  letter-spacing: 0.01em;
+  max-width: 30ch;
+}
+
+/* Scroll indicator */
+.hero__scroll {
+  position: absolute;
+  bottom: clamp(1.6rem, 4vh, 3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.hero__scroll-label {
+  color: var(--off-white-faint);
+  font-size: 0.6rem;
+}
+
+.hero__scroll-line {
+  position: relative;
+  width: 1px;
+  height: 56px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(218, 184, 119, 0.5)
+  );
+  overflow: hidden;
+}
+
+.hero__scroll-dot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  background: var(--champagne-gold);
+  box-shadow: 0 0 8px var(--champagne-gold);
+  animation: scrollDrop 2.2s var(--ease-in-out) infinite;
+}
+
+@keyframes scrollDrop {
+  0% {
+    transform: translate(-50%, -16px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 56px);
+    opacity: 0;
+  }
+}
