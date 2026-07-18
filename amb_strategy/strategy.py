@@ -30,6 +30,7 @@ class Params:
     vol_low: float = 0.15
     vol_high: float = 0.95
     allow_short: bool = False
+    cooldown: int = 0          # bars to wait after a losing trade
     risk_pct: float = 0.01     # equity fraction risked per trade
     fee: float = 0.0007        # 0.05% fee + 0.02% slippage per side
 
@@ -83,6 +84,7 @@ def backtest(df: pd.DataFrame, p: Params, equity0: float = 10_000.0) -> dict:
     qty = stop = entry_px = 0.0
     pending = 0        # signal generated on close, executed next bar open
     trades = []
+    last_loss_bar = -10**9
     warmup = max(p.entry_len, p.ema_len, p.atr_len) + 1
 
     for i in range(n):
@@ -104,6 +106,8 @@ def backtest(df: pd.DataFrame, p: Params, equity0: float = 10_000.0) -> dict:
                 pnl = (exit_px - entry_px) * qty * pos
                 equity += pnl
                 trades.append(pnl)
+                if pnl < 0:
+                    last_loss_bar = i
                 pos = 0
             else:
                 # chandelier ratchet
@@ -118,10 +122,13 @@ def backtest(df: pd.DataFrame, p: Params, equity0: float = 10_000.0) -> dict:
                     pnl = (exit_px - entry_px) * qty * pos
                     equity += pnl
                     trades.append(pnl)
+                    if pnl < 0:
+                        last_loss_bar = i
                     pos = 0
 
         # --- entry signals on close ---
-        if pos == 0 and pending == 0 and i >= warmup:
+        if (pos == 0 and pending == 0 and i >= warmup
+                and i - last_loss_bar > p.cooldown):
             vol_ok = (not p.vol_filter) or (p.vol_low <= vol_rank[i] <= p.vol_high)
             if vol_ok:
                 if c[i] > don_hi[i] and c[i] > ema[i]:
