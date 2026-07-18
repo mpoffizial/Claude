@@ -2,7 +2,12 @@
 
 **Datum:** 2026-07-18 · **Branch:** `claude/ict-silver-bullet-backtest-hywexk`
 
-## TL;DR
+> ⚠️ **Update (Langzeit-Validierung):** Die unten dokumentierten Nasdaq-Ergebnisse
+> gelten nur für Feb–Sep 2023. Auf 2017–2020er 1-Minuten-Daten verliert dieselbe
+> Konfiguration Geld. Die einzige über beide Ären robuste Variante läuft auf dem
+> **S&P 500** — Details in [Teil 2](#teil-2-langzeit--und-multi-asset-validierung).
+
+## TL;DR (Teil 1: Nasdaq, Feb–Sep 2023)
 
 Die Original-Defaults sind auf 1-Minuten-Daten praktisch Breakeven (+651 USD, PF 1.05).
 Mit 6 geänderten Settings wird die Strategie deutlich profitabel und bleibt es auch
@@ -96,12 +101,96 @@ Einzelmonat dominiert das Ergebnis.
 4. MNQ statt NQ: alle USD-Werte ÷ 10, Kommission anpassen (Standard ~$0,74/Seite,
    d. h. relativ teurer — PF sinkt leicht).
 
+---
+
+# Teil 2: Langzeit- und Multi-Asset-Validierung
+
+Auf Nachfrage („über die letzten 2 Jahre testen / andere Assets") wurde die Strategie
+zusätzlich auf **1-Minuten-Daten 2017 – Mai 2020** (Oanda-CFDs via
+[FutureSharks/financial-data](https://github.com/FutureSharks/financial-data), inkl.
+Vol-Schock Feb 2018, Q4-2018-Crash, COVID-Crash) und auf **9 weiteren Assets**
+(Dukascopy-CFDs, Feb–Sep 2023) getestet. Aktuellere freie Intraday-Daten (2024–2026)
+sind aus dieser Umgebung nicht erreichbar (alle Marktdaten-APIs netzwerkseitig gesperrt).
+
+## 2.1 Nasdaq über 2017–2020: Die 2023-Edge ist NICHT stabil
+
+1-Minuten-Daten, gleiche Engine, gleiche Kosten (1 NQ-Kontrakt):
+
+| Konfiguration | 2017 | 2018 | 2019 | 2020 (Jan–Mai) | Gesamt |
+|---|---|---|---|---|---|
+| Original-Defaults | −3.347 | −4.413 | +2.721 | −11.083 | **−16.122 USD** (PF 0,61) |
+| Optimiert (Teil 1) | −9.303 | −5.193 | −9.080 | −10.667 | **−34.243 USD** (PF 0,85) |
+| Konservativ (Bias an) | −5.960 | −13.203 | +5.808 | −5.613 | **−18.968 USD** (PF 0,83) |
+
+Auch eine komplette Neu-Optimierung (19.440 Konfigurationen) direkt auf 2017–2019
+findet **keine** Einstellung, die 2020 out-of-sample hält (beste Kandidaten: IS PF
+1,2–1,35 → OOS PF 0,7–0,9). Auf 5-Minuten-Daten 2020–2023 (3 Jahre) ist die optimierte
+Config ebenfalls nur Breakeven (PF 1,00) mit extremen Jahres-Schwankungen.
+
+**Fazit Nasdaq: Der +45k-Gewinn aus Teil 1 ist regimespezifisch (Tech-Markt 2023).
+Es gibt keine Belege für eine dauerhafte Edge auf NQ. Nicht unverändert live handeln.**
+
+## 2.2 Multi-Asset-Scan (Feb–Sep 2023, NQ-optimierte Settings unverändert)
+
+Futures-äquivalente Tick-/Punktwerte, $2,50/Seite, 1 Tick Slippage:
+
+| Asset | Netto | Trades | PF | | Asset | Netto | Trades | PF |
+|---|---|---|---|---|---|---|---|---|
+| Nasdaq (NQ) | +45.753 | 240 | 1,67 | | FTSE (Z) | −3.629 | 116 | 0,75 |
+| Brent (BZ) | +14.162 | 181 | 1,36 | | Gold (GC) | −5.254 | 138 | 0,86 |
+| S&P 500 (ES) | +13.738 | 139 | 1,33 | | DAX (FDAX) | −6.942 | 209 | 0,93 |
+| Silber (SI) | +10.862 | 51 | 1,47 | | EURUSD (6E) | −1.336 | 94 | 0,90 |
+| GBPUSD (6B) | +1.497 | 55 | 1,25 | | Dow (YM) | −1.178 | 204 | 0,97 |
+
+Cross-Era-Gegenprobe 2017–2020: WTI (Brent-Ersatz) −22.796 USD (PF 0,83) und
+GBPUSD −4.419 USD (PF 0,91) mit den NQ-Settings → auch diese 2023-Gewinne sind
+nicht belastbar. Für Silber existiert keine freie Langzeit-1m-Historie.
+
+## 2.3 Einziger robuster Fund: S&P 500 (ES) mit eigenem Preset
+
+Grid-Search auf **ES 2017–2019** (in-sample) mit **zwei unabhängigen
+Out-of-Sample-Perioden** (COVID-2020 und 2023, anderer Datenanbieter): Nur 6 von 60
+Top-Konfigurationen überleben beide. Die beste Familie
+(→ `sb_fvg_strategy_es.pine`):
+
+**Entry „Full Gap" · TP Fix RRR 2.0 · minGap 8 Ticks · Sweep-Lookback 90 ·
+slLB 15 · SL-Puffer 16 Ticks · Bias AUS** (Rest wie Original)
+
+| Zeitraum (1 ES-Kontrakt) | Netto | Trades | Winrate | PF | MaxDD |
+|---|---|---|---|---|---|
+| 2017 | −933 | 26 | — | 0,56 | — |
+| 2018 | +18.205 | 71 | — | 2,06 | — |
+| 2019 | +3.673 | 45 | — | 1,28 | — |
+| 2020 (Jan–Mai, COVID) | +5.685 | 34 | — | 1,25 | — |
+| **2017–2020 gesamt** | **+26.630** | **176** | **38,6 %** | **1,48** | **6.170** |
+| **2023 (Feb–Sep, OOS)** | **+6.375** | **69** | **40,6 %** | **1,25** | **4.203** |
+
+Nachbar-Parameter sind stabil (sweep 90–120, slLB 15–20, Puffer 16–24, RRR 2,0–2,5
+alle in beiden Ären positiv). Dieselbe Config auf NQ: 2023 +20.301 (PF 1,34), aber
+2017–2020 −4.215 (PF 0,97) — ES bleibt das einzige Asset mit Cross-Era-Robustheit.
+
+**Aber auch hier ehrlich:** 2017 war leicht negativ, die Config wurde als Überlebende
+aus vielen Kandidaten selektiert (Survivorship-Risiko), und PF 1,25–1,48 ist solide,
+aber kein Selbstläufer.
+
+## 2.4 Gesamtfazit & Empfehlung
+
+1. **Die Strategie hat in ihrer jetzigen Form keine über Jahre und Märkte stabile
+   Edge.** Das starke Nasdaq-2023-Ergebnis aus Teil 1 sollte als das gelesen werden,
+   was es ist: ein Regime-Treffer.
+2. Wenn überhaupt, ist das **ES-Preset (2.3)** die am besten abgesicherte Variante:
+   auf 3 unabhängigen Perioden (2017–19, 2020, 2023) und 2 Datenanbietern positiv.
+3. Vor jedem Live-Einsatz: mit `sb_fvg_strategy_es.pine` auf TradingView (ES/MES 1min,
+   Deep Backtesting) nachtesten und mehrere Wochen forward testen. Positionsgröße so
+   wählen, dass ein 6–8k-USD-Drawdown (pro ES-Kontrakt) tragbar ist — bzw. MES = ÷10.
+
 ## Dateien
 
 | Datei | Inhalt |
 |---|---|
-| `sb_fvg_strategy_optimized.pine` | Pine-Script mit den optimierten Default-Inputs (Logik unverändert) |
-| `sb_backtest.py` | Backtest-Engine (Python/Numba, TV-Broker-Emulation) |
+| `sb_fvg_strategy_optimized.pine` | Pine-Script, NQ-2023-optimierte Defaults (nur mit Teil-2-Warnung verwenden!) |
+| `sb_fvg_strategy_es.pine` | Pine-Script, robustes S&P-500-Preset (Teil 2.3) |
+| `sb_backtest.py` | Backtest-Engine (Python/Numba, TV-Broker-Emulation, Multi-Asset) |
 | `sb_optimize.py` | Grid-Search-Optimizer mit IS/OOS-Split |
-| `trades_optimized.csv` | Alle 240 Trades der optimierten Konfiguration |
-| `equity_curve_optimized.png` | Equity-Kurve mit IS/OOS-Markierung |
+| `trades_optimized.csv` | Alle 240 NQ-Trades der Teil-1-Konfiguration |
+| `equity_curve_optimized.png` | NQ-Equity-Kurve (Teil 1) mit IS/OOS-Markierung |

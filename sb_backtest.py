@@ -421,7 +421,9 @@ DEFAULTS = dict(use_am=True, use_ldn=True, use_pm=True, use_bias=True,
 
 
 def run_backtest(pre: dict, params: dict | None = None,
-                 start: int = 0, end: int | None = None) -> dict:
+                 start: int = 0, end: int | None = None,
+                 tick: float = TICK, point_value: float = POINT_VALUE,
+                 commission: float = COMMISSION, slip_ticks: int = SLIP_TICKS) -> dict:
     p = dict(DEFAULTS)
     if params:
         p.update(params)
@@ -437,7 +439,7 @@ def run_backtest(pre: dict, params: dict | None = None,
                int(p["entry_mode"]), int(p["sl_lb"]), float(p["sl_buf_tk"]),
                int(p["tp_mode"]), float(p["fix_rrr"]), float(p["min_rrr"]),
                int(p["max_day"]), int(p["grace_bars"]),
-               TICK, POINT_VALUE, COMMISSION, SLIP_TICKS)
+               tick, point_value, commission, slip_ticks)
     entry_i, exit_i, tdir, epx, xpx, pnl, n_setups, n_missed, n_expired = res
     return dict(entry_i=entry_i + start, exit_i=exit_i + start, dir=tdir,
                 entry_px=epx, exit_px=xpx, pnl=pnl,
