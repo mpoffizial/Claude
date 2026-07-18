@@ -223,11 +223,39 @@ minRRR 1,0. → `sb_fvg_strategy_nq_robust.pine`
   CE-Entry, disp 0,9, gapATR 0,5, bufATR 2,0, slLB 10, Bias AUS → 2017–2020 +53.143
   (PF 1,37, 815 Trades), 2023 +17.710 (PF 1,31, 158 Trades), aber höhere Drawdowns.
 
+## 3.1 Winrate-Anatomie & Hoch-Winrate-Variante
+
+Die „Winrate ~20 %" der NQ-Robust-Config ist irreführender, als sie klingt.
+Trade-Anatomie (Exit am Einstand ± Slippage = Break-Even-Scratch):
+
+| | Gewinner (3R) | BE-Scratches (≈ −10 USD) | Echte Stops |
+|---|---|---|---|
+| 2017–2020 | 20 % | 27 % | 53 % |
+| 2023 | 23 % | 27 % | 50 % |
+
+Auf die Frage „kann man die Winrate optimieren": Ja, gegen Profit-Factor. Dual-Ära-Suche
+(2.880 Kombinationen, Bedingung: beide Ären PF ≥ 1,15) ergibt die Frontier:
+
+| Variante | Winrate | 2017–20 | 2023 | Jahre positiv | Urteil |
+|---|---|---|---|---|---|
+| NQ Robust (3R + BE) | 20–23 % | +32,9k / PF 1,68 | +19,3k / PF 1,97 | 5/5 | beste Qualität |
+| **„Balanced" (Full Gap, 1,5R)** | **42–45 %** | **+30,6k / PF 1,19** | **+24,0k / PF 1,32** | **5/5** | beste Winrate, die hält |
+| Max-WR (CE, 1R) | 51–55 % | +20,1k / PF 1,26 | +6,1k / PF 1,16 | **2/5** (2019 trägt alles) | **nicht handeln** |
+
+**„Balanced"-Settings** (im Script `sb_fvg_strategy_nq_robust.pine` einstellbar):
+Entry „Full Gap" · Fix RRR **1,5** · Break-Even **aus** (0) · dispMult **0,9** ·
+gapATR 0,5 · bufATR **2,5** · sweepLB 30 · slLB **10** · Bias **AUS**.
+Stress-Test: PF 1,15 / 1,30. Trade-Frequenz ~4–5×höher als NQ Robust (774 + 162
+Trades), Drawdowns höher (8,9k / 11,7k). Mehr als ~45 % Winrate ist mit dieser
+Strategie **nicht** robust erreichbar — alle 50%+-Varianten leben von einem
+einzigen guten Jahr.
+
 ## Ehrliche Einordnung
 
-- **Winrate ~20 %**: Die meisten Trades enden am Break-Even oder im Stop; wenige
-  3R-Gewinner tragen alles. Das ist psychologisch anspruchsvoll (lange Serien ohne
-  Gewinner sind normal) — wer das nicht durchhält, handelt die Statistik kaputt.
+- **Winrate ~20 %** (davon 27 Prozentpunkte quasi-neutrale BE-Scratches, s. 3.1):
+  wenige 3R-Gewinner tragen alles. Das ist psychologisch anspruchsvoll (lange
+  Serien ohne Gewinner sind normal) — wer das nicht durchhält, handelt die
+  Statistik kaputt.
 - 2017 war nur knapp positiv (im Stress-Szenario ±0) — kein Allwetter-Versprechen.
 - Die Struktur (ATR-Puffer, BE, 3R) wurde zwar über zwei Ären validiert, aber
   beide Ären waren auch Teil der Suche. Echtes Out-of-Sample ist erst 2024+ —
