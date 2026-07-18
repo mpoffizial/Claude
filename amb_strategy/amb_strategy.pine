@@ -1,0 +1,81 @@
+//@version=6
+strategy("AMB - Adaptive Momentum Breakout",
+     overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     commission_type=strategy.commission.percent,
+     commission_value=0.05,
+     slippage=2,
+     calc_on_every_tick=false,
+     process_orders_on_close=false)
+
+// ============ INPUTS (defaults = optimized settings) ============
+grpE = "Entry"
+entryLen  = input.int(48,  "Donchian Breakout Length", minval=5,  group=grpE)
+emaLen    = input.int(200, "Trend EMA Length",         minval=10, group=grpE)
+allowShort= input.bool(false, "Allow Shorts",                     group=grpE)
+
+grpX = "Exit / Risk"
+exitLen   = input.int(24,   "Fast Exit Channel Length", minval=3,   group=grpX)
+trailMult = input.float(3.0,"Chandelier Trail (x ATR)", step=0.25,  group=grpX)
+slMult    = input.float(2.0,"Initial Stop (x ATR)",     step=0.25,  group=grpX)
+atrLen    = input.int(14,   "ATR Length",               minval=2,   group=grpX)
+riskPct   = input.float(1.0,"Risk per Trade (%)",       step=0.25,  group=grpX)
+
+grpV = "Volatility Regime Filter"
+useVolFilter = input.bool(true, "Enable ATR%-Rank Filter", group=grpV)
+volLow  = input.float(0.15, "Min ATR %-Rank", step=0.05, group=grpV)
+volHigh = input.float(0.95, "Max ATR %-Rank", step=0.05, group=grpV)
+
+// ============ INDICATORS ============
+atr  = ta.atr(atrLen)
+ema  = ta.ema(close, emaLen)
+donHi  = ta.highest(close, entryLen)[1]
+donLo  = ta.lowest(close, entryLen)[1]
+exitLo = ta.lowest(close, exitLen)[1]
+exitHi = ta.highest(close, exitLen)[1]
+
+// ATR percentile rank over 200 bars
+atrNorm = atr / close
+volRank = ta.percentrank(atrNorm, 200) / 100.0
+volOK = not useVolFilter or (volRank >= volLow and volRank <= volHigh)
+
+// ============ ENTRIES ============
+longSig  = close > donHi and close > ema and volOK
+shortSig = allowShort and close < donLo and close < ema and volOK
+
+stopDist = slMult * atr
+qtyLong  = (strategy.equity * riskPct / 100.0) / stopDist
+
+if longSig and strategy.position_size == 0
+    strategy.entry("Long", strategy.long, qty=qtyLong)
+if shortSig and strategy.position_size == 0
+    strategy.entry("Short", strategy.short, qty=qtyLong)
+
+// ============ EXITS: chandelier trail + initial stop + channel ============
+var float trailStop = na
+if strategy.position_size > 0
+    if strategy.position_size[1] == 0
+        trailStop := strategy.position_avg_price - slMult * atr
+    trailStop := math.max(trailStop, high - trailMult * atr)
+    strategy.exit("L-Stop", "Long", stop=trailStop)
+    if close < exitLo
+        strategy.close("Long", comment="Channel Exit")
+else if strategy.position_size < 0
+    if strategy.position_size[1] == 0
+        trailStop := strategy.position_avg_price + slMult * atr
+    trailStop := math.min(trailStop, low + trailMult * atr)
+    strategy.exit("S-Stop", "Short", stop=trailStop)
+    if close > exitHi
+        strategy.close("Short", comment="Channel Exit")
+else
+    trailStop := na
+
+// ============ PLOTS ============
+plot(ema, "Trend EMA", color=color.new(color.orange, 0), linewidth=2)
+plot(donHi, "Breakout Level", color=color.new(color.teal, 60))
+plot(exitLo, "Exit Channel", color=color.new(color.red, 70))
+plot(strategy.position_size != 0 ? trailStop : na, "Trail Stop",
+     color=color.new(color.fuchsia, 0), style=plot.style_linebr, linewidth=2)
+
+bgcolor(not volOK ? color.new(color.gray, 92) : na, title="Vol Filter Off-Regime")
