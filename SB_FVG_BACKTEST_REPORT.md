@@ -184,12 +184,65 @@ aber kein Selbstläufer.
    Deep Backtesting) nachtesten und mehrere Wochen forward testen. Positionsgröße so
    wählen, dass ein 6–8k-USD-Drawdown (pro ES-Kontrakt) tragbar ist — bzw. MES = ÷10.
 
+---
+
+# Teil 3: Strukturell verbesserte NQ-Variante (ATR + Break-Even)
+
+Frage: „Kann man die Strategie für Nasdaq profitabler machen?" Antwort: Ja — aber
+nicht durch weiteres Parameter-Tuning (das erzeugt nur größere 2023-Zahlen, die
+2017–2020 wieder scheitern), sondern durch **drei strukturelle Änderungen am
+Trade-Management**, gesucht mit einem Dual-Ära-Kriterium (eine Konfiguration zählt
+nur, wenn sie 2017–2020 UND 2023 profitabel ist; 13.824 Kombinationen getestet,
+522 bestehen):
+
+1. **SL-Puffer = 2,0 × ATR(14)** statt fixer Ticks → skaliert über Preisniveaus
+   und Vol-Regime (Hauptgrund, warum die fixen Tick-Settings 2017–2020 scheiterten).
+2. **TP = 3R statt 2R, dafür Break-Even bei +1R** (Stop auf Einstand, Bar-Close-Logik)
+   → wenige große Gewinner tragen das Ergebnis, Verlierer werden neutralisiert.
+3. **FVG-Mindestgröße = 0,3 × ATR** statt fixer Ticks.
+
+Dazu als Defaults: Entry „FVG Edge", dispMult 1,5, sweepLB 30, slLB 15, **Bias AN**,
+minRRR 1,0. → `sb_fvg_strategy_nq_robust.pine`
+
+## Ergebnis (1 NQ-Kontrakt, nach Kosten)
+
+| Zeitraum | Netto | Trades | Winrate | PF | MaxDD |
+|---|---|---|---|---|---|
+| 2017 | +632 | — | — | 1,07 | — |
+| 2018 | +5.436 | — | — | 1,25 | — |
+| 2019 | +15.984 | — | — | 2,31 | — |
+| 2020 (Jan–Mai, COVID) | +10.847 | — | — | 3,27 | — |
+| **2017–2020 gesamt** | **+32.899** | **211** | 19,9 % | **1,68** | **7.586** |
+| **2023 (Feb–Sep)** | **+19.339** | **44** | 22,7 % | **1,97** | **6.082** |
+
+- Kosten-Stress (2 Ticks Slippage, $5/Seite): PF 1,62 / 1,93 — kaum Wirkung.
+- Nachbar-Parameter stabil: gapATR 0–0,5, bufATR 2,0–2,5, RRR 2,5–3,5, sweep 15–60,
+  slLB 15–20 alle in beiden Ären positiv; Break-Even bei 1,0R klar besser als 0,5R/1,5R;
+  Bias AN klar besser als AUS.
+- Alternative mit mehr Trades (»Kandidat A«, dokumentiert für eigene Tests):
+  CE-Entry, disp 0,9, gapATR 0,5, bufATR 2,0, slLB 10, Bias AUS → 2017–2020 +53.143
+  (PF 1,37, 815 Trades), 2023 +17.710 (PF 1,31, 158 Trades), aber höhere Drawdowns.
+
+## Ehrliche Einordnung
+
+- **Winrate ~20 %**: Die meisten Trades enden am Break-Even oder im Stop; wenige
+  3R-Gewinner tragen alles. Das ist psychologisch anspruchsvoll (lange Serien ohne
+  Gewinner sind normal) — wer das nicht durchhält, handelt die Statistik kaputt.
+- 2017 war nur knapp positiv (im Stress-Szenario ±0) — kein Allwetter-Versprechen.
+- Die Struktur (ATR-Puffer, BE, 3R) wurde zwar über zwei Ären validiert, aber
+  beide Ären waren auch Teil der Suche. Echtes Out-of-Sample ist erst 2024+ —
+  per TradingView Deep Backtesting mit `sb_fvg_strategy_nq_robust.pine` prüfbar.
+- Engine-Erweiterung (`gap_atr`, `buf_atr`, `be_trigger_rr`, `max_hold_bars` in
+  `sb_backtest.py`) ist regressionsgetestet: Mit deaktivierten Features
+  reproduziert sie die alten Ergebnisse exakt.
+
 ## Dateien
 
 | Datei | Inhalt |
 |---|---|
 | `sb_fvg_strategy_optimized.pine` | Pine-Script, NQ-2023-optimierte Defaults (nur mit Teil-2-Warnung verwenden!) |
 | `sb_fvg_strategy_es.pine` | Pine-Script, robustes S&P-500-Preset (Teil 2.3) |
+| `sb_fvg_strategy_nq_robust.pine` | Pine-Script, strukturell verbesserte NQ-Variante (Teil 3) |
 | `sb_backtest.py` | Backtest-Engine (Python/Numba, TV-Broker-Emulation, Multi-Asset) |
 | `sb_optimize.py` | Grid-Search-Optimizer mit IS/OOS-Split |
 | `trades_optimized.csv` | Alle 240 NQ-Trades der Teil-1-Konfiguration |

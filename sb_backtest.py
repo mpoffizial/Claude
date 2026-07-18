@@ -130,7 +130,12 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
          use_am, use_ldn, use_pm, use_bias, use_pd, use_asia,
          disp_mult, min_gap_tk, sweep_lb, entry_mode, sl_lb, sl_buf_tk,
          tp_mode, fix_rrr, min_rrr, max_day, grace_bars,
-         tick, point_value, commission, slip_ticks):
+         tick, point_value, commission, slip_ticks,
+         gap_atr, buf_atr, be_trigger_rr, max_hold_bars):
+    # gap_atr / buf_atr > 0: FVG-Mindestgroesse bzw. SL-Puffer als ATR-Vielfache
+    # statt fixer Ticks (skaleninvariant ueber Preisniveaus/Regime).
+    # be_trigger_rr > 0: Stop auf Einstand, sobald be_trigger_rr * Risiko
+    # erreicht wurde (Bar-Close-Logik). max_hold_bars > 0: Zeit-Stopp zum Close.
     n = len(c)
     min_gap = min_gap_tk * tick
     sl_buf = sl_buf_tk * tick
@@ -157,6 +162,8 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
     pos_dir = 0
     pos_entry_px = 0.0
     pos_entry_i = -1
+    pos_risk = 0.0
+    be_done = True
     setups_today = 0
     last_bull_sweep = -10**9
     last_bear_sweep = -10**9
@@ -209,6 +216,29 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
                     t_pnl[ntr] = pnl
                     ntr += 1
                 pos_dir = 0
+            else:
+                # Position hat die Bar ueberlebt -> Management (Bar-Close)
+                if be_trigger_rr > 0.0 and not be_done:
+                    if pos_dir == 1 and h[i] >= pos_entry_px + be_trigger_rr * pos_risk:
+                        if p_sl < pos_entry_px:
+                            p_sl = pos_entry_px
+                        be_done = True
+                    elif pos_dir == -1 and l[i] <= pos_entry_px - be_trigger_rr * pos_risk:
+                        if p_sl > pos_entry_px:
+                            p_sl = pos_entry_px
+                        be_done = True
+                if max_hold_bars > 0 and i - pos_entry_i >= max_hold_bars:
+                    exit_px = c[i]
+                    pnl = (exit_px - pos_entry_px) * pos_dir * point_value - 2.0 * commission
+                    if ntr < max_tr:
+                        t_entry_i[ntr] = pos_entry_i
+                        t_exit_i[ntr] = i
+                        t_dir[ntr] = pos_dir
+                        t_epx[ntr] = pos_entry_px
+                        t_xpx[ntr] = exit_px
+                        t_pnl[ntr] = pnl
+                        ntr += 1
+                    pos_dir = 0
 
         # ---------- broker emulator: pending limit fills ----------
         filled_this_bar = False
@@ -219,6 +249,8 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
                     pos_dir = 1
                     pos_entry_px = fill
                     pos_entry_i = i
+                    pos_risk = fill - p_sl
+                    be_done = be_trigger_rr <= 0.0
                     pend_dir = 0
                     filled_this_bar = True
                     # same-bar exit checks after the fill
@@ -251,6 +283,8 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
                     pos_dir = -1
                     pos_entry_px = fill
                     pos_entry_i = i
+                    pos_risk = p_sl - fill
+                    be_done = be_trigger_rr <= 0.0
                     pend_dir = 0
                     filled_this_bar = True
                     if h[i] >= p_sl and l[i] <= p_tp:
@@ -317,6 +351,8 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
         # new setups
         if (pos_dir == 0 and pend_dir == 0 and in_sb and setups_today < max_day
                 and i >= 2 and not np.isnan(atr[i]) and not np.isnan(mid_open[i])):
+            gap_req = gap_atr * atr[i] if gap_atr > 0.0 else min_gap
+            buf_eff = buf_atr * atr[i] if buf_atr > 0.0 else sl_buf
             disp = abs(c[i - 1] - o[i - 1]) > disp_mult * atr[i]
             bias_long = c[i] > mid_open[i]
             bias_short = c[i] < mid_open[i]
@@ -324,7 +360,7 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
             # --- long ---
             bull_fvg = l[i] > h[i - 2]
             gap_b = l[i] - h[i - 2]
-            valid_bull = bull_fvg and disp and c[i - 1] > o[i - 1] and gap_b >= min_gap
+            valid_bull = bull_fvg and disp and c[i - 1] > o[i - 1] and gap_b >= gap_req
             bull_recent = (i - last_bull_sweep) <= sweep_lb
             if valid_bull and bull_recent and ((not use_bias) or bias_long):
                 fvg_top = l[i]
@@ -342,7 +378,7 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
                 for j in range(j0, i + 1):
                     if l[j] < lo_sw:
                         lo_sw = l[j]
-                sl = lo_sw - sl_buf
+                sl = lo_sw - buf_eff
                 risk = entry - sl
                 if risk > 0:
                     if tp_mode == 1:
@@ -368,7 +404,7 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
             if pend_dir == 0:
                 bear_fvg = h[i] < l[i - 2]
                 gap_s = l[i - 2] - h[i]
-                valid_bear = bear_fvg and disp and c[i - 1] < o[i - 1] and gap_s >= min_gap
+                valid_bear = bear_fvg and disp and c[i - 1] < o[i - 1] and gap_s >= gap_req
                 bear_recent = (i - last_bear_sweep) <= sweep_lb
                 if valid_bear and bear_recent and ((not use_bias) or bias_short):
                     fvg_top = l[i - 2]
@@ -386,7 +422,7 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
                     for j in range(j0, i + 1):
                         if h[j] > hi_sw:
                             hi_sw = h[j]
-                    sl = hi_sw + sl_buf
+                    sl = hi_sw + buf_eff
                     risk = sl - entry
                     if risk > 0:
                         if tp_mode == 1:
@@ -417,7 +453,8 @@ DEFAULTS = dict(use_am=True, use_ldn=True, use_pm=True, use_bias=True,
                 use_pd=True, use_asia=True,
                 disp_mult=1.2, min_gap_tk=4, sweep_lb=30, entry_mode=ENTRY_CE,
                 sl_lb=10, sl_buf_tk=8, tp_mode=TP_LIQ, fix_rrr=2.0,
-                min_rrr=2.0, max_day=4, grace_bars=24)
+                min_rrr=2.0, max_day=4, grace_bars=24,
+                gap_atr=0.0, buf_atr=0.0, be_trigger_rr=0.0, max_hold_bars=0)
 
 
 def run_backtest(pre: dict, params: dict | None = None,
@@ -439,7 +476,9 @@ def run_backtest(pre: dict, params: dict | None = None,
                int(p["entry_mode"]), int(p["sl_lb"]), float(p["sl_buf_tk"]),
                int(p["tp_mode"]), float(p["fix_rrr"]), float(p["min_rrr"]),
                int(p["max_day"]), int(p["grace_bars"]),
-               tick, point_value, commission, slip_ticks)
+               tick, point_value, commission, slip_ticks,
+               float(p["gap_atr"]), float(p["buf_atr"]),
+               float(p["be_trigger_rr"]), int(p["max_hold_bars"]))
     entry_i, exit_i, tdir, epx, xpx, pnl, n_setups, n_missed, n_expired = res
     return dict(entry_i=entry_i + start, exit_i=exit_i + start, dir=tdir,
                 entry_px=epx, exit_px=xpx, pnl=pnl,
