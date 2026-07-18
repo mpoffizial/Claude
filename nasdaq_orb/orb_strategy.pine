@@ -1,0 +1,101 @@
+//@version=6
+strategy("Nasdaq ORB - Opening Range Breakout",
+     overlay=true,
+     initial_capital=25000,
+     commission_type=strategy.commission.cash_per_contract,
+     commission_value=0.62,
+     slippage=1,
+     calc_on_every_tick=false)
+
+// Chart: NQ1!/MNQ1! (oder QQQ), 5-Minuten, Session 09:30-16:00 ET
+// ============ INPUTS (defaults = optimized settings) ============
+grpO = "Opening Range"
+orMin     = input.int(60, "Opening Range (Minuten)", options=[15, 30, 45, 60], group=grpO)
+bufFrac   = input.float(0.1, "Entry-Buffer (x OR-Breite)", step=0.05, group=grpO)
+cutoffHr  = input.int(15, "Keine Entries nach (Stunde ET)", minval=10, maxval=16, group=grpO)
+
+grpR = "Risk"
+stopFrac  = input.float(0.5, "Stop (x OR-Breite)",   step=0.25, group=grpR)
+tgtR      = input.float(0.0, "Target (R-Multiple, 0=EOD)", step=0.5, group=grpR)
+useBE     = input.bool(true, "Breakeven nach +1R", group=grpR)
+riskPct   = input.float(1.0, "Risiko pro Trade (%)", step=0.25, group=grpR)
+maxTrades = input.int(2, "Max Trades pro Tag", minval=1, maxval=5, group=grpR)
+
+grpF = "Filter"
+emaDays   = input.int(0, "Daily Trend EMA (0=aus)", minval=0, group=grpF)
+allowShort= input.bool(false, "Shorts erlauben", group=grpF)
+
+// ============ SESSION / OPENING RANGE ============
+inSession   = not na(time(timeframe.period, "0930-1600", "America/New_York"))
+newDay      = ta.change(time("D")) != 0
+sessMinutes = (hour(time, "America/New_York") - 9) * 60 + minute(time, "America/New_York") - 30
+
+var float orHi = na
+var float orLo = na
+var int   tradesToday = 0
+if newDay
+    orHi := na
+    orLo := na
+    tradesToday := 0
+inOR = inSession and sessMinutes < orMin
+if inOR
+    orHi := na(orHi) ? high : math.max(orHi, high)
+    orLo := na(orLo) ? low  : math.min(orLo, low)
+orDone = inSession and sessMinutes >= orMin and not na(orHi)
+orW = orHi - orLo
+
+// ============ FILTER ============
+dailyEma = request.security(syminfo.tickerid, "D",
+     ta.ema(close, math.max(emaDays, 1))[1], lookahead=barmerge.lookahead_on)
+dailyCl  = request.security(syminfo.tickerid, "D", close[1],
+     lookahead=barmerge.lookahead_on)
+longOK  = emaDays == 0 or dailyCl > dailyEma
+shortOK = allowShort and (emaDays == 0 or dailyCl < dailyEma)
+
+beforeCutoff = hour(time, "America/New_York") < cutoffHr
+
+// ============ ENTRIES ============
+buf = bufFrac * orW
+canEnter = orDone and beforeCutoff and strategy.position_size == 0 and
+     tradesToday < maxTrades and orW > 0
+
+riskPts = stopFrac * orW
+qty = riskPts > 0 ? (strategy.equity * riskPct / 100.0) / (riskPts * syminfo.pointvalue) : 0.0
+
+if canEnter and longOK and close > orHi + buf
+    strategy.entry("L", strategy.long, qty=qty)
+    tradesToday += 1
+if canEnter and shortOK and close < orLo - buf
+    strategy.entry("S", strategy.short, qty=qty)
+    tradesToday += 1
+
+// ============ EXITS ============
+var float beStop = na
+if strategy.position_size > 0
+    entry = strategy.position_avg_price
+    stopPx = entry - riskPts
+    if useBE and high >= entry + riskPts
+        beStop := entry
+    stopFinal = na(beStop) ? stopPx : math.max(stopPx, beStop)
+    strategy.exit("Lx", "L", stop=stopFinal,
+         limit=tgtR > 0 ? entry + tgtR * riskPts : na)
+else if strategy.position_size < 0
+    entry = strategy.position_avg_price
+    stopPx = entry + riskPts
+    if useBE and low <= entry - riskPts
+        beStop := entry
+    stopFinal = na(beStop) ? stopPx : math.min(stopPx, beStop)
+    strategy.exit("Sx", "S", stop=stopFinal,
+         limit=tgtR > 0 ? entry - tgtR * riskPts : na)
+else
+    beStop := na
+
+// EOD flat: keine Overnight-Positionen
+eod = hour(time, "America/New_York") == 15 and minute(time, "America/New_York") >= 55
+if eod
+    strategy.close_all(comment="EOD")
+
+// ============ PLOTS ============
+plot(orDone ? orHi : na, "OR High", color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
+plot(orDone ? orLo : na, "OR Low",  color=color.new(color.red, 0),  style=plot.style_linebr, linewidth=2)
+bgcolor(inOR ? color.new(color.blue, 90) : na, title="Opening Range")

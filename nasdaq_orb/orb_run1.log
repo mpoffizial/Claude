@@ -1,0 +1,36 @@
+Stage 1: coarse grid (in-sample, 5 paths)
+  [coarse] 50/216 (3s)
+  [coarse] 100/216 (7s)
+  [coarse] 150/216 (10s)
+  [coarse] 200/216 (14s)
+  best coarse: or=60 stop=0.5 tgt=0.0 buf=0.0 be=0 cut=42 ema=0 mt=2 longonly  score=2.77
+Stage 2: fine grid around winner
+  [fine] 50/324 (4s)
+  [fine] 100/324 (7s)
+  [fine] 150/324 (11s)
+  [fine] 200/324 (14s)
+  [fine] 250/324 (18s)
+  [fine] 300/324 (21s)
+  best fine: or=45 stop=0.75 tgt=0.0 buf=0.2 be=1 cut=66 ema=0 mt=2 longonly  score=3.01
+Stage 3: walk-forward (train 400d / test 200d)
+  fold winners:
+     4/18  or=60 stop=0.5 tgt=0.0 buf=0.1 be=1 cut=66 ema=0 mt=2 longonly
+     4/18  or=45 stop=0.75 tgt=0.0 buf=0.2 be=1 cut=66 ema=0 mt=2 longonly
+     3/18  or=60 stop=0.5 tgt=0.0 buf=0.0 be=1 cut=66 ema=0 mt=2 longonly
+     3/18  or=75 stop=0.25 tgt=0.0 buf=0.0 be=0 cut=42 ema=0 mt=2 longonly
+     2/18  or=45 stop=0.75 tgt=0.0 buf=0.1 be=1 cut=66 ema=0 mt=2 longonly
+     1/18  or=45 stop=0.75 tgt=0.0 buf=0.0 be=1 cut=66 ema=0 mt=2 longonly
+     1/18  or=45 stop=0.5 tgt=0.0 buf=0.0 be=1 cut=66 ema=0 mt=2 longonly
+  median test-fold score per candidate:
+     2.32  or=60 stop=0.5 tgt=0.0 buf=0.1 be=1 cut=66 ema=0 mt=2 longonly
+     2.12  or=45 stop=0.75 tgt=0.0 buf=0.1 be=1 cut=66 ema=0 mt=2 longonly
+     2.07  or=45 stop=0.75 tgt=0.0 buf=0.2 be=1 cut=66 ema=0 mt=2 longonly
+     2.04  or=45 stop=0.75 tgt=0.0 buf=0.2 be=0 cut=66 ema=0 mt=2 longonly
+     2.03  or=60 stop=0.5 tgt=0.0 buf=0.0 be=1 cut=66 ema=0 mt=2 longonly
+     2.01  or=45 stop=0.5 tgt=0.0 buf=0.0 be=1 cut=66 ema=0 mt=2 longonly
+     1.93  or=45 stop=0.75 tgt=0.0 buf=0.0 be=1 cut=66 ema=0 mt=2 longonly
+     1.83  or=75 stop=0.25 tgt=0.0 buf=0.0 be=0 cut=42 ema=0 mt=2 longonly
+Stage 4: validation on 10 unseen paths (25k account, 1% risk)
+  final params: or=60 stop=0.5 tgt=0.0 buf=0.1 be=1 cut=66 ema=0 mt=2 longonly
+  median: sharpe=1.92 cagr=+65.6% dd=-18.8% pf=1.49 win_days=40% win_months=68% avg_month=$3,365
+wrote results_orb.json
