@@ -1,0 +1,39 @@
+Stage 1: coarse grid search (in-sample, 3 paths)
+  [coarse] 50/540 (10s)
+  [coarse] 100/540 (17s)
+  [coarse] 150/540 (25s)
+  [coarse] 200/540 (33s)
+  [coarse] 250/540 (40s)
+  [coarse] 300/540 (49s)
+  [coarse] 350/540 (55s)
+  [coarse] 400/540 (62s)
+  [coarse] 450/540 (68s)
+  [coarse] 500/540 (75s)
+  best coarse: entry=24 exit=48 trail=5.0 sl=2.0 ema=100 cd=0 vol=(0.15,0.95)  score=1.97
+Stage 2: fine grid around winner
+  [fine] 50/243 (8s)
+  [fine] 100/243 (15s)
+  [fine] 150/243 (22s)
+  [fine] 200/243 (30s)
+  best fine: entry=24 exit=48 trail=5.5 sl=2.5 ema=100 cd=12 vol=(0.15,0.95)  score=2.07
+Stage 3: walk-forward (train 8000 / test 4000)
+  fold winners:
+     7/30  entry=24 exit=48 trail=5.5 sl=3.0 ema=100 cd=0 vol=(0.15,0.95)
+     7/30  entry=24 exit=48 trail=5.0 sl=3.0 ema=100 cd=0 vol=(0.15,0.95)
+     6/30  entry=24 exit=48 trail=5.5 sl=2.5 ema=100 cd=12 vol=(0.15,0.95)
+     4/30  entry=24 exit=48 trail=5.5 sl=3.0 ema=100 cd=24 vol=(0.15,0.95)
+     4/30  entry=24 exit=48 trail=5.0 sl=2.5 ema=100 cd=0 vol=(0.15,0.95)
+     2/30  entry=24 exit=72 trail=5.5 sl=2.5 ema=100 cd=12 vol=(0.15,0.95)
+  median test-fold score per candidate:
+     1.59  entry=24 exit=72 trail=5.0 sl=3.0 ema=100 cd=0 vol=(0.15,0.95)
+     1.57  entry=24 exit=48 trail=5.0 sl=3.0 ema=100 cd=0 vol=(0.15,0.95)
+     1.56  entry=24 exit=48 trail=5.5 sl=3.0 ema=100 cd=0 vol=(0.15,0.95)
+     1.49  entry=24 exit=48 trail=5.5 sl=2.5 ema=100 cd=12 vol=(0.15,0.95)
+     1.43  entry=24 exit=72 trail=5.5 sl=2.5 ema=100 cd=12 vol=(0.15,0.95)
+     1.33  entry=24 exit=72 trail=5.0 sl=2.5 ema=100 cd=0 vol=(0.15,0.95)
+     1.32  entry=24 exit=48 trail=5.0 sl=2.5 ema=100 cd=0 vol=(0.15,0.95)
+     1.16  entry=24 exit=48 trail=5.5 sl=3.0 ema=100 cd=24 vol=(0.15,0.95)
+Stage 4: validation on 10 unseen paths
+  final params: entry=24 exit=72 trail=5.0 sl=3.0 ema=100 cd=0 vol=(0.15,0.95)
+  median validation: sharpe=0.70 cagr=+11.2% dd=-22.2% pf=1.20
+wrote results.json

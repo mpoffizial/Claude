@@ -11,14 +11,14 @@ strategy("AMB - Adaptive Momentum Breakout",
 
 // ============ INPUTS (defaults = optimized settings) ============
 grpE = "Entry"
-entryLen  = input.int(48,  "Donchian Breakout Length", minval=5,  group=grpE)
-emaLen    = input.int(200, "Trend EMA Length",         minval=10, group=grpE)
+entryLen  = input.int(24,  "Donchian Breakout Length", minval=5,  group=grpE)
+emaLen    = input.int(100, "Trend EMA Length",         minval=10, group=grpE)
 allowShort= input.bool(false, "Allow Shorts",                     group=grpE)
 
 grpX = "Exit / Risk"
-exitLen   = input.int(24,   "Fast Exit Channel Length", minval=3,   group=grpX)
-trailMult = input.float(3.0,"Chandelier Trail (x ATR)", step=0.25,  group=grpX)
-slMult    = input.float(2.0,"Initial Stop (x ATR)",     step=0.25,  group=grpX)
+exitLen   = input.int(72,   "Fast Exit Channel Length", minval=3,   group=grpX)
+trailMult = input.float(5.0,"Chandelier Trail (x ATR)", step=0.25,  group=grpX)
+slMult    = input.float(3.0,"Initial Stop (x ATR)",     step=0.25,  group=grpX)
 atrLen    = input.int(14,   "ATR Length",               minval=2,   group=grpX)
 riskPct   = input.float(1.0,"Risk per Trade (%)",       step=0.25,  group=grpX)
 
