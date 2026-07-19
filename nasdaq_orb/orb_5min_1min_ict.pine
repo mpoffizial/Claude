@@ -1,5 +1,5 @@
 //@version=6
-strategy("ORB 5min-Range / 1min-Breakout (ICT-Style)",
+strategy("ORB 5min-Range / 1min-Breakout v2 (ICT-Style)",
      overlay=true,
      initial_capital=25000,
      commission_type=strategy.commission.percent,
@@ -9,20 +9,29 @@ strategy("ORB 5min-Range / 1min-Breakout (ICT-Style)",
      calc_on_every_tick=false)
 // Chart: NAS100 CFD / NQ1! / MNQ1! auf 1 MINUTE.
 // Range = erste 5 Minuten ab 9:30 ET (= 15:30 Schweizer Zeit im Sommer).
-// ACHTUNG: Im Simulator-Backtest war diese Variante deutlich negativ
-// (PF ~0.8) - enge 1-Min-Stops + Kosten. Erst auf echten Daten validieren!
+// v2: Retest-Entry, OR-Breiten-Filter, Entry-Fenster, Partial-TP/Runner,
+//     Tages-Verluststop - alle als Inputs zum Optimieren auf echten Daten.
 
 // ============ INPUTS ============
 grpO = "Opening Range"
 orMin     = input.int(5, "Opening Range (Minuten)", minval=1, group=grpO)
+entryMode = input.string("Breakout", "Entry-Modus", options=["Breakout", "Retest"], group=grpO)
+windowMin = input.int(120, "Entry-Fenster nach Range (Minuten)", minval=5, group=grpO)
 cutoffHr  = input.int(15, "Keine Entries nach (Stunde ET)", minval=10, maxval=16, group=grpO)
 
-grpR = "Risk"
+grpV = "Volatilitaets-Filter"
+useOrFilter = input.bool(true, "OR-Breiten-Filter (x Daily-ATR)", group=grpV)
+minOrAtr  = input.float(0.10, "Min OR-Breite (x DailyATR)", step=0.05, group=grpV)
+maxOrAtr  = input.float(1.00, "Max OR-Breite (x DailyATR)", step=0.05, group=grpV)
+
+grpR = "Risk / Exit"
 useFvg    = input.bool(true,  "FVG-Stop nutzen (falls vorhanden)", group=grpR)
 tgtR      = input.float(2.0,  "Target (R-Multiple)", step=0.5, minval=0.5, group=grpR)
 useLiq    = input.bool(true,  "Liquiditaets-Target (Vortages-Hoch/-Tief)", group=grpR)
+partialTP = input.bool(false, "Runner: 50% bei Target, Rest mit BE-Stop bis EOD", group=grpR)
 riskPct   = input.float(1.0,  "Risiko pro Trade (%)", step=0.25, group=grpR)
 maxTrades = input.int(2, "Max Trades pro Tag", minval=1, maxval=10, group=grpR)
+dayStopPct= input.float(2.0, "Tages-Verluststop (%, 0=aus)", step=0.5, group=grpR)
 maxLev    = input.float(10.0, "Max Hebel (Notional/Equity)", step=0.5, group=grpR)
 allowShort= input.bool(true,  "Shorts erlauben", group=grpR)
 
@@ -34,71 +43,118 @@ sessMinutes = (hour(time, "America/New_York") - 9) * 60 + minute(time, "America/
 var float orHi = na
 var float orLo = na
 var int   tradesToday = 0
+var float dayStartEq = na
+var int   armedLong  = 0     // Retest-Modus: 1 = Breakout gesehen, warte auf Retest
+var int   armedShort = 0
 if newDay
     orHi := na
     orLo := na
     tradesToday := 0
+    dayStartEq := strategy.equity
+    armedLong := 0
+    armedShort := 0
 inOR = inSession and sessMinutes >= 0 and sessMinutes < orMin
 if inOR
     orHi := na(orHi) ? high : math.max(orHi, high)
     orLo := na(orLo) ? low  : math.min(orLo, low)
 orDone = inSession and sessMinutes >= orMin and not na(orHi)
+orW = orHi - orLo
 
-// Vortages-Hoch/-Tief als "naechste Liquiditaet"
-pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
-pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+// Vortages-Hoch/-Tief ("naechste Liquiditaet") + Daily-ATR fuer OR-Filter
+pdh  = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl  = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+datr = request.security(syminfo.tickerid, "D", ta.atr(14)[1], lookahead=barmerge.lookahead_on)
 
-beforeCutoff = hour(time, "America/New_York") < cutoffHr
+orOK = not useOrFilter or (orW >= minOrAtr * datr and orW <= maxOrAtr * datr)
+inWindow = orDone and sessMinutes <= orMin + windowMin and
+     hour(time, "America/New_York") < cutoffHr
+dayStopHit = dayStopPct > 0 and not na(dayStartEq) and
+     (strategy.equity - dayStartEq) / dayStartEq * 100.0 <= -dayStopPct
 
-// ============ FVG-ERKENNUNG (3-Candle-Gap der Breakout-Kerze) ============
-bullFvg = low > high[2]     // Luecke zwischen Kerze[2]-Hoch und aktueller Kerze
+// ============ FVG (3-Candle-Gap der Signal-Kerze) ============
+bullFvg = low > high[2]
 bearFvg = high < low[2]
 
-// ============ ENTRIES ============
-canEnter = orDone and beforeCutoff and strategy.position_size == 0 and
-     tradesToday < maxTrades
+// ============ SIGNALE ============
+canEnter = inWindow and orOK and not dayStopHit and
+     strategy.position_size == 0 and tradesToday < maxTrades
 
-longBreak  = canEnter and close > orHi
-shortBreak = canEnter and allowShort and close < orLo
+rawLong  = close > orHi
+rawShort = allowShort and close < orLo
 
-// Stop: Low/High der Breakout-Kerze, oder FVG-Kante falls vorhanden
+// Retest: nach Breakout erst wieder Beruehrung der OR-Kante + Close darueber
+if entryMode == "Retest"
+    if rawLong and armedLong == 0
+        armedLong := 1
+    if rawShort and armedShort == 0
+        armedShort := 1
+
+retestLong  = armedLong == 1 and low <= orHi and close > orHi
+retestShort = armedShort == 1 and high >= orLo and close < orLo
+
+longSig  = canEnter and (entryMode == "Breakout" ? rawLong : retestLong)
+shortSig = canEnter and (entryMode == "Breakout" ? rawShort : retestShort)
+
+// Stop: Signal-Kerzen-Extrem oder FVG-Kante
 longStop  = useFvg and bullFvg ? high[2] : low
 shortStop = useFvg and bearFvg ? low[2]  : high
 
 var float entryStop = na
 var float entryTgt  = na
-
-riskDistL = close - longStop
-riskDistS = shortStop - close
+var float entryQty  = na
 
 qtyFor(riskDist) =>
     qr = riskDist > 0 ? (strategy.equity * riskPct / 100.0) / (riskDist * syminfo.pointvalue) : 0.0
     qc = close > 0 ? (strategy.equity * maxLev) / (close * syminfo.pointvalue) : 0.0
     math.min(qr, qc)
 
-if longBreak and riskDistL > 0
-    // Target: mind. tgtR x Risiko; Vortageshoch nur wenn es WEITER ist
+riskDistL = close - longStop
+riskDistS = shortStop - close
+
+if longSig and riskDistL > 0
     tgt = close + tgtR * riskDistL
     if useLiq and pdh > tgt
         tgt := pdh
-    strategy.entry("L", strategy.long, qty=qtyFor(riskDistL))
+    q = qtyFor(riskDistL)
+    strategy.entry("L", strategy.long, qty=q)
     entryStop := longStop
     entryTgt  := tgt
+    entryQty  := q
     tradesToday += 1
-if shortBreak and riskDistS > 0
+    armedLong := 2
+if shortSig and riskDistS > 0
     tgt = close - tgtR * riskDistS
     if useLiq and pdl < tgt
         tgt := pdl
-    strategy.entry("S", strategy.short, qty=qtyFor(riskDistS))
+    q = qtyFor(riskDistS)
+    strategy.entry("S", strategy.short, qty=q)
     entryStop := shortStop
     entryTgt  := tgt
+    entryQty  := q
     tradesToday += 1
+    armedShort := 2
 
 // ============ EXITS ============
+// Runner-Modus: Haelfte am Target, danach Stop des Rests auf Entry (BE)
+partialFilled = partialTP and not na(entryQty) and
+     math.abs(strategy.position_size) < entryQty * 0.75
+
 if strategy.position_size > 0
-    strategy.exit("Lx", "L", stop=entryStop, limit=entryTgt)
+    beStop = partialFilled ? math.max(entryStop, strategy.position_avg_price) : entryStop
+    if partialTP
+        strategy.exit("Lx1", "L", qty_percent=50, stop=entryStop, limit=entryTgt)
+        strategy.exit("Lx2", "L", qty_percent=100, stop=beStop)
+    else
+        strategy.exit("Lx", "L", stop=entryStop, limit=entryTgt)
 else if strategy.position_size < 0
-    strategy.exit("Sx", "S", stop=entryStop, limit=entryTgt)
+    beStop = partialFilled ? math.min(entryStop, strategy.position_avg_price) : entryStop
+    if partialTP
+        strategy.exit("Sx1", "S", qty_percent=50, stop=entryStop, limit=entryTgt)
+        strategy.exit("Sx2", "S", qty_percent=100, stop=beStop)
+    else
+        strategy.exit("Sx", "S", stop=entryStop, limit=entryTgt)
+else
+    entryQty := na
 
 // EOD flat
 eod = hour(time, "America/New_York") == 15 and minute(time, "America/New_York") >= 55
@@ -106,10 +162,11 @@ if eod
     strategy.close_all(comment="EOD")
 
 // ============ PLOTS ============
-plot(orDone ? orHi : na, "OR High (5min)", color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
-plot(orDone ? orLo : na, "OR Low (5min)",  color=color.new(color.red, 0),  style=plot.style_linebr, linewidth=2)
+plot(orDone ? orHi : na, "OR High", color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
+plot(orDone ? orLo : na, "OR Low",  color=color.new(color.red, 0),  style=plot.style_linebr, linewidth=2)
 plot(strategy.position_size != 0 ? entryStop : na, "Stop", color=color.new(color.fuchsia, 0), style=plot.style_linebr)
 plot(strategy.position_size != 0 ? entryTgt : na, "Target", color=color.new(color.green, 40), style=plot.style_linebr)
 plot(pdh, "Vortages-Hoch", color=color.new(color.gray, 60), style=plot.style_circles)
 plot(pdl, "Vortages-Tief", color=color.new(color.gray, 60), style=plot.style_circles)
 bgcolor(inOR ? color.new(color.blue, 90) : na, title="Opening Range")
+bgcolor(orDone and not orOK ? color.new(color.orange, 92) : na, title="OR-Filter blockt")
