@@ -1,0 +1,24 @@
+Stage 1: coarse grid (3 seeds)
+  24/96 (4s)
+  48/96 (7s)
+  72/96 (10s)
+  96/96 (13s)
+   2.22  mode=asian tgt=0.0 stop=0.25 cut=660 mt=2 +short  sh=2.35 pf=1.33 tr=980
+   2.17  mode=or30 tgt=0.0 stop=0.5 cut=660 mt=2 longonly  sh=2.22 pf=1.39 tr=597
+   2.14  mode=asian tgt=0.0 stop=0.25 cut=660 mt=2 longonly  sh=2.32 pf=1.46 tr=526
+   2.06  mode=or30 tgt=0.0 stop=0.25 cut=660 mt=2 longonly  sh=2.27 pf=1.41 tr=682
+   1.99  mode=asian tgt=3.0 stop=0.25 cut=660 mt=2 +short  sh=1.99 pf=1.19 tr=1115
+Stage 2: fine grid around winner
+   2.24  mode=asian tgt=0.0 stop=0.25 cut=600 mt=3 +short  sh=2.51 pf=1.42 tr=933
+   2.22  mode=asian tgt=0.0 stop=0.25 cut=660 mt=2 +short  sh=2.35 pf=1.33 tr=980
+   2.21  mode=asian tgt=0.0 stop=0.25 cut=660 mt=3 +short  sh=2.45 pf=1.35 tr=1065
+   2.18  mode=asian tgt=0.0 stop=0.25 cut=780 mt=2 +short  sh=2.30 pf=1.35 tr=1082
+   1.90  mode=asian tgt=0.0 stop=0.25 cut=600 mt=2 +short  sh=2.18 pf=1.32 tr=886
+Stage 3: validation on 6 unseen seeds
+  final: mode=asian tgt=0.0 stop=0.25 cut=600 mt=3 +short
+  median: sharpe=2.00 cagr=+133.3% dd=-35.1% pf=1.29 winM=67% avgM=$8,164
+Stage 4: sensitivity to trend-morning assumption
+  baseline(20%,0.9s): sh= 2.39 cagr=+190.9% pf=1.38 dd=-31.9%
+  weak(10%,0.6s): sh= 0.88 cagr= +34.0% pf=1.12 dd=-35.2%
+  none(0%): sh= 0.26 cagr=  +2.3% pf=1.01 dd=-40.4%
+wrote results_london.json (18s total)

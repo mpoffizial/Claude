@@ -19,16 +19,20 @@ rangeMode = input.string("Asian Range", "Range-Modus",
      options=["Opening Range", "Asian Range"], group=grpS)
 orMin     = input.int(15, "Opening Range (Minuten, nur OR-Modus)", minval=1, group=grpS)
 asianStartHr = input.int(0, "Asian Range Start (Stunde)", minval=0, maxval=7, group=grpS)
-cutoffHr  = input.int(11, "Keine Entries nach (Stunde London)", minval=8, maxval=16, group=grpS)
+cutoffHr  = input.int(10, "Keine Entries nach (Stunde London)", minval=8, maxval=16, group=grpS)
 flatHr    = input.int(16, "EOD Flat (Stunde London)", minval=9, maxval=21, group=grpS)
 flatMin   = input.int(25, "EOD Flat (Minute)", minval=0, maxval=59, group=grpS)
 
 grpR = "Risk"
-useFvg    = input.bool(true,  "FVG-Stop nutzen (falls vorhanden)", group=grpR)
-tgtR      = input.float(2.0,  "Target (R-Multiple)", step=0.5, minval=0.5, group=grpR)
+stopMode  = input.string("Range-Anteil", "Stop-Modus",
+     options=["Range-Anteil", "Candle/FVG"], group=grpR)
+stopFrac  = input.float(0.25, "Stop (x Range-Breite, nur Range-Modus)",
+     step=0.05, minval=0.05, group=grpR)
+useFvg    = input.bool(true,  "FVG-Stop nutzen (nur Candle-Modus)", group=grpR)
+tgtR      = input.float(0.0,  "Target (R-Multiple, 0 = bis EOD halten)", step=0.5, minval=0.0, group=grpR)
 useLiq    = input.bool(true,  "Liquiditaets-Target (Vortages-Hoch/-Tief)", group=grpR)
 riskPct   = input.float(1.0,  "Risiko pro Trade (%)", step=0.25, group=grpR)
-maxTrades = input.int(2, "Max Trades pro Tag", minval=1, maxval=10, group=grpR)
+maxTrades = input.int(3, "Max Trades pro Tag", minval=1, maxval=10, group=grpR)
 maxLev    = input.float(10.0, "Max Hebel (Notional/Equity)", step=0.5, group=grpR)
 allowShort= input.bool(true,  "Shorts erlauben", group=grpR)
 
@@ -76,9 +80,14 @@ canEnter = rangeDone and beforeCutoff and strategy.position_size == 0 and
 longBreak  = canEnter and close > rHi
 shortBreak = canEnter and allowShort and close < rLo
 
-// Stop: Breakout-Kerzen-Extrem, oder bei FVG unter/ueber der IMPULSKERZE
-longStop  = useFvg and bullFvg ? low[1]  : low
-shortStop = useFvg and bearFvg ? high[1] : high
+// Stop: optimiert = fester Anteil der Range-Breite unter/ueber der
+// gebrochenen Kante (robuster als enge 1-Min-Candle-Stops).
+// Alternativ Candle/FVG-Modus wie in der NY-ICT-Version.
+rW = rHi - rLo
+longStop  = stopMode == "Range-Anteil" ? rHi - stopFrac * rW :
+     useFvg and bullFvg ? low[1]  : low
+shortStop = stopMode == "Range-Anteil" ? rLo + stopFrac * rW :
+     useFvg and bearFvg ? high[1] : high
 
 var float entryStop = na
 var float entryTgt  = na
@@ -92,16 +101,16 @@ qtyFor(riskDist) =>
     math.min(qr, qc)
 
 if longBreak and riskDistL > 0
-    tgt = close + tgtR * riskDistL
-    if useLiq and pdh > tgt
+    tgt = tgtR > 0 ? close + tgtR * riskDistL : na
+    if tgtR > 0 and useLiq and pdh > tgt
         tgt := pdh
     strategy.entry("L", strategy.long, qty=qtyFor(riskDistL))
     entryStop := longStop
     entryTgt  := tgt
     tradesToday += 1
 if shortBreak and riskDistS > 0
-    tgt = close - tgtR * riskDistS
-    if useLiq and pdl < tgt
+    tgt = tgtR > 0 ? close - tgtR * riskDistS : na
+    if tgtR > 0 and useLiq and pdl < tgt
         tgt := pdl
     strategy.entry("S", strategy.short, qty=qtyFor(riskDistS))
     entryStop := shortStop
@@ -110,9 +119,9 @@ if shortBreak and riskDistS > 0
 
 // ============ EXITS ============
 if strategy.position_size > 0
-    strategy.exit("Lx", "L", stop=entryStop, limit=entryTgt)
+    strategy.exit("Lx", "L", stop=entryStop, limit=tgtR > 0 ? entryTgt : na)
 else if strategy.position_size < 0
-    strategy.exit("Sx", "S", stop=entryStop, limit=entryTgt)
+    strategy.exit("Sx", "S", stop=entryStop, limit=tgtR > 0 ? entryTgt : na)
 
 // EOD flat (Default 16:25 London, vor US-Schluss/Roll-Over)
 if hr == flatHr and mn >= flatMin

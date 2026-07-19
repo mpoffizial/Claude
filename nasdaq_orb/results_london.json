@@ -1,0 +1,243 @@
+{
+  "final_params": {
+    "mode": "asian",
+    "tgt_r": 0.0,
+    "stop_mode": "0.25",
+    "allow_short": true,
+    "cutoff_bar": 600,
+    "max_trades": 3
+  },
+  "stage1_top5": [
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=660 mt=2 +short",
+      "sharpe": 2.35185979826593,
+      "cagr": 1.888295551568096,
+      "max_dd": -0.3181250629665455,
+      "profit_factor": 1.3285358010719994,
+      "n_trades": 980.0,
+      "win_rate": 0.27653061224489794,
+      "pct_win_months": 0.7142857142857143,
+      "avg_month_usd": 14970.826597961393,
+      "trades_per_day": 1.3066666666666666,
+      "score": 2.215609672332839
+    },
+    {
+      "params": "mode=or30 tgt=0.0 stop=0.5 cut=660 mt=2 longonly",
+      "sharpe": 2.217635640498134,
+      "cagr": 1.3424163006423306,
+      "max_dd": -0.251084791120446,
+      "profit_factor": 1.3900038070468892,
+      "n_trades": 597.0,
+      "win_rate": 0.2931323283082077,
+      "pct_win_months": 0.7142857142857143,
+      "avg_month_usd": 8504.545768768483,
+      "trades_per_day": 0.796,
+      "score": 2.1687906417034695
+    },
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=660 mt=2 longonly",
+      "sharpe": 2.316257315494287,
+      "cagr": 1.2468455284991435,
+      "max_dd": -0.27241480587901346,
+      "profit_factor": 1.4575998956417708,
+      "n_trades": 526.0,
+      "win_rate": 0.29454545454545455,
+      "pct_win_months": 0.6571428571428571,
+      "avg_month_usd": 7237.619080202374,
+      "trades_per_day": 0.7013333333333334,
+      "score": 2.1420097429613496
+    },
+    {
+      "params": "mode=or30 tgt=0.0 stop=0.25 cut=660 mt=2 longonly",
+      "sharpe": 2.265164715951703,
+      "cagr": 2.5978266669786167,
+      "max_dd": -0.3540532462015506,
+      "profit_factor": 1.4128064782510958,
+      "n_trades": 682.0,
+      "win_rate": 0.20821114369501467,
+      "pct_win_months": 0.7142857142857143,
+      "avg_month_usd": 31790.16504702958,
+      "trades_per_day": 0.9093333333333333,
+      "score": 2.057058223548602
+    },
+    {
+      "params": "mode=asian tgt=3.0 stop=0.25 cut=660 mt=2 +short",
+      "sharpe": 1.9874000401864274,
+      "cagr": 0.848139058602787,
+      "max_dd": -0.21736655617988743,
+      "profit_factor": 1.1885909396667387,
+      "n_trades": 1115.0,
+      "win_rate": 0.3467600700525394,
+      "pct_win_months": 0.7428571428571429,
+      "avg_month_usd": 3694.742502926923,
+      "trades_per_day": 1.4866666666666666,
+      "score": 1.9874000401864274
+    }
+  ],
+  "stage2_top5": [
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=600 mt=3 +short",
+      "sharpe": 2.5067679000021603,
+      "cagr": 1.899428097362175,
+      "max_dd": -0.34394157633212935,
+      "profit_factor": 1.4157454063608401,
+      "n_trades": 933.0,
+      "win_rate": 0.2690246516613076,
+      "pct_win_months": 0.7428571428571429,
+      "avg_month_usd": 17738.6168873958,
+      "trades_per_day": 1.244,
+      "score": 2.235024055515137
+    },
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=660 mt=2 +short",
+      "sharpe": 2.35185979826593,
+      "cagr": 1.888295551568096,
+      "max_dd": -0.3181250629665455,
+      "profit_factor": 1.3285358010719994,
+      "n_trades": 980.0,
+      "win_rate": 0.27653061224489794,
+      "pct_win_months": 0.7142857142857143,
+      "avg_month_usd": 14970.826597961393,
+      "trades_per_day": 1.3066666666666666,
+      "score": 2.215609672332839
+    },
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=660 mt=3 +short",
+      "sharpe": 2.453956772827701,
+      "cagr": 1.9433974906183078,
+      "max_dd": -0.3494290544957915,
+      "profit_factor": 1.345613544778136,
+      "n_trades": 1065.0,
+      "win_rate": 0.2676056338028169,
+      "pct_win_months": 0.6571428571428571,
+      "avg_month_usd": 19437.849723777195,
+      "trades_per_day": 1.42,
+      "score": 2.2131407992664975
+    },
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=780 mt=2 +short",
+      "sharpe": 2.304018541619445,
+      "cagr": 1.8643880401548114,
+      "max_dd": -0.30955516531442295,
+      "profit_factor": 1.3482783594071786,
+      "n_trades": 1082.0,
+      "win_rate": 0.2773186409550046,
+      "pct_win_months": 0.7142857142857143,
+      "avg_month_usd": 14697.581393522532,
+      "trades_per_day": 1.4426666666666668,
+      "score": 2.1849082109905993
+    },
+    {
+      "params": "mode=asian tgt=0.0 stop=0.25 cut=600 mt=2 +short",
+      "sharpe": 2.177097711771428,
+      "cagr": 1.4732966046206681,
+      "max_dd": -0.3575664706698896,
+      "profit_factor": 1.3159944045883978,
+      "n_trades": 886.0,
+      "win_rate": 0.2722283205268935,
+      "pct_win_months": 0.6285714285714286,
+      "avg_month_usd": 10278.886224644346,
+      "trades_per_day": 1.1813333333333333,
+      "score": 1.9019642216841368
+    }
+  ],
+  "validation_runs": [
+    {
+      "sharpe": 2.130350482529253,
+      "cagr": 1.5083262444317658,
+      "max_dd": -0.3456196265839525,
+      "profit_factor": 1.2855542735805188,
+      "n_trades": 937.0,
+      "win_rate": 0.25720384204909286,
+      "pct_win_months": 0.6857142857142857,
+      "avg_month_usd": 9530.04155019019,
+      "trades_per_day": 1.2493333333333334
+    },
+    {
+      "sharpe": 1.8718109214035445,
+      "cagr": 1.1568642143801724,
+      "max_dd": -0.2849784963683572,
+      "profit_factor": 1.2893868881510684,
+      "n_trades": 921.0,
+      "win_rate": 0.252985884907709,
+      "pct_win_months": 0.6285714285714286,
+      "avg_month_usd": 6798.321749874033,
+      "trades_per_day": 1.228
+    },
+    {
+      "sharpe": 1.6924812550553705,
+      "cagr": 1.0018560720833483,
+      "max_dd": -0.39852143804081597,
+      "profit_factor": 1.208933293180688,
+      "n_trades": 952.0,
+      "win_rate": 0.24684873949579833,
+      "pct_win_months": 0.6571428571428571,
+      "avg_month_usd": 4154.387709142197,
+      "trades_per_day": 1.2693333333333334
+    },
+    {
+      "sharpe": 2.181041045653284,
+      "cagr": 1.5670139184128873,
+      "max_dd": -0.2009143535921807,
+      "profit_factor": 1.3491420508808105,
+      "n_trades": 956.0,
+      "win_rate": 0.26464435146443516,
+      "pct_win_months": 0.7428571428571429,
+      "avg_month_usd": 10789.103662691115,
+      "trades_per_day": 1.2746666666666666
+    },
+    {
+      "sharpe": 2.509547971478557,
+      "cagr": 2.116160117398638,
+      "max_dd": -0.35603108689499374,
+      "profit_factor": 1.6317404166263236,
+      "n_trades": 897.0,
+      "win_rate": 0.2709030100334448,
+      "pct_win_months": 0.7428571428571429,
+      "avg_month_usd": 15230.955062139097,
+      "trades_per_day": 1.196
+    },
+    {
+      "sharpe": 1.4296045593687365,
+      "cagr": 0.7987677230171397,
+      "max_dd": -0.43642715727262715,
+      "profit_factor": 1.2378824633550762,
+      "n_trades": 951.0,
+      "win_rate": 0.23764458464773922,
+      "pct_win_months": 0.5714285714285714,
+      "avg_month_usd": 3482.050122017158,
+      "trades_per_day": 1.268
+    }
+  ],
+  "validation_median": {
+    "sharpe": 2.0010807019663988,
+    "cagr": 1.332595229405969,
+    "max_dd": -0.3508253567394731,
+    "profit_factor": 1.2874705808657936,
+    "n_trades": 944.0,
+    "win_rate": 0.25509486347840094,
+    "pct_win_months": 0.6714285714285715,
+    "avg_month_usd": 8164.181650032111,
+    "trades_per_day": 1.2586666666666666
+  },
+  "sensitivity": {
+    "baseline(20%,0.9s)": {
+      "sharpe": 2.390879222931379,
+      "cagr": 1.9093509888718092,
+      "profit_factor": 1.3814194657842231,
+      "max_dd": -0.31870776190557903
+    },
+    "weak(10%,0.6s)": {
+      "sharpe": 0.8840766282386522,
+      "cagr": 0.3395895151168047,
+      "profit_factor": 1.1205335732434092,
+      "max_dd": -0.3517962641136411
+    },
+    "none(0%)": {
+      "sharpe": 0.2563992083642032,
+      "cagr": 0.02257461326948995,
+      "profit_factor": 1.008382613653496,
+      "max_dd": -0.403856532019013
+    }
+  }
+}
