@@ -1,0 +1,128 @@
+//@version=6
+strategy("London ORB / Asian-Range-Breakout (ICT-Style)",
+     overlay=true,
+     initial_capital=25000,
+     commission_type=strategy.commission.percent,
+     commission_value=0.003,
+     slippage=2,
+     margin_long=5, margin_short=5,
+     calc_on_every_tick=false)
+// Chart: DE40/GER40, FTSE100, EURUSD, GBPUSD oder NAS100 auf 1-5 MINUTEN.
+// London Open = 08:00 Europe/London (= 09:00 Schweizer Zeit).
+// Zwei Modi:
+//  "Opening Range" = erste N Minuten ab London Open (wie NY-Version)
+//  "Asian Range"   = Range 00:00-08:00 London, Breakout ab London Open
+
+// ============ INPUTS ============
+grpS = "Session (Europe/London-Zeit)"
+rangeMode = input.string("Asian Range", "Range-Modus",
+     options=["Opening Range", "Asian Range"], group=grpS)
+orMin     = input.int(15, "Opening Range (Minuten, nur OR-Modus)", minval=1, group=grpS)
+asianStartHr = input.int(0, "Asian Range Start (Stunde)", minval=0, maxval=7, group=grpS)
+cutoffHr  = input.int(11, "Keine Entries nach (Stunde London)", minval=8, maxval=16, group=grpS)
+flatHr    = input.int(16, "EOD Flat (Stunde London)", minval=9, maxval=21, group=grpS)
+flatMin   = input.int(25, "EOD Flat (Minute)", minval=0, maxval=59, group=grpS)
+
+grpR = "Risk"
+useFvg    = input.bool(true,  "FVG-Stop nutzen (falls vorhanden)", group=grpR)
+tgtR      = input.float(2.0,  "Target (R-Multiple)", step=0.5, minval=0.5, group=grpR)
+useLiq    = input.bool(true,  "Liquiditaets-Target (Vortages-Hoch/-Tief)", group=grpR)
+riskPct   = input.float(1.0,  "Risiko pro Trade (%)", step=0.25, group=grpR)
+maxTrades = input.int(2, "Max Trades pro Tag", minval=1, maxval=10, group=grpR)
+maxLev    = input.float(10.0, "Max Hebel (Notional/Equity)", step=0.5, group=grpR)
+allowShort= input.bool(true,  "Shorts erlauben", group=grpR)
+
+// ============ ZEIT / RANGE-AUFBAU ============
+TZ = "Europe/London"
+hr  = hour(time, TZ)
+mn  = minute(time, TZ)
+newDay = ta.change(dayofmonth(time, TZ)) != 0
+
+// Minuten seit London Open (08:00)
+minsSinceOpen = (hr - 8) * 60 + mn
+
+var float rHi = na
+var float rLo = na
+var int   tradesToday = 0
+if newDay
+    rHi := na
+    rLo := na
+    tradesToday := 0
+
+// Range aufbauen
+buildOR    = rangeMode == "Opening Range" and minsSinceOpen >= 0 and minsSinceOpen < orMin
+buildAsian = rangeMode == "Asian Range" and hr >= asianStartHr and hr < 8
+if buildOR or buildAsian
+    rHi := na(rHi) ? high : math.max(rHi, high)
+    rLo := na(rLo) ? low  : math.min(rLo, low)
+
+rangeDone = not na(rHi) and (rangeMode == "Opening Range" ?
+     minsSinceOpen >= orMin : minsSinceOpen >= 0)
+
+// Vortages-Hoch/-Tief als "naechste Liquiditaet"
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+
+beforeCutoff = hr < cutoffHr
+
+// ============ FVG (3-Candle-Gap der Breakout-Kerze) ============
+bullFvg = low > high[2]
+bearFvg = high < low[2]
+
+// ============ ENTRIES ============
+canEnter = rangeDone and beforeCutoff and strategy.position_size == 0 and
+     tradesToday < maxTrades
+
+longBreak  = canEnter and close > rHi
+shortBreak = canEnter and allowShort and close < rLo
+
+// Stop: Breakout-Kerzen-Extrem, oder bei FVG unter/ueber der IMPULSKERZE
+longStop  = useFvg and bullFvg ? low[1]  : low
+shortStop = useFvg and bearFvg ? high[1] : high
+
+var float entryStop = na
+var float entryTgt  = na
+
+riskDistL = close - longStop
+riskDistS = shortStop - close
+
+qtyFor(riskDist) =>
+    qr = riskDist > 0 ? (strategy.equity * riskPct / 100.0) / (riskDist * syminfo.pointvalue) : 0.0
+    qc = close > 0 ? (strategy.equity * maxLev) / (close * syminfo.pointvalue) : 0.0
+    math.min(qr, qc)
+
+if longBreak and riskDistL > 0
+    tgt = close + tgtR * riskDistL
+    if useLiq and pdh > tgt
+        tgt := pdh
+    strategy.entry("L", strategy.long, qty=qtyFor(riskDistL))
+    entryStop := longStop
+    entryTgt  := tgt
+    tradesToday += 1
+if shortBreak and riskDistS > 0
+    tgt = close - tgtR * riskDistS
+    if useLiq and pdl < tgt
+        tgt := pdl
+    strategy.entry("S", strategy.short, qty=qtyFor(riskDistS))
+    entryStop := shortStop
+    entryTgt  := tgt
+    tradesToday += 1
+
+// ============ EXITS ============
+if strategy.position_size > 0
+    strategy.exit("Lx", "L", stop=entryStop, limit=entryTgt)
+else if strategy.position_size < 0
+    strategy.exit("Sx", "S", stop=entryStop, limit=entryTgt)
+
+// EOD flat (Default 16:25 London, vor US-Schluss/Roll-Over)
+if hr == flatHr and mn >= flatMin
+    strategy.close_all(comment="EOD")
+
+// ============ PLOTS ============
+plot(rangeDone ? rHi : na, "Range High", color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
+plot(rangeDone ? rLo : na, "Range Low",  color=color.new(color.red, 0),  style=plot.style_linebr, linewidth=2)
+plot(strategy.position_size != 0 ? entryStop : na, "Stop", color=color.new(color.fuchsia, 0), style=plot.style_linebr)
+plot(strategy.position_size != 0 ? entryTgt : na, "Target", color=color.new(color.green, 40), style=plot.style_linebr)
+plot(pdh, "Vortages-Hoch", color=color.new(color.gray, 60), style=plot.style_circles)
+plot(pdl, "Vortages-Tief", color=color.new(color.gray, 60), style=plot.style_circles)
+bgcolor(buildOR or buildAsian ? color.new(color.blue, 90) : na, title="Range-Aufbau")
