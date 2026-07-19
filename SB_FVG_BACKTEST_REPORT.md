@@ -264,6 +264,46 @@ einzigen guten Jahr.
   `sb_backtest.py`) ist regressionsgetestet: Mit deaktivierten Features
   reproduziert sie die alten Ergebnisse exakt.
 
+---
+
+# Teil 4: Prop-Firm-Tauglichkeit
+
+Getestet mit neuer Engine-Option `eod_flat_minute` (Zwangs-Glattstellung + Order-
+Storno ab Uhrzeit X, NY-Zeit; regressionsgetestet).
+
+## 4.1 Futures-Prop-Firmen (Apex, Topstep & Co.): NICHT geeignet
+
+Diese Firmen verlangen flat vor Sessionschluss (~16:10–16:59 ET). Die NQ-Robust-
+Edge lebt aber genau von den Trades, die länger laufen: Median-Haltezeit 2,2–2,7 h,
+~25 % der Trades exiten nach 16:00 oder später, Maximum 16 Tage.
+
+| NQ Robust | 2017–2020 | 2023 |
+|---|---|---|
+| ohne Cutoff | +32.899 (PF 1,68) | +19.339 (PF 1,97) |
+| Flat 16:00 | +2.863 (PF 1,06) | −2.346 (PF 0,90) |
+| Flat 16:55 | +3.935 (PF 1,08) | −4.298 (PF 0,83) |
+
+Die Balanced-Variante überlebt den Cutoff besser (17–20: +23,6k PF 1,16; 2023:
++6,2k PF 1,09), ist aber auf MNQ-Skala zu dünn für die Limits: ~470–770 USD/Jahr
+je MNQ bei max. EOD-Trailing-DD von 792–1.416 USD je MNQ. Schon 2 MNQ reißen in
+der 2023-Ära das übliche 2.500-USD-Trailing-Limit (Apex 50k); die für ein
+Evaluation-Ziel nötige Größe (4–6 MNQ) ist damit unvereinbar. **Fazit: Mit
+Flat-by-Close-Regeln ist diese Strategie praktisch nicht handelbar.**
+
+## 4.2 CFD-Prop-Firmen mit Overnight-Erlaubnis (FTMO-Swing-Typ): bedingt geeignet
+
+Bei festen (nicht-trailenden) Limits à la „5 % Tagesverlust / 10 % Gesamtverlust
+auf 100k" läuft die Strategie unverändert. Kennzahlen je 1 NQ-Äquivalent (~20 USD/Pkt):
+
+- Schlechtester Tag: −1.776 (2017–20) / −2.693 USD (2023) → unter 5 %-Tageslimit
+- Max. Drawdown: 7.586 / 6.082 USD → unter 10 %-Gesamtlimit, aber wenig Reserve
+- ~5 % der Trades laufen übers Wochenende → **Swing-Account nötig** (Weekend-Holding)
+
+Empfohlene Größe auf einem 100k-Konto: **max. 0,5–0,7 NQ-Äquivalent** (≈ 10–14
+USD/Pkt CFD-Exposure), damit der historische Drawdown < 50 % des Gesamtlimits
+bleibt. Consistency-Regeln einzelner Anbieter (max. X % Profit aus einem Tag)
+können mit dem 3R-Profil kollidieren — vor Anmeldung prüfen.
+
 ## Dateien
 
 | Datei | Inhalt |

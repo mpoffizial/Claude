@@ -131,7 +131,7 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
          disp_mult, min_gap_tk, sweep_lb, entry_mode, sl_lb, sl_buf_tk,
          tp_mode, fix_rrr, min_rrr, max_day, grace_bars,
          tick, point_value, commission, slip_ticks,
-         gap_atr, buf_atr, be_trigger_rr, max_hold_bars):
+         gap_atr, buf_atr, be_trigger_rr, max_hold_bars, eod_flat_minute):
     # gap_atr / buf_atr > 0: FVG-Mindestgroesse bzw. SL-Puffer als ATR-Vielfache
     # statt fixer Ticks (skaleninvariant ueber Preisniveaus/Regime).
     # be_trigger_rr > 0: Stop auf Einstand, sobald be_trigger_rr * Risiko
@@ -227,7 +227,8 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
                         if p_sl > pos_entry_px:
                             p_sl = pos_entry_px
                         be_done = True
-                if max_hold_bars > 0 and i - pos_entry_i >= max_hold_bars:
+                if ((max_hold_bars > 0 and i - pos_entry_i >= max_hold_bars) or
+                        (eod_flat_minute > 0 and minute[i] >= eod_flat_minute)):
                     exit_px = c[i]
                     pnl = (exit_px - pos_entry_px) * pos_dir * point_value - 2.0 * commission
                     if ntr < max_tr:
@@ -333,6 +334,10 @@ def _run(o, h, l, c, minute, new_day, mid_open, pdh, pdl, asia_hi, asia_lo, atr,
         in_sb = ((use_am and 600 <= m < 660) or
                  (use_ldn and 180 <= m < 240) or
                  (use_pm and 840 <= m < 900))
+
+        # Prop-Modus: keine offenen Orders/Positionen nach EOD-Cutoff
+        if eod_flat_minute > 0 and minute[i] >= eod_flat_minute and pend_dir != 0:
+            pend_dir = 0
 
         # pending management (same order as Pine: fill label / missed / expired)
         if pend_dir != 0 and not filled_this_bar and i > pend_bar:
@@ -454,7 +459,8 @@ DEFAULTS = dict(use_am=True, use_ldn=True, use_pm=True, use_bias=True,
                 disp_mult=1.2, min_gap_tk=4, sweep_lb=30, entry_mode=ENTRY_CE,
                 sl_lb=10, sl_buf_tk=8, tp_mode=TP_LIQ, fix_rrr=2.0,
                 min_rrr=2.0, max_day=4, grace_bars=24,
-                gap_atr=0.0, buf_atr=0.0, be_trigger_rr=0.0, max_hold_bars=0)
+                gap_atr=0.0, buf_atr=0.0, be_trigger_rr=0.0, max_hold_bars=0,
+                eod_flat_minute=0)
 
 
 def run_backtest(pre: dict, params: dict | None = None,
@@ -478,7 +484,8 @@ def run_backtest(pre: dict, params: dict | None = None,
                int(p["max_day"]), int(p["grace_bars"]),
                tick, point_value, commission, slip_ticks,
                float(p["gap_atr"]), float(p["buf_atr"]),
-               float(p["be_trigger_rr"]), int(p["max_hold_bars"]))
+               float(p["be_trigger_rr"]), int(p["max_hold_bars"]),
+               int(p["eod_flat_minute"]))
     entry_i, exit_i, tdir, epx, xpx, pnl, n_setups, n_missed, n_expired = res
     return dict(entry_i=entry_i + start, exit_i=exit_i + start, dir=tdir,
                 entry_px=epx, exit_px=xpx, pnl=pnl,
