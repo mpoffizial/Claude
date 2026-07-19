@@ -2,10 +2,16 @@
 strategy("Nasdaq ORB - Opening Range Breakout",
      overlay=true,
      initial_capital=25000,
-     commission_type=strategy.commission.cash_per_contract,
-     commission_value=0.62,
-     slippage=1,
+     commission_type=strategy.commission.percent,
+     commission_value=0.003,
+     slippage=2,
+     margin_long=5, margin_short=5,
      calc_on_every_tick=false)
+// margin_long/short=5 => 20:1 Hebel-Simulation. OHNE das lehnt TradingView
+// risikobasierte Positionsgroessen > Kontogroesse stillschweigend ab
+// (Pine-Default ist 100% Margin) -> "fast keine Trades".
+// Kommission: 0.003%/Seite ~ CFD-Half-Spread. Fuer MNQ-Futures stattdessen:
+// commission_type=strategy.commission.cash_per_contract, commission_value=0.62
 
 // Chart: NQ1!/MNQ1! (oder QQQ), 5-Minuten, Session 09:30-16:00 ET
 // ============ INPUTS (defaults = optimized settings) ============
@@ -24,6 +30,7 @@ maxTrades = input.int(2, "Max Trades pro Tag", minval=1, maxval=5, group=grpR)
 grpF = "Filter"
 emaDays   = input.int(0, "Daily Trend EMA (0=aus)", minval=0, group=grpF)
 allowShort= input.bool(false, "Shorts erlauben", group=grpF)
+maxLev    = input.float(10.0, "Max Hebel (Notional/Equity)", step=0.5, group=grpR)
 
 // ============ SESSION / OPENING RANGE ============
 inSession   = not na(time(timeframe.period, "0930-1600", "America/New_York"))
@@ -60,7 +67,11 @@ canEnter = orDone and beforeCutoff and strategy.position_size == 0 and
      tradesToday < maxTrades and orW > 0
 
 riskPts = stopFrac * orW
-qty = riskPts > 0 ? (strategy.equity * riskPct / 100.0) / (riskPts * syminfo.pointvalue) : 0.0
+qtyRisk = riskPts > 0 ? (strategy.equity * riskPct / 100.0) / (riskPts * syminfo.pointvalue) : 0.0
+// Hebel-Deckel: enge Opening Range => grosse Risiko-Positionsgroesse.
+// Ohne Cap wuerde die Order die Margin sprengen oder absurd gross werden.
+qtyCap = close > 0 ? (strategy.equity * maxLev) / (close * syminfo.pointvalue) : 0.0
+qty = math.min(qtyRisk, qtyCap)
 
 if canEnter and longOK and close > orHi + buf
     strategy.entry("L", strategy.long, qty=qty)
