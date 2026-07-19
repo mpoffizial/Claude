@@ -100,7 +100,8 @@ def generate(n_days: int = 750, seed: int = 42,
 
 def backtest(close: np.ndarray, mode="asian", tgt_r=2.0, stop_mode="candle",
              allow_short=True, cutoff_bar=660, max_trades=2,
-             risk=0.01, fee=0.0001, eq0=25_000.0) -> dict:
+             risk=0.01, fee=0.0001, eq0=25_000.0,
+             return_daily: bool = False) -> dict:
     n_days = close.shape[0]
     equity = eq0
     daily = np.zeros(n_days)
@@ -184,13 +185,16 @@ def backtest(close: np.ndarray, mode="asian", tgt_r=2.0, stop_mode="candle",
     act = daily[daily != 0]
     n_m = len(daily) // 21
     monthly = daily[:n_m * 21].reshape(n_m, 21).sum(axis=1)
-    return {
+    out = {
         "sharpe": sharpe, "cagr": cagr, "max_dd": max_dd, "profit_factor": pf,
         "n_trades": len(t), "win_rate": len(wins) / len(t) if len(t) else 0.0,
         "pct_win_months": (monthly > 0).mean() if n_m else 0.0,
         "avg_month_usd": monthly.mean() if n_m else 0.0,
         "trades_per_day": len(t) / n_days,
     }
+    if return_daily:
+        out["_daily_equity"] = full
+    return out
 
 
 def score(m: dict) -> float:
