@@ -95,9 +95,10 @@ retestShort = armedShort == 1 and high >= orLo and close < orLo
 longSig  = canEnter and (entryMode == "Breakout" ? rawLong : retestLong)
 shortSig = canEnter and (entryMode == "Breakout" ? rawShort : retestShort)
 
-// Stop: Signal-Kerzen-Extrem oder FVG-Kante
-longStop  = useFvg and bullFvg ? high[2] : low
-shortStop = useFvg and bearFvg ? low[2]  : high
+// Stop: Signal-Kerzen-Extrem, oder bei FVG unter/ueber der IMPULSKERZE
+// (die mittlere Kerze des 3-Kerzen-Musters, die das Gap gerissen hat)
+longStop  = useFvg and bullFvg ? low[1]  : low
+shortStop = useFvg and bearFvg ? high[1] : high
 
 var float entryStop = na
 var float entryTgt  = na
