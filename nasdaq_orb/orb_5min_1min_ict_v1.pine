@@ -1,0 +1,115 @@
+//@version=6
+strategy("ORB 5min-Range / 1min-Breakout (ICT-Style)",
+     overlay=true,
+     initial_capital=25000,
+     commission_type=strategy.commission.percent,
+     commission_value=0.003,
+     slippage=2,
+     margin_long=5, margin_short=5,
+     calc_on_every_tick=false)
+// Chart: NAS100 CFD / NQ1! / MNQ1! auf 1 MINUTE.
+// Range = erste 5 Minuten ab 9:30 ET (= 15:30 Schweizer Zeit im Sommer).
+// FVG-Stop-Variante: Stop unter/ueber der IMPULSKERZE des FVG-Musters.
+
+// ============ INPUTS ============
+grpO = "Opening Range"
+orMin     = input.int(5, "Opening Range (Minuten)", minval=1, group=grpO)
+cutoffHr  = input.int(15, "Keine Entries nach (Stunde ET)", minval=10, maxval=16, group=grpO)
+
+grpR = "Risk"
+useFvg    = input.bool(true,  "FVG-Stop nutzen (falls vorhanden)", group=grpR)
+tgtR      = input.float(2.0,  "Target (R-Multiple)", step=0.5, minval=0.5, group=grpR)
+useLiq    = input.bool(true,  "Liquiditaets-Target (Vortages-Hoch/-Tief)", group=grpR)
+riskPct   = input.float(1.0,  "Risiko pro Trade (%)", step=0.25, group=grpR)
+maxTrades = input.int(2, "Max Trades pro Tag", minval=1, maxval=10, group=grpR)
+maxLev    = input.float(10.0, "Max Hebel (Notional/Equity)", step=0.5, group=grpR)
+allowShort= input.bool(true,  "Shorts erlauben", group=grpR)
+
+// ============ SESSION / OPENING RANGE ============
+inSession   = not na(time(timeframe.period, "0930-1600", "America/New_York"))
+newDay      = ta.change(time("D")) != 0
+sessMinutes = (hour(time, "America/New_York") - 9) * 60 + minute(time, "America/New_York") - 30
+
+var float orHi = na
+var float orLo = na
+var int   tradesToday = 0
+if newDay
+    orHi := na
+    orLo := na
+    tradesToday := 0
+inOR = inSession and sessMinutes >= 0 and sessMinutes < orMin
+if inOR
+    orHi := na(orHi) ? high : math.max(orHi, high)
+    orLo := na(orLo) ? low  : math.min(orLo, low)
+orDone = inSession and sessMinutes >= orMin and not na(orHi)
+
+// Vortages-Hoch/-Tief als "naechste Liquiditaet"
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+
+beforeCutoff = hour(time, "America/New_York") < cutoffHr
+
+// ============ FVG-ERKENNUNG (3-Candle-Gap der Breakout-Kerze) ============
+bullFvg = low > high[2]     // Luecke zwischen Kerze[2]-Hoch und aktueller Kerze
+bearFvg = high < low[2]
+
+// ============ ENTRIES ============
+canEnter = orDone and beforeCutoff and strategy.position_size == 0 and
+     tradesToday < maxTrades
+
+longBreak  = canEnter and close > orHi
+shortBreak = canEnter and allowShort and close < orLo
+
+// Stop: Low/High der Breakout-Kerze - oder bei FVG unter/ueber der
+// IMPULSKERZE (mittlere Kerze des 3-Kerzen-Musters, die das Gap riss)
+longStop  = useFvg and bullFvg ? low[1]  : low
+shortStop = useFvg and bearFvg ? high[1] : high
+
+var float entryStop = na
+var float entryTgt  = na
+
+riskDistL = close - longStop
+riskDistS = shortStop - close
+
+qtyFor(riskDist) =>
+    qr = riskDist > 0 ? (strategy.equity * riskPct / 100.0) / (riskDist * syminfo.pointvalue) : 0.0
+    qc = close > 0 ? (strategy.equity * maxLev) / (close * syminfo.pointvalue) : 0.0
+    math.min(qr, qc)
+
+if longBreak and riskDistL > 0
+    // Target: mind. tgtR x Risiko; Vortageshoch nur wenn es WEITER ist
+    tgt = close + tgtR * riskDistL
+    if useLiq and pdh > tgt
+        tgt := pdh
+    strategy.entry("L", strategy.long, qty=qtyFor(riskDistL))
+    entryStop := longStop
+    entryTgt  := tgt
+    tradesToday += 1
+if shortBreak and riskDistS > 0
+    tgt = close - tgtR * riskDistS
+    if useLiq and pdl < tgt
+        tgt := pdl
+    strategy.entry("S", strategy.short, qty=qtyFor(riskDistS))
+    entryStop := shortStop
+    entryTgt  := tgt
+    tradesToday += 1
+
+// ============ EXITS ============
+if strategy.position_size > 0
+    strategy.exit("Lx", "L", stop=entryStop, limit=entryTgt)
+else if strategy.position_size < 0
+    strategy.exit("Sx", "S", stop=entryStop, limit=entryTgt)
+
+// EOD flat
+eod = hour(time, "America/New_York") == 15 and minute(time, "America/New_York") >= 55
+if eod
+    strategy.close_all(comment="EOD")
+
+// ============ PLOTS ============
+plot(orDone ? orHi : na, "OR High (5min)", color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
+plot(orDone ? orLo : na, "OR Low (5min)",  color=color.new(color.red, 0),  style=plot.style_linebr, linewidth=2)
+plot(strategy.position_size != 0 ? entryStop : na, "Stop", color=color.new(color.fuchsia, 0), style=plot.style_linebr)
+plot(strategy.position_size != 0 ? entryTgt : na, "Target", color=color.new(color.green, 40), style=plot.style_linebr)
+plot(pdh, "Vortages-Hoch", color=color.new(color.gray, 60), style=plot.style_circles)
+plot(pdl, "Vortages-Tief", color=color.new(color.gray, 60), style=plot.style_circles)
+bgcolor(inOR ? color.new(color.blue, 90) : na, title="Opening Range")
