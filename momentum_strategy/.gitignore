@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+user_data/data/
+user_data/logs/
+user_data/backtest_results/
+outputs/*.zip
+outputs/*.json
+outputs/.last_result.json

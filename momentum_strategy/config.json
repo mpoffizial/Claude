@@ -1,0 +1,31 @@
+{
+  "//": "MomentumTrend backtest config. Dry-run/backtest only, no API keys.",
+  "dry_run": true,
+  "dry_run_wallet": 10000,
+  "stake_currency": "USDT",
+  "stake_amount": "unlimited",
+  "tradable_balance_ratio": 0.99,
+  "max_open_trades": 5,
+  "timeframe": "1h",
+  "trading_mode": "spot",
+  "fiat_display_currency": "USD",
+  "fee": 0.00075,
+  "use_exit_signal": true,
+  "exit_profit_only": false,
+  "dataformat_ohlcv": "feather",
+  "exchange": {
+    "name": "binance",
+    "key": "",
+    "secret": "",
+    "ccxt_config": { "enableRateLimit": true },
+    "pair_whitelist": [
+      "BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "XRP/USDT",
+      "ADA/USDT", "AVAX/USDT", "LINK/USDT", "DOT/USDT", "LTC/USDT"
+    ],
+    "pair_blacklist": []
+  },
+  "pairlists": [ { "method": "StaticPairList" } ],
+  "entry_pricing": { "price_side": "other", "use_order_book": false, "order_book_top": 1 },
+  "exit_pricing":  { "price_side": "other", "use_order_book": false, "order_book_top": 1 },
+  "internals": { "process_throttle_secs": 5 }
+}
