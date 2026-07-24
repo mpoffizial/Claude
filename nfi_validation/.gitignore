@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv*/
+ftenv/
 vendor/
 user_data/data/
 user_data/logs/
