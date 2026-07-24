@@ -1,0 +1,20 @@
+# Freqtrade via Docker, image pinned for reproducibility (Deliverable #4).
+# Mirrors the layout of the official docker-compose.yml from freqtrade's stable
+# branch, but pins the tag instead of tracking :stable.
+#
+#   docker compose run --rm freqtrade download-data ...
+#   docker compose run --rm freqtrade backtesting ...
+#
+# user_data/ is bind-mounted; put the NFI strategy .py + configs + downloaded
+# data under it (see README).
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:2026.6
+    # build: reproducible base; do NOT use :stable / :latest for a study.
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # No ports / no API server needed for backtesting.
+    command: >
+      backtesting
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --config /freqtrade/user_data/config.json

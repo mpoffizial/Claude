@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Pinned versions for reproducibility (Deliverable #4).
+# Two logical environments; keep them separate to avoid dependency conflicts.
+# ---------------------------------------------------------------------------
+
+# (A) Backtest engine. Prefer Docker (see docker-compose.yml, image pinned to
+#     freqtradeorg/freqtrade:2026.6). If you must pip-install instead:
+#         python -m venv .venv-ft && . .venv-ft/bin/activate
+#         pip install "freqtrade==2026.6"
+#     freqtrade pins its own pandas/numpy/TA-Lib; let it resolve them.
+freqtrade==2026.6
+
+# (B) Analysis/plotting environment for the scripts in this repo
+#     (01_analyze_git_history, 05_costs, 06_robustness, 07_benchmark).
+#     Resolved and tested in this session:
+pandas==3.0.5
+numpy==2.4.6
+matplotlib==3.11.1
+scipy==1.17.1
+
+# Strategy under test is pinned by git SHA, NOT by pip - see walk-forward driver.
+# NostalgiaForInfinity @ https://github.com/iterativv/NostalgiaForInfinity
+# Baseline uses HEAD-at-run-date; walk-forward checks out one SHA per window.

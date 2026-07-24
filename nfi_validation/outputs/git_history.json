@@ -1,0 +1,210 @@
+{
+  "repo": "iterativv/NostalgiaForInfinity",
+  "analysed_on": "2026-07-24",
+  "total_commits": 25927,
+  "commits_per_year_all_files": {
+    "2021": 2102,
+    "2022": 3764,
+    "2023": 4033,
+    "2024": 4430,
+    "2025": 5363,
+    "2026": 6235
+  },
+  "n_major_versions": 7,
+  "version_lineage": {
+    "NostalgiaForInfinityX.py": {
+      "first_add": "2021-10-06",
+      "last_touch": "2026-05-13",
+      "commits": 3591,
+      "commits_per_year": {
+        "2021": 711,
+        "2022": 2811,
+        "2023": 60,
+        "2024": 3,
+        "2025": 5,
+        "2026": 1
+      },
+      "complexity": {
+        "lines": 38977,
+        "tuned_thresholds": 22614,
+        "condition_combinators": 1661,
+        "enter_signal_refs": 43
+      }
+    },
+    "NostalgiaForInfinityX2.py": {
+      "first_add": "2022-12-13",
+      "last_touch": "2026-05-13",
+      "commits": 1027,
+      "commits_per_year": {
+        "2022": 256,
+        "2023": 762,
+        "2024": 3,
+        "2025": 5,
+        "2026": 1
+      },
+      "complexity": {
+        "lines": 14444,
+        "tuned_thresholds": 6475,
+        "condition_combinators": 21,
+        "enter_signal_refs": 72
+      }
+    },
+    "NostalgiaForInfinityX3.py": {
+      "first_add": "2023-05-30",
+      "last_touch": "2026-05-13",
+      "commits": 2390,
+      "commits_per_year": {
+        "2023": 1081,
+        "2024": 1303,
+        "2025": 5,
+        "2026": 1
+      },
+      "complexity": {
+        "lines": 46718,
+        "tuned_thresholds": 20716,
+        "condition_combinators": 1198,
+        "enter_signal_refs": 202
+      }
+    },
+    "NostalgiaForInfinityX4.py": {
+      "first_add": "2023-08-16",
+      "last_touch": "2026-05-13",
+      "commits": 2094,
+      "commits_per_year": {
+        "2023": 779,
+        "2024": 1309,
+        "2025": 5,
+        "2026": 1
+      },
+      "complexity": {
+        "lines": 46716,
+        "tuned_thresholds": 20716,
+        "condition_combinators": 1198,
+        "enter_signal_refs": 202
+      }
+    },
+    "NostalgiaForInfinityX5.py": {
+      "first_add": "2024-09-14",
+      "last_touch": "2026-05-13",
+      "commits": 1319,
+      "commits_per_year": {
+        "2024": 1084,
+        "2025": 234,
+        "2026": 1
+      },
+      "complexity": {
+        "lines": 58249,
+        "tuned_thresholds": 30301,
+        "condition_combinators": 420,
+        "enter_signal_refs": 240
+      }
+    },
+    "NostalgiaForInfinityX6.py": {
+      "first_add": "2025-03-01",
+      "last_touch": "2026-05-31",
+      "commits": 2612,
+      "commits_per_year": {
+        "2025": 2280,
+        "2026": 332
+      },
+      "complexity": {
+        "lines": 69664,
+        "tuned_thresholds": 35678,
+        "condition_combinators": 1188,
+        "enter_signal_refs": 273
+      }
+    },
+    "NostalgiaForInfinityX7.py": {
+      "first_add": "2025-10-21",
+      "last_touch": "2026-07-24",
+      "commits": 4253,
+      "commits_per_year": {
+        "2025": 1441,
+        "2026": 2812
+      },
+      "complexity": {
+        "lines": 75111,
+        "tuned_thresholds": 14347,
+        "condition_combinators": 6732,
+        "enter_signal_refs": 302
+      }
+    }
+  },
+  "walk_forward_active_version_map": [
+    {
+      "checkpoint": "2023-01-01",
+      "active_version": "NostalgiaForInfinityX2.py",
+      "version_age_days": 19
+    },
+    {
+      "checkpoint": "2023-04-01",
+      "active_version": "NostalgiaForInfinityX2.py",
+      "version_age_days": 109
+    },
+    {
+      "checkpoint": "2023-07-01",
+      "active_version": "NostalgiaForInfinityX3.py",
+      "version_age_days": 32
+    },
+    {
+      "checkpoint": "2023-10-01",
+      "active_version": "NostalgiaForInfinityX4.py",
+      "version_age_days": 46
+    },
+    {
+      "checkpoint": "2024-01-01",
+      "active_version": "NostalgiaForInfinityX4.py",
+      "version_age_days": 138
+    },
+    {
+      "checkpoint": "2024-04-01",
+      "active_version": "NostalgiaForInfinityX4.py",
+      "version_age_days": 229
+    },
+    {
+      "checkpoint": "2024-07-01",
+      "active_version": "NostalgiaForInfinityX4.py",
+      "version_age_days": 320
+    },
+    {
+      "checkpoint": "2024-10-01",
+      "active_version": "NostalgiaForInfinityX5.py",
+      "version_age_days": 17
+    },
+    {
+      "checkpoint": "2025-01-01",
+      "active_version": "NostalgiaForInfinityX5.py",
+      "version_age_days": 109
+    },
+    {
+      "checkpoint": "2025-04-01",
+      "active_version": "NostalgiaForInfinityX6.py",
+      "version_age_days": 31
+    },
+    {
+      "checkpoint": "2025-07-01",
+      "active_version": "NostalgiaForInfinityX6.py",
+      "version_age_days": 122
+    },
+    {
+      "checkpoint": "2025-10-01",
+      "active_version": "NostalgiaForInfinityX6.py",
+      "version_age_days": 214
+    },
+    {
+      "checkpoint": "2026-01-01",
+      "active_version": "NostalgiaForInfinityX7.py",
+      "version_age_days": 72
+    },
+    {
+      "checkpoint": "2026-04-01",
+      "active_version": "NostalgiaForInfinityX7.py",
+      "version_age_days": 162
+    },
+    {
+      "checkpoint": "2026-07-01",
+      "active_version": "NostalgiaForInfinityX7.py",
+      "version_age_days": 253
+    }
+  ]
+}

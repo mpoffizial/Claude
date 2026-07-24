@@ -1,0 +1,61 @@
+{
+  "//": "NFI validation base config. NO API KEYS - backtest/dry-run only.",
+  "//pflicht": "The four NFI-mandated values below MUST NOT be overridden (README).",
+  "timeframe": "5m",
+  "use_exit_signal": true,
+  "exit_profit_only": false,
+  "ignore_roi_if_entry_signal": true,
+
+  "dry_run": true,
+  "dry_run_wallet": 10000,
+  "stake_currency": "USDT",
+  "stake_amount": "unlimited",
+  "tradable_balance_ratio": 0.99,
+  "max_open_trades": 6,
+  "fiat_display_currency": "USD",
+  "trading_mode": "spot",
+  "margin_mode": "",
+
+  "//fees": "Set explicitly so every backtest states its cost assumption. 0.075% = Binance spot w/ BNB discount. Overridden per-scenario in Phase 4.",
+  "fee": 0.00075,
+
+  "//grinding": "NFI position-adjustment (DCA/'grinding') is part of the strategy; keep on.",
+  "position_adjustment_enable": true,
+
+  "exchange": {
+    "name": "binance",
+    "key": "",
+    "secret": "",
+    "ccxt_config": { "enableRateLimit": true },
+    "ccxt_async_config": { "enableRateLimit": true },
+    "pair_whitelist": [],
+    "pair_blacklist": []
+  },
+
+  "pairlists": [
+    { "method": "StaticPairList" }
+  ],
+
+  "entry_pricing": {
+    "price_side": "other",
+    "use_order_book": false,
+    "order_book_top": 1,
+    "price_last_balance": 0
+  },
+  "exit_pricing": {
+    "price_side": "other",
+    "use_order_book": false,
+    "order_book_top": 1
+  },
+  "order_types": {
+    "entry": "limit",
+    "exit": "limit",
+    "emergency_exit": "limit",
+    "force_entry": "limit",
+    "force_exit": "limit",
+    "stoploss": "limit",
+    "stoploss_on_exchange": false
+  },
+  "unfilledtimeout": { "entry": 3, "exit": 2, "unit": "minutes" },
+  "internals": { "process_throttle_secs": 5 }
+}
