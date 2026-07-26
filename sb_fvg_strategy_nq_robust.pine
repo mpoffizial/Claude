@@ -1,0 +1,331 @@
+//@version=5
+// ═══════════════════════════════════════════════════════════════════
+//  ICT SILVER BULLET FVG – STRATEGY (NQ ROBUST / ATR + BREAK-EVEN)
+//  Grundlogik unveraendert. Drei strukturelle Aenderungen machen die
+//  Strategie ueber beide getesteten Aeren (2017–Mai 2020 UND Feb–Sep 2023,
+//  1min, zwei unabhaengige Datenanbieter) auf Nasdaq profitabel:
+//    1. SL-Puffer = 2.0 × ATR(14) statt fixer Ticks (skaleninvariant)
+//    2. TP = 3R statt 2R, dafuer Break-Even bei +1R (Stop auf Einstand)
+//    3. FVG-Mindestgroesse = 0.3 × ATR statt fixer Ticks
+//  Ergebnis (1 NQ-Kontrakt, nach Kosten, konservative Fill-Annahmen):
+//    · 2017–2020: +32.899 USD, PF 1.68, 211 Trades, MaxDD 7.586 USD
+//      (jedes Jahr positiv; 2017 nur knapp)
+//    · 2023:      +19.339 USD, PF 1.97,  44 Trades, MaxDD 6.082 USD
+//    · Stress (2 Ticks Slippage, $5/Seite): PF 1.62 / 1.93
+//  ACHTUNG: Winrate nur ~20 % – die meisten Trades enden am Break-Even
+//  oder im Stop, wenige grosse 3R-Gewinner tragen alles. Details:
+//  SB_FVG_BACKTEST_REPORT.md, Teil 3. Nur 1min. Forward-Test Pflicht!
+// ═══════════════════════════════════════════════════════════════════
+strategy("ICT Silver Bullet FVG – Strategy (NQ Robust)", "SB-FVG-S-NQR", overlay=true,
+     initial_capital=25000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=2.5,
+     slippage=1, calc_on_every_tick=false,
+     max_boxes_count=500, max_lines_count=500, max_labels_count=500,
+     default_qty_type=strategy.fixed, default_qty_value=1)
+
+// ════════════════ INPUTS ════════════════
+grpS = "Session & Zeit (NY-Zeit)"
+useAMw  = input.bool(true, "AM Silver Bullet aktiv (10–11)", group=grpS)
+amSess  = input.session("1000-1100", "AM Fenster", group=grpS)
+useLDNw = input.bool(true, "London Silver Bullet aktiv (3–4)", group=grpS)
+ldnSess = input.session("0300-0400", "London Fenster", group=grpS)
+usePMw  = input.bool(true, "PM Silver Bullet aktiv (14–15)", group=grpS)
+pmSess  = input.session("1400-1500", "PM Fenster", group=grpS)
+asiaSession = input.session("1800-0000", "Asia Session", group=grpS)
+showSB      = input.bool(true, "SB-Fenster hervorheben", group=grpS)
+
+grpB = "Bias"
+useBias = input.bool(true, "Midnight-Open-Bias-Filter aktiv", group=grpB)
+showMid = input.bool(true, "Midnight-Open-Linie anzeigen", group=grpB)
+
+grpF = "FVG & Displacement"
+dispMult = input.float(1.5, "Displacement: Kerzen-Body > x · ATR(14)", minval=0.1, step=0.1, group=grpF)
+minGapTk = input.int(4, "Minimale FVG-Groesse (Ticks)", minval=0, group=grpF)
+showFVG  = input.bool(true, "FVG-Box zeichnen", group=grpF)
+
+grpL = "Liquiditaet & Sweep"
+usePD   = input.bool(true, "Previous Day High/Low", group=grpL)
+useAsia = input.bool(true, "Asia High/Low", group=grpL)
+showLiq = input.bool(true, "Liquiditaetslinien anzeigen", group=grpL)
+sweepLB = input.int(30, "Sweep innerhalb der letzten x Bars", minval=5, group=grpL)
+
+grpT = "Trade Management"
+entryMode = input.string("FVG Edge", "Entry-Option", options=["FVG Edge", "CE (50%)", "Full Gap"], group=grpT)
+slLB      = input.int(15, "SL hinter Swing der letzten x Bars", minval=3, group=grpT)
+slBufTk   = input.int(16, "SL-Puffer (Ticks)", minval=0, group=grpT)
+tpMode    = input.string("Fix RRR", "TP-Modus", options=["Liquiditaet", "Fix RRR"], group=grpT)
+fixRRR    = input.float(3.0, "Fixes RRR (Fix-Modus / Fallback)", minval=0.5, step=0.5, group=grpT)
+minRRR    = input.float(1.0, "Minimales RRR (Setup-Filter)", minval=0.5, step=0.5, group=grpT)
+maxDay    = input.int(4, "Max. Setups pro Tag", minval=1, group=grpT)
+graceBars = input.int(48, "Fill-Frist: Bars nach Fenster-Ende", minval=0, group=grpT)
+gapATRx   = input.float(0.3, "FVG-Mindestgroesse: x · ATR(14)  (0 = Ticks nutzen)", minval=0.0, step=0.1, group=grpT)
+bufATRx   = input.float(2.0, "SL-Puffer: x · ATR(14)  (0 = Ticks nutzen)", minval=0.0, step=0.5, group=grpT)
+beTrig    = input.float(1.0, "Break-Even: Stop auf Einstand ab x · R  (0 = aus)", minval=0.0, step=0.5, group=grpT)
+
+grpR = "Position Sizing"
+sizeMode = input.string("Fix Kontrakte", "Modus", options=["Fix Kontrakte", "Risiko %"], group=grpR)
+fixQty   = input.int(1, "Fixe Kontrakte", minval=1, group=grpR)
+riskPct  = input.float(1.0, "Risiko pro Trade (% vom Equity)", minval=0.1, step=0.1, group=grpR)
+
+tz = "America/New_York"
+
+// ════════════════ SESSION- & TAGESLOGIK ════════════════
+inAM   = not na(time(timeframe.period, amSess, tz))
+inLDN  = not na(time(timeframe.period, ldnSess, tz))
+inPM   = not na(time(timeframe.period, pmSess, tz))
+inSB   = (useAMw and inAM) or (useLDNw and inLDN) or (usePMw and inPM)
+inAsia = not na(time(timeframe.period, asiaSession, tz))
+newDay = ta.change(dayofmonth(time, tz)) != 0
+
+var float midOpen = na
+if newDay
+    midOpen := open
+
+var int setupsToday = 0
+if newDay
+    setupsToday := 0
+
+var float asiaHigh = na
+var float asiaLow  = na
+asiaStart = inAsia and not inAsia[1]
+if asiaStart
+    asiaHigh := high
+    asiaLow  := low
+else if inAsia
+    asiaHigh := math.max(asiaHigh, high)
+    asiaLow  := math.min(asiaLow, low)
+
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+
+// ════════════════ BIAS ════════════════
+biasLong  = not na(midOpen) and close > midOpen
+biasShort = not na(midOpen) and close < midOpen
+
+// ════════════════ LIQUIDITY SWEEPS ════════════════
+sweepBull = (usePD and not na(pdl) and low < pdl and close > pdl) or (useAsia and not na(asiaLow) and low < asiaLow and close > asiaLow)
+sweepBear = (usePD and not na(pdh) and high > pdh and close < pdh) or (useAsia and not na(asiaHigh) and high > asiaHigh and close < asiaHigh)
+
+bsBull = ta.barssince(sweepBull)
+bsBear = ta.barssince(sweepBear)
+bullSweepRecent = not na(bsBull) and bsBull <= sweepLB
+bearSweepRecent = not na(bsBear) and bsBear <= sweepLB
+
+// ════════════════ FVG + DISPLACEMENT ════════════════
+atr14  = ta.atr(14)
+minGap = gapATRx > 0 ? gapATRx * atr14 : minGapTk * syminfo.mintick
+disp   = math.abs(close[1] - open[1]) > dispMult * atr14
+
+bullFVG = low > high[2]
+bearFVG = high < low[2]
+gapB = low - high[2]
+gapS = low[2] - high
+
+validBull = bullFVG and disp and close[1] > open[1] and gapB >= minGap
+validBear = bearFVG and disp and close[1] < open[1] and gapS >= minGap
+
+fvgTopB = low
+fvgBotB = high[2]
+fvgTopS = low[2]
+fvgBotS = high
+
+longEntry  = entryMode == "FVG Edge" ? fvgTopB : entryMode == "CE (50%)" ? math.avg(fvgTopB, fvgBotB) : fvgBotB
+shortEntry = entryMode == "FVG Edge" ? fvgBotS : entryMode == "CE (50%)" ? math.avg(fvgTopS, fvgBotS) : fvgTopS
+
+lowestSw  = ta.lowest(low, slLB)
+highestSw = ta.highest(high, slLB)
+slBufPts = bufATRx > 0 ? bufATRx * atr14 : slBufTk * syminfo.mintick
+longSL  = lowestSw  - slBufPts
+shortSL = highestSw + slBufPts
+
+// ════════════════ POSITION SIZING ════════════════
+calcQty(float riskPts) =>
+    float q = float(fixQty)
+    if sizeMode == "Risiko %"
+        riskCash = strategy.equity * riskPct / 100.0
+        perContract = riskPts * syminfo.pointvalue
+        q := perContract > 0 ? math.max(1, math.floor(riskCash / perContract)) : 1
+    q
+
+// ════════════════ ORDER- & TRADE-VERWALTUNG ════════════════
+var int   pendDir = 0
+var int   pendBar = na
+var float pEntry  = na
+var float pSL     = na
+var float pTP     = na
+var bool  inPos   = false
+var float pRisk   = na
+var bool  beMoved = false
+var int   fillBar = na
+var int   lastClosed = 0
+var line  lnE = na
+var line  lnS = na
+var line  lnT = na
+var box   bxF = na
+
+fmt(float p) => str.tostring(p, format.mintick)
+flat = strategy.position_size == 0
+
+// ── LONG SETUP ──
+canTrade  = flat and pendDir == 0 and inSB and setupsToday < maxDay
+longSetup = canTrade and validBull and bullSweepRecent and (not useBias or biasLong)
+
+if longSetup
+    riskL = longEntry - longSL
+    float tpL = na
+    if tpMode == "Fix RRR"
+        tpL := longEntry + fixRRR * riskL
+    else
+        float best = na
+        if usePD and not na(pdh) and pdh > longEntry
+            best := pdh
+        if useAsia and not na(asiaHigh) and asiaHigh > longEntry
+            best := na(best) ? asiaHigh : math.min(best, asiaHigh)
+        tpL := na(best) ? longEntry + fixRRR * riskL : best
+    rrL = riskL > 0 ? (tpL - longEntry) / riskL : 0.0
+    if riskL > 0 and rrL >= minRRR
+        qty = calcQty(riskL)
+        strategy.entry("Long", strategy.long, qty=qty, limit=longEntry)
+        strategy.exit("Long Exit", "Long", stop=longSL, limit=tpL)
+        pendDir := 1
+        pendBar := bar_index
+        pEntry  := longEntry
+        pSL     := longSL
+        pTP     := tpL
+        pRisk   := riskL
+        beMoved := false
+        setupsToday := setupsToday + 1
+        if showFVG
+            bxF := box.new(bar_index - 2, fvgTopB, bar_index, fvgBotB, border_color=color.new(color.teal, 0), bgcolor=color.new(color.teal, 82))
+        lnE := line.new(bar_index, pEntry, bar_index + 1, pEntry, color=color.new(color.blue, 0), width=2)
+        lnS := line.new(bar_index, pSL, bar_index + 1, pSL, color=color.new(color.red, 0), width=2)
+        lnT := line.new(bar_index, pTP, bar_index + 1, pTP, color=color.new(color.green, 0), width=2)
+        label.new(bar_index, pEntry, "LONG · " + entryMode + "\nEntry " + fmt(pEntry) + "\nSL " + fmt(pSL) + " | TP " + fmt(pTP) + "\nRRR " + str.tostring(rrL, "#.##") + " · Qty " + str.tostring(qty, "#"), style=label.style_label_left, color=color.new(color.blue, 15), textcolor=color.white, size=size.small)
+        alert("SB-FVG LONG Setup " + syminfo.ticker + " | Entry " + fmt(pEntry) + " | SL " + fmt(pSL) + " | TP " + fmt(pTP), alert.freq_once_per_bar_close)
+
+// ── SHORT SETUP ──
+shortSetup = flat and pendDir == 0 and inSB and setupsToday < maxDay and validBear and bearSweepRecent and (not useBias or biasShort)
+
+if shortSetup
+    riskS = shortSL - shortEntry
+    float tpS = na
+    if tpMode == "Fix RRR"
+        tpS := shortEntry - fixRRR * riskS
+    else
+        float best = na
+        if usePD and not na(pdl) and pdl < shortEntry
+            best := pdl
+        if useAsia and not na(asiaLow) and asiaLow < shortEntry
+            best := na(best) ? asiaLow : math.max(best, asiaLow)
+        tpS := na(best) ? shortEntry - fixRRR * riskS : best
+    rrS = riskS > 0 ? (shortEntry - tpS) / riskS : 0.0
+    if riskS > 0 and rrS >= minRRR
+        qty = calcQty(riskS)
+        strategy.entry("Short", strategy.short, qty=qty, limit=shortEntry)
+        strategy.exit("Short Exit", "Short", stop=shortSL, limit=tpS)
+        pendDir := -1
+        pendBar := bar_index
+        pEntry  := shortEntry
+        pSL     := shortSL
+        pTP     := tpS
+        pRisk   := riskS
+        beMoved := false
+        setupsToday := setupsToday + 1
+        if showFVG
+            bxF := box.new(bar_index - 2, fvgTopS, bar_index, fvgBotS, border_color=color.new(color.maroon, 0), bgcolor=color.new(color.maroon, 82))
+        lnE := line.new(bar_index, pEntry, bar_index + 1, pEntry, color=color.new(color.blue, 0), width=2)
+        lnS := line.new(bar_index, pSL, bar_index + 1, pSL, color=color.new(color.red, 0), width=2)
+        lnT := line.new(bar_index, pTP, bar_index + 1, pTP, color=color.new(color.green, 0), width=2)
+        label.new(bar_index, pEntry, "SHORT · " + entryMode + "\nEntry " + fmt(pEntry) + "\nSL " + fmt(pSL) + " | TP " + fmt(pTP) + "\nRRR " + str.tostring(rrS, "#.##") + " · Qty " + str.tostring(qty, "#"), style=label.style_label_right, color=color.new(color.maroon, 15), textcolor=color.white, size=size.small)
+        alert("SB-FVG SHORT Setup " + syminfo.ticker + " | Entry " + fmt(pEntry) + " | SL " + fmt(pSL) + " | TP " + fmt(pTP), alert.freq_once_per_bar_close)
+
+// ── PENDING VERWALTEN: gefuellt, verpasst oder Frist abgelaufen ──
+if pendDir != 0
+    if not flat
+        label.new(bar_index, pEntry, "FILLED @ " + fmt(pEntry), style=pendDir == 1 ? label.style_label_up : label.style_label_down, color=color.new(color.blue, 0), textcolor=color.white, size=size.tiny)
+        pendDir := 0
+        inPos := true
+        fillBar := bar_index
+    else if bar_index > pendBar
+        missed  = pendDir == 1 ? high >= pTP and low > pEntry : low <= pTP and high < pEntry
+        expired = not inSB and bar_index - pendBar > graceBars
+        if missed or expired
+            strategy.cancel(pendDir == 1 ? "Long" : "Short")
+            label.new(bar_index, pEntry, missed ? "VERPASST (TP ohne Fill)" : "ABGELAUFEN", style=label.style_label_left, color=color.new(color.gray, 30), textcolor=color.white, size=size.tiny)
+            pendDir := 0
+
+// ── BREAK-EVEN: Stop auf Einstand ab beTrig · R (ab Folgebar des Fills) ──
+if inPos and not flat and not beMoved and beTrig > 0 and not na(fillBar) and bar_index > fillBar
+    if strategy.position_size > 0 and high >= pEntry + beTrig * pRisk
+        strategy.exit("Long Exit", "Long", stop=pEntry, limit=pTP)
+        pSL := pEntry
+        beMoved := true
+    else if strategy.position_size < 0 and low <= pEntry - beTrig * pRisk
+        strategy.exit("Short Exit", "Short", stop=pEntry, limit=pTP)
+        pSL := pEntry
+        beMoved := true
+
+// ── TRADE GESCHLOSSEN: Win/Loss-Label ──
+if inPos and flat
+    inPos := false
+    if strategy.closedtrades > lastClosed
+        lastProfit = strategy.closedtrades.profit(strategy.closedtrades - 1)
+        isWin = lastProfit > 0
+        label.new(bar_index, close, (isWin ? "TAKE PROFIT ✔  +" : "STOP LOSS ✖  ") + str.tostring(lastProfit, "#.##") + " " + syminfo.currency, style=isWin ? label.style_label_down : label.style_label_up, color=color.new(isWin ? color.green : color.red, 0), textcolor=color.white, size=size.small)
+lastClosed := strategy.closedtrades
+
+// ── Aktive Linien/Boxen verlaengern ──
+if (pendDir != 0 or not flat) and not na(lnE)
+    line.set_x2(lnE, bar_index)
+    line.set_x2(lnS, bar_index)
+    line.set_x2(lnT, bar_index)
+    if not na(bxF)
+        box.set_right(bxF, bar_index)
+
+// ════════════════ DARSTELLUNG ════════════════
+plot(showMid ? midOpen : na, "Midnight Open (00:00 NY)", color=color.new(color.orange, 0), style=plot.style_linebr, linewidth=1)
+plot(showLiq and usePD ? pdh : na, "PDH", color=color.new(color.fuchsia, 30), style=plot.style_linebr)
+plot(showLiq and usePD ? pdl : na, "PDL", color=color.new(color.fuchsia, 30), style=plot.style_linebr)
+plot(showLiq and useAsia ? asiaHigh : na, "Asia High", color=color.new(color.aqua, 40), style=plot.style_linebr)
+plot(showLiq and useAsia ? asiaLow : na, "Asia Low", color=color.new(color.aqua, 40), style=plot.style_linebr)
+
+bgcolor(showSB and inSB ? color.new(color.orange, 88) : na, title="SB-Fenster")
+
+// ════════════════ STATUS-TABELLE ════════════════
+DAYS30 = 30 * 24 * 60 * 60 * 1000
+
+var table tb = table.new(position.top_right, 2, 9, bgcolor=color.new(color.black, 15), border_width=1, border_color=color.new(color.gray, 60))
+if barstate.islast
+    int w30 = 0
+    int t30 = 0
+    if strategy.closedtrades > 0
+        for i = strategy.closedtrades - 1 to 0
+            if time - strategy.closedtrades.exit_time(i) > DAYS30
+                break
+            t30 := t30 + 1
+            if strategy.closedtrades.profit(i) > 0
+                w30 := w30 + 1
+    float wr30 = t30 > 0 ? 100.0 * w30 / t30 : na
+    wrTxt = t30 > 0 ? str.tostring(wr30, "#.#") + " %" : "keine Trades"
+    wrCol = na(wr30) ? color.gray : wr30 >= 50 ? color.green : wr30 >= 40 ? color.orange : color.red
+    stateTxt = not flat ? "IM TRADE" : pendDir != 0 ? "PENDING (Limit)" : "Wartet"
+    biasTxt  = biasLong ? "LONG ▲" : biasShort ? "SHORT ▼" : "–"
+    biasCol  = biasLong ? color.green : biasShort ? color.red : color.gray
+    table.cell(tb, 0, 0, "SB-FVG Strategy NQR", text_color=color.white, text_size=size.small)
+    table.cell(tb, 1, 0, syminfo.ticker, text_color=color.white, text_size=size.small)
+    table.cell(tb, 0, 1, "Bias", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 1, biasTxt, text_color=biasCol, text_size=size.tiny)
+    table.cell(tb, 0, 2, "SB-Fenster", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 2, inSB ? "AKTIV" : "zu", text_color=inSB ? color.orange : color.gray, text_size=size.tiny)
+    table.cell(tb, 0, 3, "Status", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 3, stateTxt, text_color=not flat ? color.yellow : color.white, text_size=size.tiny)
+    table.cell(tb, 0, 4, "Entry / SL / TP", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 4, pendDir != 0 or not flat ? fmt(pEntry) + " / " + fmt(pSL) + " / " + fmt(pTP) : "–", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 0, 5, "Setups heute", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 5, str.tostring(setupsToday) + " / " + str.tostring(maxDay), text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 0, 6, "Winrate 30 Tage", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 6, wrTxt, text_color=wrCol, text_size=size.tiny)
+    table.cell(tb, 0, 7, "W / L (30 Tage)", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 7, t30 > 0 ? str.tostring(w30) + " / " + str.tostring(t30 - w30) : "–", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 0, 8, "Trades gesamt", text_color=color.white, text_size=size.tiny)
+    table.cell(tb, 1, 8, str.tostring(strategy.closedtrades), text_color=color.white, text_size=size.tiny)
