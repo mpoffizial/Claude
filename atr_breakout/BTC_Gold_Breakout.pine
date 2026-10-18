@@ -1,0 +1,166 @@
+//@version=6
+// BTC / GOLD ATR-BREAKOUT — Portierung der Signalregeln, kein Portfolio-Replikat.
+// Verwendung: normale 1-Stunden-Kerzen, Pine Editor, speichern, zum Chart hinzufügen.
+// BTC: BTCUSDT-Perpetual-Feed. Gold: XAUUSD-Feed, Kontraktwert prüfen.
+// Ein Skript handelt immer nur das aktuelle Chart-Symbol. Profil manuell wählen.
+// Originalportfolio: 70% BTC / 30% Gold, quartalsweise geschlossen und neu verteilt.
+// Diese gemeinsame Abrechnung/Umverteilung ist hier NICHT implementiert.
+// 500 CHF unten sind das Startkapital EINER separaten Strategie, nicht zweier Konten!
+// Für die anfängliche 70/30-Aufteilung Eigenschaften auf 350 CHF bzw. 150 CHF setzen.
+// Auch dann entsprechen die späteren Kontostände ohne Umschichtung nicht dem Portfolio.
+//
+// ABWEICHUNGEN: keine historischen Funding-/Swapzahlungen, keine CHF-Wechselgebühr,
+// keine Markpreis-Liquidation oder originalen Volumenlimits. TV-Marginmodell gilt.
+// Positionsgröße verwendet den bekannten Signal-Schlusskurs statt den nächsten Open.
+// Initialstop relativ zum tatsächlichen Fill; Originalstop relativ zum nächsten Open.
+// TV-Slippage in Ticks statt original 0.02% je Ausführung; unten standardmäßig 2 Ticks.
+// Provision unten BTC 0.05% je Ausführung. GOLD in Eigenschaften auf 0.005% ändern.
+// Stop-Reihenfolge innerhalb einer Stunde richtet sich nach dem TV-Brokeremulator.
+// Bar Magnifier kann optional aktiviert werden; dessen Datenabdeckung ist begrenzt.
+// Historie muss ausreichend weit vor Testbeginn beginnen, ideal ab 2020 für BTC.
+// ATR/EMA starten rekursiv mit erstem verfügbaren Wert wie pandas adjust=False.
+// Unterschiedliche Feeds, fehlende Stunden und Warm-up verändern Ergebnisse.
+// Fehlt die letzte Stunde eines 4h/16h-Blocks, wird dieser Block verworfen.
+// Das kann insbesondere bei Gold-Handelspausen vom pandas-Resampling abweichen.
+// Nach einem Exit in derselben Stunde gibt es hier keinen sofortigen Wiedereinstieg.
+// Die rückblickend ausgewählten Parameter sind KEIN unabhängig bestätigter Vorteil.
+// Originalrisiken 60% BTC / 40% Gold sind extrem. Kein Millionengewinn-Versprechen.
+// Code fachlich geprüft; nicht im TradingView-Compiler ausgeführt.
+
+strategy("BTC / Gold ATR-Breakout | Forschungsportierung", overlay = true,
+     initial_capital = 500, currency = currency.CHF, pyramiding = 0,
+     commission_type = strategy.commission.percent, commission_value = 0.05,
+     slippage = 2, margin_long = 2, margin_short = 100,
+     calc_on_every_tick = false, calc_on_order_fills = false,
+     process_orders_on_close = false)
+
+string profile = input.string("BTC – Portfolio", "Regelprofil",
+     options = ["BTC – Portfolio", "Gold – Portfolio", "BTC – jüngster Test"])
+bool originalRisk = input.bool(true, "Originales Forschungsrisiko (extrem hoch)")
+float customRisk = input.float(1.0, "Alternativ: Risiko je Trade (%)", minval = 0.01, maxval = 100) / 100
+float qtyStep = input.float(0.001, "BTC: Mengenschritt", minval = 0.000001)
+float goldStep = input.float(1.0, "Gold: Mengenschritt in Chart-Kontrakten", minval = 0.000001)
+float maxNotional = input.float(5000000, "Maximaler Positionswert in Symbolwährung", minval = 1)
+int startDate = input.time(timestamp("25 Mar 2021 00:00 +0000"), "Testbeginn (UTC)")
+int endDate = input.time(timestamp("25 Mar 2026 00:00 +0000"), "Testende exklusiv (UTC)")
+// Für BTC jüngster Test: 17.10.2021 00:00 bis 17.10.2026 00:00 UTC einstellen.
+
+bool isGold = profile == "Gold – Portfolio"
+bool isLatest = profile == "BTC – jüngster Test"
+int tfHours = isGold ? 4 : 16
+int phaseHours = isGold ? 0 : isLatest ? 5 : 6
+int maLength = isGold ? 40 : isLatest ? 20 : 24
+float bandMult = isGold ? 1.0 : 3.0
+float stopMult = isGold ? 4.0 : isLatest ? 1.0 : 1.75
+float risk = originalRisk ? (isGold ? 0.40 : 0.60) : customRisk
+float levCap = isGold ? 20.0 : 50.0
+float modelFee = isGold ? 0.00005 : 0.0005
+float modelSlip = 0.0002
+float step = isGold ? goldStep : qtyStep
+
+if barstate.isfirst
+    if not timeframe.isminutes or timeframe.multiplier != 60
+        runtime.error("Bitte normale 1-Stunden-Kerzen (60 Minuten) verwenden.")
+    if not chart.is_standard
+        runtime.error("Bitte Standardkerzen verwenden, keine Heikin-Ashi/Renko-Kerzen.")
+    if endDate <= startDate
+        runtime.error("Testende muss nach Testbeginn liegen.")
+
+// Explizite Zeitverankerung: 16h-Raster rotiert über die Tageszeiten.
+// Kein request.security-Lookahead, keine noch offenen höheren Kerzen.
+int anchor = timestamp("01 Jan 2020 00:00 +0000") + phaseHours * 3600000
+int periodMs = tfHours * 3600000
+int bucket = int(math.floor(float(time - anchor) / periodMs))
+var int activeBucket = na
+var float bucketHigh = na
+var float bucketLow = na
+var float bucketClose = na
+var bool bucketStartsClean = false
+var float prevClose = na
+var float atr = na
+var float ema = na
+var float basis = na
+var int samples = 0
+var array<float> closes = array.new_float()
+var float stopPrice = na
+var float pendingDistance = na
+bool completed = false
+bool buy = false
+bool sell = false
+
+if barstate.isconfirmed
+    if na(activeBucket) or bucket != activeBucket
+        activeBucket := bucket
+        bucketHigh := high
+        bucketLow := low
+        bucketClose := close
+        // Skip only a truncated first bucket. Session gaps in later buckets are allowed.
+        bucketStartsClean := not barstate.isfirst or time == anchor + bucket * periodMs
+    else
+        bucketHigh := math.max(bucketHigh, high)
+        bucketLow := math.min(bucketLow, low)
+        bucketClose := close
+
+    completed := time_close == anchor + (bucket + 1) * periodMs and bucketStartsClean
+    if completed
+        float tr = na(prevClose) ? bucketHigh - bucketLow : math.max(bucketHigh - bucketLow, math.max(math.abs(bucketHigh - prevClose), math.abs(bucketLow - prevClose)))
+        atr := na(atr) ? tr : atr + (tr - atr) / 14.0
+        ema := na(ema) ? bucketClose : ema + (bucketClose - ema) * (2.0 / 101.0)
+        prevClose := bucketClose
+        samples += 1
+        array.push(closes, bucketClose)
+        if array.size(closes) > maLength
+            array.shift(closes)
+        basis := array.size(closes) == maLength ? array.avg(closes) : na
+        bool ready = samples >= (isGold ? 100 : math.max(14, maLength))
+        buy := ready and bucketClose > basis + bandMult * atr and (not isGold or bucketClose > ema)
+        sell := ready and bucketClose < basis
+
+    // A resting relative stop is submitted together with the entry, so it can
+    // protect the first entry hour without historical fill recalculation.
+    bool newlyFilled = strategy.position_size > 0 and strategy.position_size[1] == 0
+    if newlyFilled
+        stopPrice := strategy.position_avg_price - pendingDistance
+    if strategy.position_size == 0
+        stopPrice := na
+
+    bool inWindow = time_close >= startDate and time_close < endDate
+    bool stoppedThisBar = strategy.closedtrades > nz(strategy.closedtrades[1])
+    if strategy.position_size > 0
+        if completed and not na(atr)
+            stopPrice := math.max(stopPrice, close - stopMult * atr)
+        strategy.exit("SL", "Long", stop = stopPrice, alert_message = "EXIT_STOP")
+        if completed and sell
+            strategy.close("Long", comment = "Unter SMA", alert_message = "EXIT_SMA")
+        if time_close >= endDate
+            strategy.close("Long", comment = "Testende", immediately = true, alert_message = "EXIT_END")
+
+    if completed and buy and inWindow and strategy.position_size == 0 and not stoppedThisBar and strategy.equity > 0
+        float equityQuote = strategy.convert_to_symbol(strategy.equity)
+        float distance = stopMult * atr
+        float estimatedEntry = close * (1 + modelSlip)
+        float perUnit = (distance + 2 * close * modelSlip + modelFee * (estimatedEntry + close)) * syminfo.pointvalue
+        float quantity = math.min(equityQuote * risk / perUnit, equityQuote * levCap * 0.8 / (estimatedEntry * syminfo.pointvalue))
+        quantity := math.min(quantity, maxNotional / (estimatedEntry * syminfo.pointvalue))
+        float value = quantity * estimatedEntry * syminfo.pointvalue
+        float maintenance = isGold ? 0.05 : value <= 50000 ? 0.01 : value <= 250000 ? 0.02 : value <= 1000000 ? 0.03 : value <= 5000000 ? 0.05 : 0.10
+        quantity := math.min(quantity, equityQuote / (2 * maintenance * estimatedEntry * syminfo.pointvalue))
+        quantity := math.floor(quantity / step) * step
+        bool sufficient = quantity >= step and (isGold or quantity * estimatedEntry * syminfo.pointvalue >= 100)
+        if sufficient and distance < close
+            // Round upwards to a tradable tick distance; documented small deviation.
+            float lossTicks = math.ceil(distance / syminfo.mintick)
+            pendingDistance := lossTicks * syminfo.mintick
+            strategy.entry("Long", strategy.long, qty = quantity, alert_message = "ENTRY_LONG")
+            strategy.exit("SL", "Long", loss = lossTicks, alert_message = "EXIT_STOP")
+
+plot(basis, "SMA der Signalkerzen", color = color.blue, linewidth = 2)
+plot(basis + bandMult * atr, "Breakout-Schwelle", color = color.orange)
+plot(isGold ? ema : na, "Gold EMA 100", color = color.purple)
+plot(strategy.position_size > 0 ? stopPrice : na, "Aktiver Stop", color = color.red, style = plot.style_linebr)
+plotshape(completed and buy, title = "Long-Regel erfüllt (kein Fill)", style = shape.triangleup, location = location.belowbar, color = color.green, size = size.tiny)
+var table info = table.new(position.top_right, 1, 3)
+if barstate.islast
+    table.cell(info, 0, 0, profile + " | Chart 1h", text_color = color.white, bgcolor = color.navy)
+    table.cell(info, 0, 1, "Risiko: " + str.tostring(risk * 100, "#.##") + "% | kein Portfolio-Replikat", text_color = color.white, bgcolor = color.maroon)
+    table.cell(info, 0, 2, isGold ? "Gold-Provision auf 0.005% setzen; Kontraktwert prüfen" : "Funding fehlt; Provision 0.05%; Slippage prüfen", text_color = color.white, bgcolor = color.gray)
