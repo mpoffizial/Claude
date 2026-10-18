@@ -25,6 +25,7 @@ Wichtige Optionen:
 | `--start / --end` | Testfenster (Ende exklusiv) |
 | `--risk 1` | 1 % Risiko je Trade statt Originalrisiko (60 % BTC / 40 % Gold) |
 | `--no-margin-calls` | ohne TradingView-Margin-Call rechnen |
+| `--funding` | historische Binance-Funding-Raten für BTC belasten (nicht im Pine-Skript) |
 | `--btc-csv / --gold-csv` | eigene 1h-Daten, z. B. TradingView-Export (`time,open,high,low,close`) |
 | `--fx-csv` / `--usdchf 0.80` | eigene USD/CHF-Tageskurse bzw. konstanter Kurs |
 
@@ -43,5 +44,5 @@ Equity-Kurven als CSV in `backtest_data/results/`.
 - Gewinne in CHF mit dem USD/CHF-Schlusskurs des Vortags; USDT = USD.
 - Gold: Provision 0.005 %, Mengenschritt 1 Unze, Tick 0.01.
 - Teil-Liquidationen zählen in der Statistik zur selben Position.
-- Wie im Pine-Skript: kein Funding, keine Wechselgebühr, keine Börsen-Liquidation,
+- Wie im Pine-Skript: ohne `--funding` kein Funding, keine Wechselgebühr, keine Börsen-Liquidation,
   kein 70/30-Rebalancing.

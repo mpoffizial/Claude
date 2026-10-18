@@ -115,6 +115,27 @@ def download_binance(symbol="BTCUSDT", start=date(2020, 1, 1), end=None, market=
     return _finish(pd.concat(frames))
 
 
+def download_binance_funding(symbol="BTCUSDT", start=date(2020, 1, 1), end=None):
+    """Historische Funding-Raten (Anteil je Funding-Zeitpunkt, + = Long zahlt)."""
+    end = end or datetime.now(timezone.utc).date()
+    base = f"https://data.binance.vision/data/futures/um/monthly/fundingRate/{symbol}"
+    parts = []
+    for y, m in _months(start, end):
+        name = f"{symbol}-fundingRate-{y}-{m:02d}"
+        raw = _get(f"{base}/{name}.zip")
+        if raw is None:
+            continue
+        df = pd.read_csv(io.BytesIO(zipfile.ZipFile(io.BytesIO(raw)).read(f"{name}.csv")))
+        parts.append(pd.Series(df["last_funding_rate"].astype(float).values,
+                               index=pd.to_datetime(df["calc_time"], unit="ms", utc=True).dt.round("1h")))
+    if not parts:
+        raise RuntimeError("Keine Funding-Daten erhalten.")
+    s = pd.concat(parts).sort_index()
+    s = s[~s.index.duplicated(keep="last")]
+    s.name = "funding_rate"
+    return s
+
+
 # ----------------------------------------------------------------------------
 # Gold – Dukascopy XAUUSD
 # ----------------------------------------------------------------------------

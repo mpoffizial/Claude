@@ -17,7 +17,10 @@ TradingView-Brokeremulation, soweit sie für dieses Skript relevant ist:
 - Kontowährung CHF: Gewinne werden mit dem USD/CHF-Tageskurs des Vortags
   umgerechnet, die Positionsgrösse mit demselben Kurs in USD.
 
-Nicht nachgebildet (wie im Pine-Skript selbst): Funding, Wechselgebühren,
+Optional (--funding, nicht im Pine-Skript): historische Binance-Funding-Raten
+für BTC, belastet zum Open der Funding-Stunde, solange die Position offen ist.
+
+Nicht nachgebildet (wie im Pine-Skript selbst): Wechselgebühren,
 Markpreis-Liquidation der Börse, Portfolio-Rebalancing.
 """
 
@@ -87,10 +90,11 @@ class Result:
     equity_low: pd.Series              # Equity CHF am Kerzentief (intrabar)
     signals: int = 0
     rejected: int = 0
+    funding_chf: float | None = None
     stats: dict = field(default_factory=dict)
 
 
-def run(bars, fx, prof, s):
+def run(bars, fx, prof, s, funding=None):
     t = bars.index.as_unit("ms").asi8
     o, h, lo, c = (bars[k].to_numpy(float) for k in ("open", "high", "low", "close"))
     rate = fx  # CHF je USD, je Kerze
@@ -129,6 +133,7 @@ def run(bars, fx, prof, s):
     prev_pos = 0.0
     prev_closed = 0
     signals = rejected = 0
+    funding_chf = 0.0
     eq_close = np.empty(n)
     eq_low = np.empty(n)
 
@@ -147,6 +152,10 @@ def run(bars, fx, prof, s):
 
     for i in range(n):
         r = rate[i]
+        if funding is not None and qty > 0 and funding[i] != 0.0:
+            cost = qty * o[i] * pv * funding[i] * r
+            net_chf -= cost
+            funding_chf += cost
         # ---------------- Brokeremulator: Ausführungen innerhalb der Kerze i
         if pend_close and qty > 0:
             close_part(qty, o[i] - slip, i, "Unter SMA")
@@ -257,7 +266,7 @@ def run(bars, fx, prof, s):
 
     idx = bars.index
     res = Result(prof, s, pd.DataFrame(trades), pd.Series(eq_close, idx), pd.Series(eq_low, idx),
-                 signals, rejected)
+                 signals, rejected, None if funding is None else funding_chf)
     res.stats = statistics(res)
     return res
 
@@ -303,6 +312,8 @@ def statistics(res):
     else:
         out["Trades"] = 0
     out["Signale ohne Fill (zu wenig Kapital)"] = res.rejected
+    if res.funding_chf is not None:
+        out["Funding bezahlt CHF"] = res.funding_chf
     return out
 
 
@@ -364,6 +375,18 @@ def load_inputs(args):
     return btc, gold, fx
 
 
+def load_funding(args):
+    path = Path(args.data_dir) / "BTCUSDT_funding.csv"
+    if path.exists() and not args.refresh:
+        df = pd.read_csv(path)
+        return pd.Series(df["funding_rate"].values, index=pd.to_datetime(df["time"], utc=True))
+    print("Lade Binance-Funding-Raten …", flush=True)
+    s = datasrc.download_binance_funding(start=date.fromisoformat(args.warmup_start),
+                                         end=pd.Timestamp(args.end).date())
+    datasrc.save_csv(s.to_frame(), path)
+    return s
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--profile", choices=list(PROFILES) + ["all"], default="all")
@@ -373,6 +396,7 @@ def main():
     ap.add_argument("--warmup-start", default="2020-01-01", help="Beginn der Kurshistorie")
     ap.add_argument("--risk", type=float, help="Risiko je Trade in %% statt Originalrisiko")
     ap.add_argument("--no-margin-calls", action="store_true")
+    ap.add_argument("--funding", action="store_true", help="Binance-Funding-Raten für BTC belasten")
     ap.add_argument("--btc-csv", help="1h-OHLC-CSV statt Download (z. B. TradingView-Export)")
     ap.add_argument("--gold-csv", help="1h-OHLC-CSV für XAUUSD")
     ap.add_argument("--fx-csv", help="Tageskurse USD/CHF (Spalten date, usdchf)")
@@ -393,6 +417,7 @@ def main():
     gold_settings = replace(base, commission_pct=0.005, mintick=0.01, qty_step=1.0)
 
     names = list(PROFILES) if args.profile == "all" else [args.profile]
+    funding = load_funding(args) if args.funding else None
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     curves = {}
@@ -405,7 +430,10 @@ def main():
         bars = bars[bars.index < end]
         if bars.index[-1] < end - pd.Timedelta(days=2):
             print(f"\nWARNUNG: Daten enden am {bars.index[-1]:%d.%m.%Y %H:%M} UTC, vor dem Testende.")
-        res = run(bars, fx_per_bar(fx, bars.index), prof, gold_settings if prof.is_gold else base)
+        fund = None
+        if args.funding and not prof.is_gold:
+            fund = funding.reindex(bars.index).fillna(0.0).to_numpy(float)
+        res = run(bars, fx_per_bar(fx, bars.index), prof, gold_settings if prof.is_gold else base, fund)
         curves[prof.name] = res.equity
         print(f"\n=== {prof.name} | {start:%d.%m.%Y} – {end:%d.%m.%Y} | Daten ab {bars.index[0]:%d.%m.%Y} ===")
         for k, v in res.stats.items():
