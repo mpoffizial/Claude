@@ -170,9 +170,35 @@ def download_dukascopy(instrument="XAUUSD", start=date(2020, 1, 1), end=None, sc
 # ----------------------------------------------------------------------------
 
 def download_usdchf(start=date(2020, 1, 1), end=None):
-    """Tagesschlusskurse (UTC) aus den Dukascopy-1h-Kerzen."""
-    hourly = download_dukascopy("USDCHF", start=start, end=end, scale=100000.0)
-    s = hourly["close"].resample("1D").last().dropna()
+    """Tagesschlusskurse aus Dukascopy-Jahresdateien (eine Abfrage je Jahr).
+    Für das laufende Jahr werden die abgeschlossenen Monate aus 1h-Kerzen
+    gebildet; der laufende Monat wird mit dem letzten Kurs fortgeschrieben."""
+    end = end or datetime.now(timezone.utc).date()
+    today = datetime.now(timezone.utc).date()
+    base = "https://datafeed.dukascopy.com/datafeed/USDCHF"
+    cache = CACHE_DIR / "dukascopy" / "USDCHF"
+    scale = 100000.0
+    closes = []
+    for y in range(start.year, end.year + 1):
+        path = f"{y}/BID_candles_day_1.bi5"
+        raw = _get_cached(f"{base}/{path}", cache / path, y < today.year)
+        if raw:
+            days = _parse_bi5_candles(raw, datetime(y, 1, 1), scale)
+            closes.append(days.loc[days["volume"] > 0, "close"])
+            continue
+        for yy, m in _months(date(y, 1, 1), min(end, date(y, 12, 31))):
+            if (yy, m) >= (today.year, today.month):
+                break
+            path = f"{yy}/{m - 1:02d}/BID_candles_hour_1.bi5"
+            raw = _get_cached(f"{base}/{path}", cache / path, True)
+            if raw:
+                hrs = _parse_bi5_candles(raw, datetime(yy, m, 1), scale)
+                hrs = hrs[hrs["volume"] > 0]
+                closes.append(hrs["close"].resample("1D").last().dropna())
+    if not closes:
+        raise RuntimeError("Keine USD/CHF-Daten erhalten.")
+    s = pd.concat(closes).sort_index()
+    s = s[~s.index.duplicated(keep="last")]
     s.name = "usdchf"
     return s
 
