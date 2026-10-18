@@ -271,6 +271,45 @@ def run(bars, fx, prof, s, funding=None):
     return res
 
 
+def quarter_edges(start, end):
+    """Testbeginn, alle Kalenderquartalsanfänge dazwischen, Testende."""
+    qs = pd.date_range(start.normalize(), end, freq="QS", tz="UTC")
+    return [start] + [q for q in qs if start < q < end] + [end]
+
+
+def run_portfolio(btc, gold, fx_btc, fx_gold, base, gold_settings, weights=(0.7, 0.3), funding=None):
+    """Originalportfolio: je Quartal Kapital nach weights aufteilen, beide
+    Strategien handeln getrennt, am Quartalsende wird alles geschlossen."""
+    total = base.initial_capital
+    eq, eql, rows = [], [], []
+    trades = {"btc": [], "gold": []}
+    edges = quarter_edges(base.start, base.end)
+    for a, b in zip(edges[:-1], edges[1:]):
+        seg = {}
+        for key, bars, fx, st, w in (("btc", btc, fx_btc, base, weights[0]),
+                                     ("gold", gold, fx_gold, gold_settings, weights[1])):
+            m = bars.index < b
+            fund = funding[m] if key == "btc" and funding is not None else None
+            r = run(bars[m], fx[m], PROFILES[key], replace(st, start=a, end=b, initial_capital=total * w), fund)
+            win = (r.equity.index >= a) & (r.equity.index < b)
+            seg[key] = (r.equity[win], r.equity_low[win], total * w)
+            if len(r.trades):
+                trades[key].append(r.trades)
+        idx = seg["btc"][0].index
+        # Gold hat Handelspausen: letzten Stand fortschreiben, vor dem ersten Gold-Bar = Zuteilung
+        g = seg["gold"][0].reindex(idx).ffill().fillna(seg["gold"][2])
+        gl = seg["gold"][1].reindex(idx).ffill().fillna(seg["gold"][2])
+        eq.append(seg["btc"][0] + g)
+        eql.append(seg["btc"][1] + gl)
+        btc_end = float(seg["btc"][0].iloc[-1])
+        gold_end = float(seg["gold"][0].iloc[-1]) if len(seg["gold"][0]) else seg["gold"][2]
+        rows.append({"Quartal ab": f"{a:%d.%m.%Y}", "Start CHF": total, "BTC CHF": btc_end,
+                     "Gold CHF": gold_end, "Ende CHF": btc_end + gold_end})
+        total = btc_end + gold_end
+    trades = {k: pd.concat(v, ignore_index=True) if v else pd.DataFrame() for k, v in trades.items()}
+    return pd.concat(eq), pd.concat(eql), pd.DataFrame(rows), trades
+
+
 def max_drawdown(eq, eq_low=None):
     peak = eq.cummax()
     worst = eq if eq_low is None else np.minimum(eq, eq_low)
@@ -397,6 +436,8 @@ def main():
     ap.add_argument("--risk", type=float, help="Risiko je Trade in %% statt Originalrisiko")
     ap.add_argument("--no-margin-calls", action="store_true")
     ap.add_argument("--funding", action="store_true", help="Binance-Funding-Raten für BTC belasten")
+    ap.add_argument("--portfolio", action="store_true",
+                    help="Originalportfolio 70/30 BTC/Gold mit Quartals-Umverteilung rechnen")
     ap.add_argument("--btc-csv", help="1h-OHLC-CSV statt Download (z. B. TradingView-Export)")
     ap.add_argument("--gold-csv", help="1h-OHLC-CSV für XAUUSD")
     ap.add_argument("--fx-csv", help="Tageskurse USD/CHF (Spalten date, usdchf)")
@@ -440,6 +481,31 @@ def main():
             print(f"  {k:<38} {v:,.2f}" if isinstance(v, float) else f"  {k:<38} {v}")
         res.trades.to_csv(out / f"trades_{key}.csv", index=False)
         res.equity.to_frame("equity_chf").to_csv(out / f"equity_{key}.csv")
+
+    if args.portfolio and btc is not None and gold is not None:
+        b_all, g_all = btc[btc.index < end], gold[gold.index < end]
+        fund = funding.reindex(b_all.index).fillna(0.0).to_numpy(float) if args.funding else None
+        w = (0.7, 0.3)
+        peq, peql, qtab, ptr = run_portfolio(b_all, g_all, fx_per_bar(fx, b_all.index), fx_per_bar(fx, g_all.index),
+                                             base, gold_settings, w, fund)
+        curves["Portfolio 70/30"] = peq
+        peq.to_frame("equity_chf").to_csv(out / "equity_portfolio.csv")
+        qtab.to_csv(out / "portfolio_quartale.csv", index=False)
+        final = float(peq.iloc[-1])
+        years = (end - start).days / 365.25
+        print(f"\n=== Portfolio 70 % BTC / 30 % Gold, Quartals-Umverteilung | {start:%d.%m.%Y} – {end:%d.%m.%Y} ===")
+        print(f"  Startkapital CHF                       {args.capital:,.2f}")
+        print(f"  Endkapital CHF                         {final:,.2f}")
+        print(f"  Rendite %                              {(final / args.capital - 1) * 100:,.2f}")
+        print(f"  CAGR %                                 {((final / args.capital) ** (1 / years) - 1) * 100:,.2f}")
+        print(f"  Max. Drawdown % (Schluss)              {max_drawdown(peq) * 100:,.2f}")
+        print(f"  Max. Drawdown % (intrabar)             {max_drawdown(peq, peql) * 100:,.2f}")
+        print(f"  Tiefster Kontostand CHF                {float(np.minimum(peq, peql).min()):,.2f}")
+        for k, name in (("btc", "BTC"), ("gold", "Gold")):
+            t = ptr[k]
+            n = t["entry_time"].nunique() if len(t) else 0
+            pnl = t["pnl_chf"].sum() if len(t) else 0.0
+            print(f"  {name}: Trades {n}, Summe Trade-Gewinne CHF {pnl:,.2f}")
 
     if btc is not None:
         b = btc[(btc.index >= start) & (btc.index < end)]
