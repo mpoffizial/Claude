@@ -26,7 +26,7 @@ import pandas as pd
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / "backtest_data"
 USER_AGENT = "Mozilla/5.0 (atr-breakout-backtest)"
-REQUEST_PAUSE = 1.5  # Sekunden zwischen Dukascopy-Abfragen (Rate-Limit)
+REQUEST_PAUSE = 2.5  # Sekunden zwischen Dukascopy-Abfragen (Rate-Limit)
 
 
 def _get(url, timeout=60, retries=9):
