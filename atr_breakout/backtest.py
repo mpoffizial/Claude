@@ -273,13 +273,21 @@ def run(bars, fx, prof, s, funding=None):
     return res
 
 
+def financing_per_bar(index, annual):
+    """Übernachtkosten als Anteil je Kerze: Jahressatz mal Zeit seit der Vorkerze.
+    Wochenenden und Handelspausen werden so mit ihrer vollen Dauer belastet."""
+    hours = np.diff(index.as_unit("ms").asi8, prepend=index.as_unit("ms").asi8[0]) / HOUR_MS
+    return annual * hours / (365 * 24)
+
+
 def quarter_edges(start, end):
     """Testbeginn, alle Kalenderquartalsanfänge dazwischen, Testende."""
     qs = pd.date_range(start.normalize(), end, freq="QS", tz="UTC")
     return [start] + [q for q in qs if start < q < end] + [end]
 
 
-def run_portfolio(btc, gold, fx_btc, fx_gold, base, gold_settings, weights=(0.7, 0.3), funding=None):
+def run_portfolio(btc, gold, fx_btc, fx_gold, base, gold_settings, weights=(0.7, 0.3), funding=None,
+                  gold_funding=None):
     """Originalportfolio: je Quartal Kapital nach weights aufteilen, beide
     Strategien handeln getrennt, am Quartalsende wird alles geschlossen."""
     total = base.initial_capital
@@ -291,7 +299,8 @@ def run_portfolio(btc, gold, fx_btc, fx_gold, base, gold_settings, weights=(0.7,
         for key, bars, fx, st, w in (("btc", btc, fx_btc, base, weights[0]),
                                      ("gold", gold, fx_gold, gold_settings, weights[1])):
             m = bars.index < b
-            fund = funding[m] if key == "btc" and funding is not None else None
+            fund = funding if key == "btc" else gold_funding
+            fund = None if fund is None else fund[m]
             r = run(bars[m], fx[m], PROFILES[key], replace(st, start=a, end=b, initial_capital=total * w), fund)
             win = (r.equity.index >= a) & (r.equity.index < b)
             seg[key] = (r.equity[win], r.equity_low[win], total * w)
@@ -354,7 +363,7 @@ def statistics(res):
         out["Trades"] = 0
     out["Signale ohne Fill (zu wenig Kapital)"] = res.rejected
     if res.funding_chf is not None:
-        out["Funding bezahlt CHF"] = res.funding_chf
+        out["Funding/Finanzierung bezahlt CHF"] = res.funding_chf
     return out
 
 
@@ -437,9 +446,13 @@ def main():
     ap.add_argument("--warmup-start", default="2020-01-01", help="Beginn der Kurshistorie")
     ap.add_argument("--risk", type=float, help="Risiko je Trade in %% statt Originalrisiko")
     ap.add_argument("--no-margin-calls", action="store_true")
+    ap.add_argument("--realistic-costs", action="store_true",
+                    help="nur realistische Kosten (Provision inkl. Slippage, Funding, Gold-Finanzierung, "
+                         "Gold 0.01 Unzen); Risiko und Hebel bleiben wie gewählt")
+    ap.add_argument("--gold-financing", type=float, help="Gold-Übernachtkosten in %% pro Jahr auf den Positionswert")
     ap.add_argument("--realistic", action="store_true",
                     help="Einstellungen von BTC_Gold_Breakout_realistisch.pine: 5 %% Risiko, max. 5x Hebel, "
-                         "10 %% Margin, Kosten inkl. 0.02 %% Slippage, Gold in 0.01 Unzen, Funding")
+                         "10 %% Margin und alle realistischen Kosten (siehe --realistic-costs)")
     ap.add_argument("--funding", action="store_true", help="Binance-Funding-Raten für BTC belasten")
     ap.add_argument("--portfolio", action="store_true",
                     help="Originalportfolio 70/30 BTC/Gold mit Quartals-Umverteilung rechnen")
@@ -461,12 +474,17 @@ def main():
                     risk=None if args.risk is None else args.risk / 100,
                     margin_calls=not args.no_margin_calls)
     gold_settings = replace(base, commission_pct=0.005, mintick=0.01, qty_step=1.0)
-    if args.realistic:
+    if args.realistic or args.realistic_costs:
         # Kosten = Provision + 0.02 % Slippage, in TradingView als Provision eingetragen
-        base = replace(base, risk=0.05 if args.risk is None else base.risk, max_leverage=5.0,
-                       margin_long_pct=10.0, commission_pct=0.07, slippage_ticks=0)
+        base = replace(base, commission_pct=0.07, slippage_ticks=0)
+        if args.realistic:
+            base = replace(base, risk=0.05 if args.risk is None else base.risk, max_leverage=5.0,
+                           margin_long_pct=10.0)
         gold_settings = replace(base, commission_pct=0.025, mintick=0.01, qty_step=0.01)
         args.funding = True
+        if args.gold_financing is None:
+            args.gold_financing = 7.0
+    gold_fin = (args.gold_financing or 0.0) / 100
 
     names = list(PROFILES) if args.profile == "all" else [args.profile]
     funding = load_funding(args) if args.funding else None
@@ -485,6 +503,8 @@ def main():
         fund = None
         if args.funding and not prof.is_gold:
             fund = funding.reindex(bars.index).fillna(0.0).to_numpy(float)
+        if gold_fin and prof.is_gold:
+            fund = financing_per_bar(bars.index, gold_fin)
         res = run(bars, fx_per_bar(fx, bars.index), prof, gold_settings if prof.is_gold else base, fund)
         curves[prof.name] = res.equity
         print(f"\n=== {prof.name} | {start:%d.%m.%Y} – {end:%d.%m.%Y} | Daten ab {bars.index[0]:%d.%m.%Y} ===")
@@ -497,8 +517,9 @@ def main():
         b_all, g_all = btc[btc.index < end], gold[gold.index < end]
         fund = funding.reindex(b_all.index).fillna(0.0).to_numpy(float) if args.funding else None
         w = (0.7, 0.3)
+        gfund = financing_per_bar(g_all.index, gold_fin) if gold_fin else None
         peq, peql, qtab, ptr = run_portfolio(b_all, g_all, fx_per_bar(fx, b_all.index), fx_per_bar(fx, g_all.index),
-                                             base, gold_settings, w, fund)
+                                             base, gold_settings, w, fund, gfund)
         curves["Portfolio 70/30"] = peq
         peq.to_frame("equity_chf").to_csv(out / "equity_portfolio.csv")
         qtab.to_csv(out / "portfolio_quartale.csv", index=False)
@@ -527,6 +548,10 @@ def main():
         print(f"\n=== Vergleich Buy & Hold BTC ===\n  Endkapital CHF {bh.iloc[-1]:,.2f}"
               f" | Max. Drawdown {max_drawdown(bh) * 100:.1f} %")
     if curves:
+        monthly = pd.DataFrame({k: v[(v.index >= start) & (v.index < end)].resample("ME").last()
+                                for k, v in curves.items()})
+        monthly.index = monthly.index.strftime("%Y-%m")
+        monthly.to_csv(out / "monatlich.csv")
         print("\nKontostand CHF am Ende jedes Testjahres:")
         print(yearly_table(curves, start, end).to_string(index=False))
 

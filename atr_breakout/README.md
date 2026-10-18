@@ -12,10 +12,10 @@ Stop schon in der Einstiegsstunde, 2 % Margin mit Margin Call, Konto in CHF).
 | `BTC_Gold_Breakout.pine` | 60 % BTC / 40 % Gold | bis 40x / 16x | Original-Forschungsportierung |
 | `BTC_Gold_Breakout_realistisch.pine` | 5 % | max. 5x | gleiche Regeln, realistisches Risiko und Kosten |
 
-Ergebnisse 18.10.2021 – 18.10.2026, 500 CHF, echte Daten, `--realistic`
-(inkl. BTC-Funding): BTC 1'311 CHF (Winrate 60 %, Max. DD −15 %),
-Gold 3'164 CHF (Winrate 40 %, Max. DD −19 %), Portfolio 70/30 mit
-Quartals-Umverteilung 1'775 CHF (Max. DD −9 %).
+Portfolio 70/30 mit Quartals-Umverteilung, 18.10.2021 – 18.10.2026, 500 CHF,
+echte Daten, realistische Kosten (inkl. BTC-Funding und 7 % Gold-Finanzierung):
+5 % Risiko (`--realistic`) 1'620 CHF, Max. DD −10 %;
+Original-Risiko (`--realistic-costs`) 313'376 CHF, Max. DD −72 %, tiefster Stand 144 CHF.
 
 ## Ausführen
 
@@ -36,6 +36,8 @@ Wichtige Optionen:
 | `--capital 350` | Startkapital CHF |
 | `--start / --end` | Testfenster (Ende exklusiv) |
 | `--realistic` | Einstellungen der realistischen Pine-Version (5 % Risiko, max. 5x, Kosten inkl. Slippage, Gold 0.01 Unzen, Funding) |
+| `--realistic-costs` | nur realistische Kosten (Provision inkl. 0.02 % Slippage, BTC-Funding, Gold-Finanzierung, Gold 0.01 Unzen), Risiko bleibt |
+| `--gold-financing 7` | Gold-Übernachtkosten in % pro Jahr auf den Positionswert (Standard bei `--realistic*`: 7) |
 | `--portfolio` | zusätzlich Portfolio 70 % BTC / 30 % Gold mit Quartals-Umverteilung |
 | `--risk 1` | 1 % Risiko je Trade statt Originalrisiko (60 % BTC / 40 % Gold) |
 | `--no-margin-calls` | ohne TradingView-Margin-Call rechnen |
@@ -43,8 +45,8 @@ Wichtige Optionen:
 | `--btc-csv / --gold-csv` | eigene 1h-Daten, z. B. TradingView-Export (`time,open,high,low,close`) |
 | `--fx-csv` / `--usdchf 0.80` | eigene USD/CHF-Tageskurse bzw. konstanter Kurs |
 
-Ergebnisse: Kennzahlen und Jahrestabelle im Terminal, Trade-Listen und
-Equity-Kurven als CSV in `backtest_data/results/`.
+Ergebnisse: Kennzahlen und Jahrestabelle im Terminal, Trade-Listen,
+Equity-Kurven und Monatsendstände (`monatlich.csv`) als CSV in `backtest_data/results/`.
 
 ## Benötigte Hosts
 
