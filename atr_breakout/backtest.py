@@ -356,7 +356,7 @@ def load_inputs(args):
     elif (cache / "USDCHF_daily.csv").exists() and not args.refresh:
         fx = datasrc.load_fx_csv(cache / "USDCHF_daily.csv")
     elif args.download:
-        print("Lade USD/CHF (EZB) …", flush=True)
+        print("Lade USD/CHF (Dukascopy) …", flush=True)
         fx = datasrc.download_usdchf(start=warm, end=end_d)
         datasrc.save_csv(fx.to_frame(), cache / "USDCHF_daily.csv")
     else:
@@ -418,6 +418,7 @@ def main():
         r = fx_per_bar(fx, b.index)
         bh = args.capital * (b.close * r) / (b.close.iloc[0] * r[0])
         curves["Buy & Hold BTC"] = bh
+        bh.to_frame("equity_chf").to_csv(out / "equity_buyhold.csv")
         print(f"\n=== Vergleich Buy & Hold BTC ===\n  Endkapital CHF {bh.iloc[-1]:,.2f}"
               f" | Max. Drawdown {max_drawdown(bh) * 100:.1f} %")
     if curves:

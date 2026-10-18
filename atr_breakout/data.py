@@ -5,16 +5,16 @@ Quellen:
 - BTC:  Binance USDⓈ-M Perpetual BTCUSDT, 1h-Klines von data.binance.vision
         (gleicher Feed wie BINANCE:BTCUSDT.P auf TradingView).
 - Gold: Dukascopy XAUUSD 1h-Bid-Kerzen (datafeed.dukascopy.com).
-- FX:   EZB-Referenzkurse USD/CHF über api.frankfurter.app (Tageswerte).
+- FX:   Dukascopy USDCHF, Tagesschlusskurse aus 1h-Kerzen.
 
 Alternativ können CSV-Dateien geladen werden, z. B. ein TradingView-Export
 ("Chartdaten exportieren") mit Spalten time, open, high, low, close.
 """
 
 import io
-import json
 import lzma
 import struct
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -26,18 +26,42 @@ import pandas as pd
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / "backtest_data"
 USER_AGENT = "Mozilla/5.0 (atr-breakout-backtest)"
+REQUEST_PAUSE = 1.5  # Sekunden zwischen Dukascopy-Abfragen (Rate-Limit)
 
 
-def _get(url, timeout=60):
-    """HTTP GET; gibt None bei 404 zurück (Datei existiert noch nicht)."""
+def _get(url, timeout=60, retries=9):
+    """HTTP GET; gibt None bei 404 zurück (Datei existiert noch nicht).
+    Abgebrochene Verbindungen werden mit wachsender Wartezeit wiederholt."""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None
-        raise
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            if (e.code < 500 and e.code != 429) or attempt == retries - 1:
+                raise
+            wait = e.headers.get("Retry-After")
+            if wait and wait.isdigit():
+                time.sleep(int(wait))
+                continue
+        except (urllib.error.URLError, ConnectionError, TimeoutError):
+            if attempt == retries - 1:
+                raise
+        time.sleep(min(5 * 2 ** attempt, 300))
+
+
+def _get_cached(url, path, complete):
+    """Wie _get, speichert abgeschlossene Perioden aber als Datei zwischen."""
+    if path.exists():
+        return path.read_bytes()
+    raw = _get(url)
+    time.sleep(REQUEST_PAUSE)
+    if raw is not None and complete:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(raw)
+    return raw
 
 
 def _months(start, end):
@@ -112,16 +136,21 @@ def download_dukascopy(instrument="XAUUSD", start=date(2020, 1, 1), end=None, sc
     """1h-Bid-Kerzen; aktueller Monat aus Minutenkerzen zusammengesetzt.
     Kerzen ohne Volumen (Markt geschlossen) werden entfernt."""
     end = end or datetime.now(timezone.utc).date()
+    today = datetime.now(timezone.utc).date()
     base = f"https://datafeed.dukascopy.com/datafeed/{instrument}"
+    cache = CACHE_DIR / "dukascopy" / instrument
     frames = []
     for y, m in _months(start, end):
-        raw = _get(f"{base}/{y}/{m - 1:02d}/BID_candles_hour_1.bi5")
+        path = f"{y}/{m - 1:02d}/BID_candles_hour_1.bi5"
+        month_done = (y, m) < (today.year, today.month)
+        raw = _get_cached(f"{base}/{path}", cache / path, month_done)
         if raw is not None:
             frames.append(_parse_bi5_candles(raw, datetime(y, m, 1), scale))
             continue
         d = date(y, m, 1)
         while d.month == m and d <= end:
-            raw = _get(f"{base}/{y}/{m - 1:02d}/{d.day:02d}/BID_candles_min_1.bi5")
+            path = f"{y}/{m - 1:02d}/{d.day:02d}/BID_candles_min_1.bi5"
+            raw = _get_cached(f"{base}/{path}", cache / path, d < today)
             if raw:
                 mins = _parse_bi5_candles(raw, datetime(d.year, d.month, d.day), scale)
                 mins = mins[mins["volume"] > 0]
@@ -137,14 +166,13 @@ def download_dukascopy(instrument="XAUUSD", start=date(2020, 1, 1), end=None, sc
 
 
 # ----------------------------------------------------------------------------
-# USD/CHF – EZB-Referenzkurse
+# USD/CHF – Dukascopy
 # ----------------------------------------------------------------------------
 
 def download_usdchf(start=date(2020, 1, 1), end=None):
-    end = end or datetime.now(timezone.utc).date()
-    raw = _get(f"https://api.frankfurter.app/{start.isoformat()}..{end.isoformat()}?from=USD&to=CHF")
-    rates = json.loads(raw)["rates"]
-    s = pd.Series({pd.Timestamp(k, tz="UTC"): v["CHF"] for k, v in rates.items()}).sort_index()
+    """Tagesschlusskurse (UTC) aus den Dukascopy-1h-Kerzen."""
+    hourly = download_dukascopy("USDCHF", start=start, end=end, scale=100000.0)
+    s = hourly["close"].resample("1D").last().dropna()
     s.name = "usdchf"
     return s
 
@@ -160,7 +188,7 @@ def load_ohlc_csv(path):
     df.columns = [c.strip().lower() for c in df.columns]
     tcol = next(c for c in df.columns if c in ("time", "timestamp", "date", "datetime", "open_time"))
     t = df[tcol]
-    if np.issubdtype(t.dtype, np.number):
+    if pd.api.types.is_numeric_dtype(t):
         unit = "ms" if t.iloc[0] > 10**11 else "s"
         idx = pd.to_datetime(t, unit=unit, utc=True)
     else:

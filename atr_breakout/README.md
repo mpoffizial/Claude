@@ -9,7 +9,7 @@ Stop schon in der Einstiegsstunde, 2 % Margin mit Margin Call, Konto in CHF).
 
 ```bash
 pip install pandas numpy
-# lädt BTCUSDT-Perpetual (Binance), XAUUSD (Dukascopy) und USD/CHF (EZB) nach backtest_data/
+# lädt BTCUSDT-Perpetual (Binance), XAUUSD und USD/CHF (Dukascopy) nach backtest_data/
 python atr_breakout/backtest.py --download
 ```
 
@@ -33,7 +33,7 @@ Equity-Kurven als CSV in `backtest_data/results/`.
 
 ## Benötigte Hosts
 
-`data.binance.vision`, `datafeed.dukascopy.com`, `api.frankfurter.app`.
+`data.binance.vision`, `datafeed.dukascopy.com`.
 
 ## Modellannahmen
 
