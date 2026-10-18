@@ -5,6 +5,18 @@ mit der TradingView-Brokeremulation, die für dieses Skript relevant ist
 (Fill zum nächsten Open, Slippage in Ticks, Provision je Ausführung,
 Stop schon in der Einstiegsstunde, 2 % Margin mit Margin Call, Konto in CHF).
 
+## Zwei Versionen
+
+| Datei | Risiko je Trade | Hebel | Zweck |
+|---|---|---|---|
+| `BTC_Gold_Breakout.pine` | 60 % BTC / 40 % Gold | bis 40x / 16x | Original-Forschungsportierung |
+| `BTC_Gold_Breakout_realistisch.pine` | 5 % | max. 5x | gleiche Regeln, realistisches Risiko und Kosten |
+
+Ergebnisse 18.10.2021 – 18.10.2026, 500 CHF, echte Daten, `--realistic`
+(inkl. BTC-Funding): BTC 1'311 CHF (Winrate 60 %, Max. DD −15 %),
+Gold 3'164 CHF (Winrate 40 %, Max. DD −19 %), Portfolio 70/30 mit
+Quartals-Umverteilung 1'775 CHF (Max. DD −9 %).
+
 ## Ausführen
 
 ```bash
@@ -23,6 +35,8 @@ Wichtige Optionen:
 | `--profile btc\|btc-latest\|gold` | nur ein Profil |
 | `--capital 350` | Startkapital CHF |
 | `--start / --end` | Testfenster (Ende exklusiv) |
+| `--realistic` | Einstellungen der realistischen Pine-Version (5 % Risiko, max. 5x, Kosten inkl. Slippage, Gold 0.01 Unzen, Funding) |
+| `--portfolio` | zusätzlich Portfolio 70 % BTC / 30 % Gold mit Quartals-Umverteilung |
 | `--risk 1` | 1 % Risiko je Trade statt Originalrisiko (60 % BTC / 40 % Gold) |
 | `--no-margin-calls` | ohne TradingView-Margin-Call rechnen |
 | `--funding` | historische Binance-Funding-Raten für BTC belasten (nicht im Pine-Skript) |

@@ -78,6 +78,7 @@ class Settings:
     point_value: float = 1.0
     max_notional: float = 5_000_000.0
     risk: float | None = None          # None = originales Forschungsrisiko
+    max_leverage: float | None = None  # None = originale Grenze levCap * 0.8
     margin_calls: bool = True
 
 
@@ -244,7 +245,8 @@ def run(bars, fx, prof, s, funding=None):
             distance = prof.stop_mult * atr
             est_entry = c[i] * (1 + MODEL_SLIP)
             per_unit = (distance + 2 * c[i] * MODEL_SLIP + prof.model_fee * (est_entry + c[i])) * pv
-            q = min(eq_q * risk / per_unit, eq_q * prof.lev_cap * 0.8 / (est_entry * pv))
+            lev = prof.lev_cap * 0.8 if s.max_leverage is None else s.max_leverage
+            q = min(eq_q * risk / per_unit, eq_q * lev / (est_entry * pv))
             q = min(q, s.max_notional / (est_entry * pv))
             value = q * est_entry * pv
             if prof.is_gold:
@@ -435,6 +437,9 @@ def main():
     ap.add_argument("--warmup-start", default="2020-01-01", help="Beginn der Kurshistorie")
     ap.add_argument("--risk", type=float, help="Risiko je Trade in %% statt Originalrisiko")
     ap.add_argument("--no-margin-calls", action="store_true")
+    ap.add_argument("--realistic", action="store_true",
+                    help="Einstellungen von BTC_Gold_Breakout_realistisch.pine: 5 %% Risiko, max. 5x Hebel, "
+                         "10 %% Margin, Kosten inkl. 0.02 %% Slippage, Gold in 0.01 Unzen, Funding")
     ap.add_argument("--funding", action="store_true", help="Binance-Funding-Raten für BTC belasten")
     ap.add_argument("--portfolio", action="store_true",
                     help="Originalportfolio 70/30 BTC/Gold mit Quartals-Umverteilung rechnen")
@@ -456,6 +461,12 @@ def main():
                     risk=None if args.risk is None else args.risk / 100,
                     margin_calls=not args.no_margin_calls)
     gold_settings = replace(base, commission_pct=0.005, mintick=0.01, qty_step=1.0)
+    if args.realistic:
+        # Kosten = Provision + 0.02 % Slippage, in TradingView als Provision eingetragen
+        base = replace(base, risk=0.05 if args.risk is None else base.risk, max_leverage=5.0,
+                       margin_long_pct=10.0, commission_pct=0.07, slippage_ticks=0)
+        gold_settings = replace(base, commission_pct=0.025, mintick=0.01, qty_step=0.01)
+        args.funding = True
 
     names = list(PROFILES) if args.profile == "all" else [args.profile]
     funding = load_funding(args) if args.funding else None
