@@ -43,7 +43,25 @@ automatisch weiter, und von den meisten Fehlern erholt sie sich selbst.
 
 ---
 
-## ⚡ Schnellstart unter Windows (Doppelklick)
+## ⚡ Schnellstart unter Windows: ein Befehl
+
+**PowerShell** öffnen (Startmenü → „PowerShell“), diesen Befehl einfügen und Enter drücken:
+
+```powershell
+irm https://raw.githubusercontent.com/mpoffizial/Claude/claude/blissful-turing-83j3hp/clipmaschine/deploy/install_windows.ps1 | iex
+```
+
+Der Installer
+* installiert fehlendes Python und ffmpeg (per winget),
+* legt die Clipmaschine in `Desktop\Clipmaschine` ab. Liegt dein Desktop in OneDrive, landet sie stattdessen in
+  einem lokalen Ordner (vermeidet Sync-Konflikte), und der Desktop bekommt eine Verknüpfung dorthin,
+* erstellt auf dem Desktop **„Clipmaschine starten“** und **„Clipmaschine aktualisieren“**,
+* startet die Maschine. Beim ersten Mal führt ein Assistent durch Twitch-Kanäle, Twitch-Zugang und die
+  TikTok-Anmeldung per QR-Code.
+
+Updates: Doppelklick auf „Clipmaschine aktualisieren“. Deine Einstellungen, Logins und Daten bleiben erhalten.
+
+### Alternative: ZIP und Doppelklick
 
 1. Einmalig installieren (in der Eingabeaufforderung):
    ```bat
