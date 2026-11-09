@@ -303,8 +303,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--at", type=float, default=3.0, help="Sekunde im Clip")
     p.set_defaults(func=cmd_frame)
 
-    p = sub.add_parser("auth", help="bei Twitch/TikTok/YouTube anmelden")
-    p.add_argument("platform", choices=["twitch", "tiktok", "youtube"])
+    p = sub.add_parser("auth", help="bei Twitch/TikTok/YouTube/Instagram anmelden")
+    p.add_argument("platform", choices=["twitch", "tiktok", "youtube", "instagram"])
     p.set_defaults(func=cmd_auth)
 
     sub.add_parser("status", help="Warteschlange und letzte Uploads").set_defaults(func=cmd_status)

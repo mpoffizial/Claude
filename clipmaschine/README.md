@@ -38,7 +38,7 @@ automatisch weiter, und von den meisten Fehlern erholt sie sich selbst.
 | **Schnitt** | Drei Layouts: `blur` (Video mittig, unscharfer Hintergrund), `crop` (bildfüllend), `split` (Facecam oben, Gameplay unten). Dazu Hook-Text oben, Credit und Lautheits-Angleichung auf −14 LUFS. |
 | **Untertitel** *(optional)* | Läuft lokal und kostenlos mit faster-whisper. Wörter erscheinen in kurzen Häppchen, das gerade gesprochene Wort wird gelb hervorgehoben (Karaoke-Stil). |
 | **Titel & Hashtags** | Mit Claude (optional), sonst per Vorlage. Hook, Titel, Beschreibung mit Credit und 5–8 Hashtags. |
-| **Posten** | TikTok (**direkt mit deinem Account** über den Browser oder per offizieller API), YouTube Shorts und Instagram Reels, mit Tageslimit, Mindestabstand und Uhrzeiten pro Plattform. |
+| **Posten** | TikTok und Instagram Reels (**direkt mit deinem Account** über den Browser oder per offizieller API) sowie YouTube Shorts, mit Tageslimit, Mindestabstand und Uhrzeiten pro Plattform. |
 | **Dauerbetrieb** | Selbstheilung, Schutz vor Doppelstart, Heartbeat sowie Auto-Neustart per Docker, systemd oder Windows-Skript. |
 
 ---
@@ -200,9 +200,35 @@ So bleibt es zuverlässig:
    freigibt (YouTube API Audit). Das Tageskontingent reicht für etwa 6 Uploads pro Tag. Ist es aufgebraucht,
    pausiert die Maschine YouTube **bis zum Reset um Mitternacht (US-Westküste)** und macht dann von selbst weiter.
 
-### Instagram Reels
+### Instagram – direkt mit deinem Account verbinden (Browser-Modus, empfohlen)
 
-1. Den Instagram-Account auf **Business oder Creator** umstellen.
+Du brauchst **kein Business-Konto und keine Meta-Entwickler-App**.
+
+1. In der `config.yaml` setzen (der Einrichtungs-Assistent macht das auf Wunsch automatisch):
+   ```yaml
+   instagram:
+     enabled: true
+     method: browser
+   ```
+2. Verbinden:
+   ```bash
+   python -m clipmaschine auth instagram
+   ```
+   Im Browserfenster ganz normal anmelden (Benutzername + Passwort, ggf. Bestätigungscode).
+   Das Fenster schließt sich danach von selbst.
+3. Fertig. Bei jedem Post öffnet sich kurz ein Browserfenster. Die Maschine klickt sich durch
+   *Erstellen → Beitrag → Video → Zuschnitt „Original“ (Hochformat bleibt erhalten) → Weiter → Bildunterschrift → Teilen*.
+
+Es gelten dieselben Sicherheitsnetze wie bei TikTok: kein Doppel-Post, Pause bei abgelaufener Anmeldung (nach
+`auth instagram` geht es sofort weiter), und bei Sicherheitsabfragen („Bist du es?“) wartet die Maschine, bis du
+im Fenster bestätigt hast. Screenshots bei Problemen liegen in `clipmaschine_data/logs/instagram_screenshots/`.
+
+> ⚠️ Auch Instagram erlaubt automatisiertes Posten über die Website laut Nutzungsbedingungen nicht. Das Risiko betrifft
+> nur deinen Account. Moderate Limits (Standard: 4 Posts pro Tag) halten es gering.
+
+### Instagram – offizielle API (Alternative)
+
+1. Den Instagram-Account auf **Business oder Creator** umstellen und `instagram.method: api` setzen.
 2. Auf <https://developers.facebook.com> eine App mit dem Produkt **Instagram** anlegen
    (*Instagram API with Instagram Login*). Berechtigungen: `instagram_business_basic` und `instagram_business_content_publish`.
 3. Für deinen Account einen Token erzeugen und in die `.env` eintragen: `INSTAGRAM_USER_ID` und `INSTAGRAM_ACCESS_TOKEN`.
@@ -241,7 +267,7 @@ Danach in der `config.yaml` `captions.enabled: true` setzen. Läuft auf der CPU.
 | `python -m clipmaschine run --dry-run` | Alles durchspielen, **ohne** hochzuladen (zum Testen) |
 | `python -m clipmaschine run` | **Dauerbetrieb** |
 | `python -m clipmaschine status` | Läuft die Maschine? Warteschlange, letzte Uploads |
-| `python -m clipmaschine auth twitch\|tiktok\|youtube` | Einmalige Anmeldung |
+| `python -m clipmaschine auth tiktok\|instagram\|youtube\|twitch` | Einmalige Anmeldung |
 | `python -m clipmaschine health` | Exit-Code 0, wenn die Maschine läuft (Monitoring) |
 
 **Empfohlener Start:** `check` → `process <clip-url>` (Ergebnis anschauen) → `run --dry-run` → `run`.
@@ -278,7 +304,7 @@ Die Maschine ist so gebaut, dass sie **ohne Eingreifen** weiterläuft:
 | Gerendertes Video fehlt | Wird automatisch neu gerendert. |
 | Plattform lehnt ein Video endgültig ab | Kein weiterer Versuch für diesen Clip. Andere Clips und Plattformen laufen normal weiter. |
 | Tokens laufen ab | Twitch, TikTok, YouTube und Instagram werden automatisch erneuert. |
-| TikTok-Anmeldung im Browser-Modus abgelaufen | TikTok pausiert, der Rest läuft weiter. Nach `auth tiktok` geht es **sofort** weiter. |
+| TikTok- oder Instagram-Anmeldung im Browser-Modus abgelaufen | Nur diese Plattform pausiert, der Rest läuft weiter. Nach `auth tiktok` bzw. `auth instagram` geht es **sofort** weiter. |
 | Chat-Verbindung bricht ab | Automatischer Reconnect. Ein Watchdog startet abgestürzte Threads neu. |
 | Hängender ffmpeg- oder Download-Prozess | Zeitlimit, Abbruch, neuer Versuch. |
 | Wenig Speicherplatz | Downloads pausieren, bis wieder genug Platz frei ist (`min_free_disk_gb`). |

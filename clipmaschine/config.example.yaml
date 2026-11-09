@@ -114,6 +114,14 @@ youtube:
 
 instagram:
   enabled: false
+  # browser = mit deinem normalen Instagram-Account (kein Business-Konto, keine Meta-App):
+  #           einmal "python -m clipmaschine auth instagram" → im Fenster anmelden → fertig
+  # api     = Instagram Graph API (Business/Creator-Account + Meta-App, siehe README)
+  # auto    = api, wenn INSTAGRAM_USER_ID/ACCESS_TOKEN gesetzt sind, sonst browser
+  method: browser
+  browser_headless: false
+  browser_channel: chrome
+  # nur für method: api
   graph_host: graph.instagram.com     # "Instagram API with Instagram Login" (Token wird automatisch erneuert)
                                       # Facebook-Login-Variante mit Seiten-Token: graph.facebook.com
   api_version: v23.0

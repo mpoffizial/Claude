@@ -6,6 +6,7 @@ from ..config import AppConfig
 from ..oauth import TokenStore
 from .base import UploadError, UploadResult, Uploader
 from .instagram import InstagramUploader
+from .instagram_browser import InstagramBrowserUploader
 from .tiktok import TikTokUploader
 from .tiktok_browser import TikTokBrowserUploader
 from .youtube import YouTubeUploader
@@ -26,6 +27,13 @@ def make_uploader(cfg: AppConfig, platform: str) -> Uploader:
     if platform == "youtube":
         return YouTubeUploader(cfg.youtube, cfg.tokens_dir / "youtube.json")
     if platform == "instagram":
+        if cfg.instagram_method == "browser":
+            return InstagramBrowserUploader(
+                cfg.instagram,
+                profile_dir=cfg.data_dir / "browser" / "instagram",
+                marker_path=cfg.tokens_dir / "instagram_browser.json",
+                debug_dir=cfg.data_dir / "logs" / "instagram_screenshots",
+            )
         return InstagramUploader(cfg.instagram, token_store=TokenStore(cfg.tokens_dir / "instagram.json"))
     raise ValueError(f"Unbekannte Plattform: {platform}")
 

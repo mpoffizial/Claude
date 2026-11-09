@@ -1,7 +1,7 @@
 """Einrichtungs-Assistent:  python -m clipmaschine setup
 
 Fragt das Nötigste ab, schreibt config.yaml und .env (Kommentare der Vorlage bleiben erhalten),
-verbindet TikTok mit deinem Account und prüft am Ende die Einrichtung.
+verbindet TikTok/Instagram mit deinen Accounts und prüft am Ende die Einrichtung.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from .config import PACKAGE_DIR, load_config
 
 LOGIN_RE = re.compile(r"^[A-Za-z0-9_]{3,25}$")
 STREAMER_TEMPLATE = "  - login: dein_streamer\n    hashtags: [deinstreamer]          # immer mitposten\n"
-TIKTOK_TEMPLATE = "tiktok:\n  enabled: false\n"
+PLATFORM_TEMPLATE = "{name}:\n  enabled: false\n"
 
 
 def parse_logins(text: str) -> list[str]:
@@ -32,17 +32,20 @@ def parse_logins(text: str) -> list[str]:
     return logins
 
 
-def build_config_text(template: str, logins: list[str], tiktok: bool) -> str:
+def build_config_text(template: str, logins: list[str], tiktok: bool, instagram: bool = False) -> str:
     streamers = "".join(f"  - login: {login}\n" for login in logins)
-    if STREAMER_TEMPLATE in template and TIKTOK_TEMPLATE in template:
+    platforms = {"tiktok": tiktok, "instagram": instagram}
+    if STREAMER_TEMPLATE in template and all(PLATFORM_TEMPLATE.format(name=n) in template for n in platforms):
         text = template.replace(STREAMER_TEMPLATE, streamers, 1)
-        if tiktok:
-            text = text.replace(TIKTOK_TEMPLATE, "tiktok:\n  enabled: true\n", 1)
+        for name, enabled in platforms.items():
+            if enabled:
+                text = text.replace(PLATFORM_TEMPLATE.format(name=name), f"{name}:\n  enabled: true\n", 1)
         return text
     # Vorlage wurde verändert → sicherer Weg über YAML (ohne Kommentare)
     data = yaml.safe_load(template) or {}
     data["streamers"] = [{"login": login} for login in logins]
-    data.setdefault("tiktok", {})["enabled"] = tiktok
+    for name, enabled in platforms.items():
+        data.setdefault(name, {})["enabled"] = enabled
     return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
 
 
@@ -67,7 +70,7 @@ def _yes(answer: str, default: bool = True) -> bool:
 
 
 def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
-              ask_secret: Callable[[str], str] | None = None, connect_tiktok: bool | None = None) -> Path:
+              ask_secret: Callable[[str], str] | None = None, connect: bool | None = None) -> Path:
     """Führt durch die Einrichtung und gibt den Pfad der config.yaml zurück."""
     ask = ask or input
     ask_secret = ask_secret or getpass.getpass
@@ -76,7 +79,7 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
     env_path = target_dir / ".env"
     print("\n🎬 Clipmaschine – Einrichtung\n")
     if not shutil.which("ffmpeg"):
-        print("⚠ ffmpeg fehlt noch. Windows: winget install Gyan.FFmpeg | macOS: brew install ffmpeg | "
+        print("⚠ ffmpeg fehlt noch. Mac: brew install ffmpeg | Windows: winget install Gyan.FFmpeg | "
               "Linux: sudo apt install ffmpeg – danach das Terminal neu öffnen.\n")
 
     write_config = True
@@ -84,25 +87,29 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
         write_config = not _yes(ask(f"{config_path.name} gibt es schon. Behalten? [J/n] "))
 
     if write_config:
-        print("1/4 Welche Twitch-Kanäle sollen geclippt werden?")
+        print("1/5 Welche Twitch-Kanäle sollen geclippt werden?")
         print("    Nur Kanäle, die dir das erlaubt haben (oder dein eigener). Mehrere mit Komma trennen.")
         logins: list[str] = []
         while not logins:
             logins = parse_logins(ask("    Kanäle: "))
             if not logins:
                 print("    Bitte mindestens einen gültigen Twitch-Namen eingeben (z. B. meinkanal).")
+        print("\n2/5 Gepostet wird auf TikTok.")
+        instagram = _yes(ask("    Zusätzlich auf Instagram (Reels) posten? [J/n] "))
         template = (PACKAGE_DIR / "config.example.yaml").read_text(encoding="utf-8")
-        config_path.write_text(build_config_text(template, logins, tiktok=True), encoding="utf-8")
-        print(f"    ✔ {config_path.name} geschrieben ({', '.join(logins)})\n")
+        config_path.write_text(build_config_text(template, logins, tiktok=True, instagram=instagram),
+                               encoding="utf-8")
+        print(f"    ✔ {config_path.name} geschrieben ({', '.join(logins)}; TikTok"
+              f"{' + Instagram' if instagram else ''})\n")
 
-    print("2/4 Twitch-Zugang (optional – einfach Enter drücken)")
+    print("3/5 Twitch-Zugang (optional – einfach Enter drücken)")
     print("    Ohne Zugang findet die Maschine die Top-Clips über die öffentliche Twitch-Clip-Seite.")
     print("    Nur für den Live-Modus nötig: App unter https://dev.twitch.tv/console/apps anlegen,")
     print("    OAuth-Redirect-URL http://localhost:17563/twitch/callback, Client-Typ: Confidential")
     client_id = ask("    Client-ID (Enter = ohne): ").strip()
     client_secret = ask_secret("    Client-Secret (unsichtbar): ").strip() if client_id else ""
 
-    print("\n3/4 KI-Titel mit Claude (optional): Key von https://console.anthropic.com")
+    print("\n4/5 KI-Titel mit Claude (optional): Key von https://console.anthropic.com")
     anthropic_key = ask_secret("    ANTHROPIC_API_KEY (unsichtbar, Enter = Vorlagen nutzen): ").strip()
 
     env_text = env_path.read_text(encoding="utf-8") if env_path.exists() else \
@@ -115,17 +122,22 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
     print(f"    ✔ Zugangsdaten in {env_path.name} gespeichert\n")
 
     cfg = load_config(config_path)
-    print("4/4 TikTok mit deinem Account verbinden")
-    if connect_tiktok is None:
-        connect_tiktok = _yes(ask("    Jetzt verbinden? Es öffnet sich ein Browserfenster. [J/n] "))
-    if connect_tiktok and cfg.tiktok.enabled:
-        from .uploaders import make_uploader
+    from .uploaders import make_uploader
+    platforms = [name for name in ("tiktok", "instagram") if getattr(cfg, name).enabled]
+    labels = " und ".join({"tiktok": "TikTok", "instagram": "Instagram"}[p] for p in platforms)
+    print(f"5/5 {labels} mit deinem Account verbinden")
+    if connect is None:
+        connect = _yes(ask("    Jetzt verbinden? Es öffnen sich Browserfenster zum Anmelden. [J/n] "))
+    for platform in platforms:
+        if not connect:
+            print(f"    {platform}: später verbinden mit: python -m clipmaschine auth {platform}")
+            continue
         try:
-            make_uploader(cfg, "tiktok").authorize()
+            make_uploader(cfg, platform).authorize()
+        except NotImplementedError:
+            print(f"    {platform}: läuft über die API – die Zugangsdaten stehen in der .env")
         except Exception as exc:  # Einrichtung trotzdem abschließen
-            print(f"    ✘ TikTok-Verbindung fehlgeschlagen: {exc}\n"
-                  "      Später erneut: python -m clipmaschine auth tiktok")
-    else:
-        print("    Später verbinden mit: python -m clipmaschine auth tiktok")
+            print(f"    ✘ {platform}-Verbindung fehlgeschlagen: {exc}\n"
+                  f"      Später erneut: python -m clipmaschine auth {platform}")
     print("\n✔ Einrichtung abgeschlossen.\n")
     return config_path

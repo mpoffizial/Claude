@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import glob
+import os
 import shutil
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -85,3 +87,25 @@ class FakeTwitch:
 
     def game_names(self, ids):
         return {gid: "Minecraft" for gid in ids if gid}
+
+
+def _find_browser() -> str | None:
+    explicit = os.getenv("CLIPMASCHINE_TEST_BROWSER")
+    if explicit:
+        return explicit
+    found = sorted(glob.glob("/opt/pw-browsers/chromium-*/chrome-linux*/chrome"))
+    return found[-1] if found else None
+
+
+@pytest.fixture(scope="session")
+def browser_exec(tmp_path_factory):
+    executable = _find_browser()
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            kwargs = {"executable_path": executable} if executable else {}
+            ctx = p.chromium.launch_persistent_context(str(tmp_path_factory.mktemp("probe")), headless=True, **kwargs)
+            ctx.close()
+    except Exception as exc:  # kein startbarer Browser in dieser Umgebung
+        pytest.skip(f"kein Chromium verfügbar: {exc}")
+    return executable

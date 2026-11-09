@@ -184,6 +184,15 @@ class YouTubeConfig:
 @dataclass
 class InstagramConfig:
     enabled: bool = False
+    # auto = API, wenn INSTAGRAM_USER_ID/ACCESS_TOKEN gesetzt sind, sonst Browser
+    # browser = mit deinem normalen Instagram-Account über instagram.com (kein Business-Konto nötig)
+    # api = Instagram Graph API (Business/Creator-Account + Meta-App)
+    method: str = "auto"
+    browser_headless: bool = False
+    browser_channel: str | None = "chrome"
+    browser_executable: str | None = None
+    browser_upload_timeout_seconds: float = 600
+    browser_selectors: dict = field(default_factory=dict)
     user_id: str = ""
     access_token: str = ""
     graph_host: str = "graph.instagram.com"  # Facebook-Login-Variante: graph.facebook.com
@@ -237,6 +246,13 @@ class AppConfig:
         if self.tiktok.method == "auto":
             return "api" if self.tiktok.client_key and self.tiktok.client_secret else "browser"
         return self.tiktok.method
+
+    @property
+    def instagram_method(self) -> str:
+        """Tatsächlich genutzte Instagram-Methode ('api' oder 'browser')."""
+        if self.instagram.method == "auto":
+            return "api" if self.instagram.user_id and self.instagram.access_token else "browser"
+        return self.instagram.method
 
 
 def _section(cls, raw: Any, name: str):
@@ -370,6 +386,8 @@ def validate(cfg: AppConfig) -> None:
             log.warning("Streamer '%s' nutzt layout 'split' ohne facecam – es wird 'blur' verwendet", s.login)
     if cfg.tiktok.method not in TIKTOK_METHODS:
         problems.append(f"tiktok.method muss eines von {TIKTOK_METHODS} sein")
+    if cfg.instagram.method not in TIKTOK_METHODS:
+        problems.append(f"instagram.method muss eines von {TIKTOK_METHODS} sein")
     if cfg.tiktok.mode not in TIKTOK_MODES:
         problems.append(f"tiktok.mode muss eines von {TIKTOK_MODES} sein")
     if cfg.tiktok.privacy_level not in TIKTOK_PRIVACY:
