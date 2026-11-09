@@ -95,11 +95,12 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
         config_path.write_text(build_config_text(template, logins, tiktok=True), encoding="utf-8")
         print(f"    ✔ {config_path.name} geschrieben ({', '.join(logins)})\n")
 
-    print("2/4 Twitch-Zugang für die Clip-Suche")
-    print("    App anlegen: https://dev.twitch.tv/console/apps → OAuth-Redirect-URL:")
-    print("    http://localhost:17563/twitch/callback  (Kategorie egal, Client-Typ: Confidential)")
-    client_id = ask("    Client-ID (Enter = später): ").strip()
-    client_secret = ask_secret("    Client-Secret (unsichtbar, Enter = später): ").strip() if client_id else ""
+    print("2/4 Twitch-Zugang (optional – einfach Enter drücken)")
+    print("    Ohne Zugang findet die Maschine die Top-Clips über die öffentliche Twitch-Clip-Seite.")
+    print("    Nur für den Live-Modus nötig: App unter https://dev.twitch.tv/console/apps anlegen,")
+    print("    OAuth-Redirect-URL http://localhost:17563/twitch/callback, Client-Typ: Confidential")
+    client_id = ask("    Client-ID (Enter = ohne): ").strip()
+    client_secret = ask_secret("    Client-Secret (unsichtbar): ").strip() if client_id else ""
 
     print("\n3/4 KI-Titel mit Claude (optional): Key von https://console.anthropic.com")
     anthropic_key = ask_secret("    ANTHROPIC_API_KEY (unsichtbar, Enter = Vorlagen nutzen): ").strip()

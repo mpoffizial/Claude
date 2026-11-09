@@ -56,8 +56,8 @@ Der Installer
 * legt die Clipmaschine in `Desktop\Clipmaschine` ab. Liegt dein Desktop in OneDrive, landet sie stattdessen in
   einem lokalen Ordner (vermeidet Sync-Konflikte), und der Desktop bekommt eine Verknüpfung dorthin,
 * erstellt auf dem Desktop **„Clipmaschine starten“** und **„Clipmaschine aktualisieren“**,
-* startet die Maschine. Beim ersten Mal führt ein Assistent durch Twitch-Kanäle, Twitch-Zugang und die
-  TikTok-Anmeldung per QR-Code.
+* startet die Maschine. Beim ersten Mal fragt ein Assistent nur deine Twitch-Kanäle ab (Twitch-Zugang
+  ist optional) und öffnet die TikTok-Anmeldung per QR-Code.
 
 Updates: Doppelklick auf „Clipmaschine aktualisieren“. Deine Einstellungen, Logins und Daten bleiben erhalten.
 
@@ -116,7 +116,11 @@ Das fertige Video liegt danach in `clipmaschine_data/rendered/`.
 
 ## 🔑 Plattformen einrichten
 
-### Twitch (Pflicht)
+### Twitch (optional)
+
+**Ohne Einrichtung** findet die Clipmaschine die Top-Clips über die öffentliche Twitch-Clip-Seite.
+Eine Twitch-Entwickler-App bringt etwas genauere Daten (Spiel, VOD-Position) und ist nur für den
+**Live-Modus** Pflicht. Fällt die API einmal aus, wird automatisch die öffentliche Seite genutzt.
 
 1. <https://dev.twitch.tv/console/apps> öffnen, **Register Your Application** wählen.
 2. Als OAuth-Redirect-URL `http://localhost:17563/twitch/callback` eintragen. Client-Typ: *Confidential*.

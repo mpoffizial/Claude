@@ -203,22 +203,24 @@ def cmd_check(cfg: AppConfig, args) -> int:
 
     line(bool(cfg.streamers), "Streamer", ", ".join(s.login for s in cfg.streamers) or "keine eingetragen")
     from .twitch_api import TwitchAPIError
-    try:
-        machine = _machine(cfg)
-        users = machine.twitch.get_users(logins=[s.login for s in cfg.streamers])
-        missing = [s.login for s in cfg.streamers if s.login not in users]
-        line(not missing, "Twitch-API", "alle Kanäle gefunden" if not missing else f"nicht gefunden: {missing}")
-        if cfg.live.enabled:
-            try:
-                login = machine.twitch.validate_user_token().get("login")
-                line(True, "Live-Modus", f"Clips werden als {login} erstellt")
-            except TwitchAPIError as exc:
-                line(False, "Live-Modus", str(exc))
-        else:
-            line(None, "Live-Modus", "aus")
-    except TwitchAPIError as exc:
-        line(False, "Twitch-API", str(exc))
-        machine = None
+    machine = _machine(cfg)
+    if machine.has_twitch_credentials:
+        try:
+            users = machine.twitch.get_users(logins=[s.login for s in cfg.streamers])
+            missing = [s.login for s in cfg.streamers if s.login not in users]
+            line(not missing, "Twitch-API", "alle Kanäle gefunden" if not missing else f"nicht gefunden: {missing}")
+        except TwitchAPIError as exc:
+            line(False, "Twitch-API", f"{exc} – solange wird die öffentliche Clip-Seite genutzt")
+    else:
+        line(None, "Twitch", "ohne Entwickler-App – Top-Clips kommen von der öffentlichen Clip-Seite")
+    if cfg.live.enabled:
+        try:
+            login = machine.twitch.validate_user_token().get("login")
+            line(True, "Live-Modus", f"Clips werden als {login} erstellt")
+        except TwitchAPIError as exc:
+            line(False, "Live-Modus", f"braucht TWITCH_CLIENT_ID/SECRET und 'auth twitch' ({exc})")
+    else:
+        line(None, "Live-Modus", "aus")
 
     if cfg.captions.enabled:
         try:
@@ -229,8 +231,7 @@ def cmd_check(cfg: AppConfig, args) -> int:
     else:
         line(None, "Untertitel", "aus")
 
-    from .metadata import MetadataGenerator
-    generator = machine.metadata if machine else MetadataGenerator(cfg.metadata)
+    generator = machine.metadata
     if generator.uses_claude:
         has_key = bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"))
         line(None, "KI-Titel", f"Claude ({cfg.metadata.model})" + ("" if has_key else

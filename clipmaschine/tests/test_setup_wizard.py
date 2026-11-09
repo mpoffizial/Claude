@@ -63,7 +63,7 @@ def test_cli_setup_without_start(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("getpass.getpass", scripted(""))
     assert main(["setup", "--no-start"]) == 0
     out = capsys.readouterr().out
-    assert "Einrichtung abgeschlossen" in out and "Twitch-API" in out
+    assert "Einrichtung abgeschlossen" in out and "öffentlichen Clip-Seite" in out
     assert (tmp_path / "config.yaml").is_file()
 
 

@@ -24,6 +24,8 @@ set PY=.venv\Scripts\python.exe
 echo Pruefe Pakete ...
 %PY% -m pip install --disable-pip-version-check -q -r clipmaschine\requirements.txt
 if errorlevel 1 goto pip_failed
+REM yt-dlp aktuell halten - Twitch aendert seine Seite oefter
+%PY% -m pip install --disable-pip-version-check -q --upgrade yt-dlp >nul 2>nul
 
 set CHROME_FOUND=0
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set CHROME_FOUND=1

@@ -100,16 +100,17 @@ def test_example_config_loads(cli_config):
     assert cfg.posting.timezone == "Europe/Berlin" and cfg.editing.layout == "blur"
 
 
-def test_cli_status_check_health_and_run_once(cli_config, capsys):
+def test_cli_status_check_health_and_run_once(cli_config, capsys, monkeypatch):
+    monkeypatch.setattr("clipmaschine.highlights._list_public_clips", lambda url, limit: [])
     assert main(["-c", str(cli_config), "health"]) == 1               # noch nie gelaufen
     assert main(["-c", str(cli_config), "status"]) == 0
     assert "noch nie gelaufen" in capsys.readouterr().out
 
-    assert main(["-c", str(cli_config), "check"]) == 1                # Twitch-Zugangsdaten fehlen
+    assert main(["-c", str(cli_config), "check"]) == 0                # Twitch-App ist optional
     out = capsys.readouterr().out
-    assert "TWITCH_CLIENT_ID" in out and "ffmpeg" in out
+    assert "öffentlichen Clip-Seite" in out and "ffmpeg" in out
 
-    assert main(["-c", str(cli_config), "run", "--once", "--dry-run"]) == 0   # läuft trotz Twitch-Fehler
+    assert main(["-c", str(cli_config), "run", "--once", "--dry-run"]) == 0
     assert main(["-c", str(cli_config), "health"]) == 0
     assert main(["-c", str(cli_config), "status"]) == 0
     assert "läuft" in capsys.readouterr().out

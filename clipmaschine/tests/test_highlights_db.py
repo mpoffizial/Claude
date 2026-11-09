@@ -109,3 +109,50 @@ def test_active_hours_and_slots():
     assert not ok and "nächster Post" in reason
     assert slot_available(db, "tiktok", cfg, now + timedelta(minutes=61))[0]
     assert slot_available(db, "youtube", cfg, now)[0]                   # Limits gelten pro Plattform
+
+
+def _public_entry(slug, views, age_hours, duration=20.0, title="Clip", login="streamer_a"):
+    created = datetime.now(timezone.utc) - timedelta(hours=age_hours)
+    return {"url": f"https://www.twitch.tv/{login}/clip/{slug}", "id": "12345", "title": title,
+            "view_count": views, "duration": duration, "timestamp": created.timestamp(), "language": "de"}
+
+
+def test_discovery_without_twitch_credentials_uses_public_clip_page(app_config, monkeypatch):
+    from clipmaschine import highlights
+    calls = []
+
+    def fake_list(url, limit):
+        calls.append((url, limit))
+        login = url.split("/")[3]
+        if login != "streamer_a":
+            return []
+        return [_public_entry("TopClip-abc", 800, 2), _public_entry("ZweiterClip", 300, 5),
+                _public_entry("ZuAlt", 5000, 30), _public_entry("ZuWenig", 3, 1), {"url": "kaputt"}]
+
+    monkeypatch.setattr(highlights, "_list_public_clips", fake_list)
+    db = Database(":memory:")
+    stored = ClipDiscovery(app_config, None, db).discover()
+    assert [clip.id for clip, _ in stored] == ["TopClip-abc", "ZweiterClip"]
+    assert calls[0][0] == "https://www.twitch.tv/streamer_a/clips?filter=clips&range=24hr"
+    row = db.get_clip("TopClip-abc")
+    assert row["broadcaster_login"] == "streamer_a" and row["url"].endswith("/clip/TopClip-abc")
+
+
+def test_discovery_falls_back_to_public_page_when_api_fails(app_config, monkeypatch):
+    from clipmaschine import highlights
+    from clipmaschine.twitch_api import TwitchAPIError
+
+    class BrokenTwitch(FakeTwitch):
+        def get_clips(self, *args, **kwargs):
+            raise TwitchAPIError("HTTP 503")
+
+    monkeypatch.setattr(highlights, "_list_public_clips",
+                        lambda url, limit: [_public_entry("Ersatz", 500, 1)] if "streamer_a" in url else [])
+    db = Database(":memory:")
+    stored = ClipDiscovery(app_config, BrokenTwitch({"streamer_a": [], "streamer_b": []}), db).discover()
+    assert [clip.id for clip, _ in stored] == ["Ersatz"]
+
+
+def test_public_period_mapping():
+    from clipmaschine.highlights import public_period
+    assert [public_period(h) for h in (6, 24, 48, 168, 500, 2000)] == ["24hr", "24hr", "7d", "7d", "30d", "all"]

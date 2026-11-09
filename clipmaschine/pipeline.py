@@ -76,9 +76,15 @@ class ClipMachine:
         return self._twitch
 
     @property
+    def has_twitch_credentials(self) -> bool:
+        return self._twitch is not None or bool(self.cfg.twitch.client_id and self.cfg.twitch.client_secret)
+
+    @property
     def discovery(self) -> ClipDiscovery:
         if self._discovery is None:
-            self._discovery = ClipDiscovery(self.cfg, self.twitch, self.db)
+            # ohne Zugangsdaten: öffentliche Twitch-Clip-Seite statt API
+            api = self.twitch if self.has_twitch_credentials else None
+            self._discovery = ClipDiscovery(self.cfg, api, self.db)
         return self._discovery
 
     def _local(self, dt: datetime) -> str:
@@ -106,6 +112,11 @@ class ClipMachine:
         self.cleanup_leftovers()
 
         self._live_wanted = self.cfg.live.enabled and not once
+        if self._live_wanted and not self.has_twitch_credentials:
+            log.warning("Live-Modus braucht TWITCH_CLIENT_ID/SECRET in der .env – läuft ohne Live-Modus weiter")
+            self._live_wanted = False
+        if not self.has_twitch_credentials:
+            log.info("Twitch: ohne Entwickler-App – Top-Clips kommen von der öffentlichen Clip-Seite")
         try:
             while not self.stop_event.is_set():
                 started = time.monotonic()
