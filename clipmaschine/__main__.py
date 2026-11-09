@@ -251,6 +251,22 @@ def cmd_check(cfg: AppConfig, args) -> int:
     return 0 if ok else 1
 
 
+def cmd_setup(args) -> int:
+    from .setup_wizard import run_setup
+
+    config_path = run_setup(Path.cwd())
+    cfg = load_config(config_path)
+    _setup_logging(cfg, args.verbose)
+    cmd_check(cfg, args)
+    if args.no_start:
+        return 0
+    answer = input("Clipmaschine jetzt starten? [J/n] ").strip().lower()
+    if answer and answer[0] not in ("j", "y"):
+        print("Starten später mit: python -m clipmaschine run")
+        return 0
+    return cmd_run(cfg, argparse.Namespace(dry_run=False, once=False))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m clipmaschine",
@@ -260,6 +276,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-v", "--verbose", action="store_true", help="ausführliche Logs")
     parser.add_argument("--version", action="version", version=f"clipmaschine {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("setup", help="Einrichtungs-Assistent (erster Start)")
+    p.add_argument("--no-start", action="store_true", help="nach der Einrichtung nicht direkt starten")
 
     p = sub.add_parser("run", help="Maschine im Dauerbetrieb starten")
     p.add_argument("--dry-run", action="store_true", help="alles machen außer hochladen")
@@ -292,6 +311,16 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("health", help="Exit 0, wenn die Maschine läuft (Monitoring)").set_defaults(func=cmd_health)
 
     args = parser.parse_args(argv)
+    if args.command == "setup":
+        _setup_logging(None, args.verbose)
+        try:
+            return cmd_setup(args)
+        except (KeyboardInterrupt, EOFError):
+            print("\nEinrichtung abgebrochen.")
+            return 130
+        except ConfigError as exc:
+            print(f"Konfigurationsfehler: {exc}", file=sys.stderr)
+            return 2
     try:
         cfg = load_config(args.config)
     except ConfigError as exc:

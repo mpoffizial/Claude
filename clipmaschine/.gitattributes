@@ -1,1 +1,2 @@
-*.bat text eol=crlf
+# Windows-Skripte mit CRLF ablegen (auch im ZIP-Download) – keine Umwandlung durch git
+*.bat -text

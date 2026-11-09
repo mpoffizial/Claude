@@ -43,7 +43,25 @@ automatisch weiter, und von den meisten Fehlern erholt sie sich selbst.
 
 ---
 
-## 🚀 Installation
+## ⚡ Schnellstart unter Windows (Doppelklick)
+
+1. Einmalig installieren (in der Eingabeaufforderung):
+   ```bat
+   winget install Python.Python.3.12
+   winget install Gyan.FFmpeg
+   ```
+2. Das Repository herunterladen (grüner Button **Code → Download ZIP** auf GitHub, Branch
+   `claude/blissful-turing-83j3hp`) und entpacken.
+3. **`clipmaschine\deploy\start_windows.bat` doppelklicken.** Beim ersten Start:
+   * richtet das Skript die Python-Umgebung und alle Pakete selbst ein,
+   * fragt der Assistent deine Twitch-Kanäle und die Twitch-Zugangsdaten ab (Claude-Key optional),
+   * öffnet sich ein Browserfenster für die **TikTok-Anmeldung** (am einfachsten per QR-Code),
+   * startet danach die Maschine und hält sie am Laufen (Neustart nach Abstürzen).
+
+Ab dann reicht ein Doppelklick auf dieselbe Datei. Den Assistenten kannst du jederzeit erneut starten:
+`python -m clipmaschine setup`.
+
+## 🚀 Installation (manuell, alle Systeme)
 
 **Voraussetzungen:** Python 3.10 oder neuer und **ffmpeg** (mit libass, bei den üblichen Builds dabei).
 
@@ -192,6 +210,7 @@ Danach in der `config.yaml` `captions.enabled: true` setzen. Läuft auf der CPU.
 
 | Befehl | Zweck |
 |---|---|
+| `python -m clipmaschine setup` | Einrichtungs-Assistent: Kanäle, Zugangsdaten, TikTok verbinden |
 | `python -m clipmaschine check` | Einrichtung prüfen: ffmpeg, Twitch, Plattformen, KI, Untertitel |
 | `python -m clipmaschine discover` | Aktuelle Top-Clips suchen, anzeigen und vormerken |
 | `python -m clipmaschine process <clip-url>` | Einen bestimmten Clip schneiden (mit `--upload` sofort posten) |

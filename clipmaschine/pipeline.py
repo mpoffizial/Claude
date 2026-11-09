@@ -97,7 +97,12 @@ class ClipMachine:
             log.warning("Keine Plattform aktiviert – Videos werden nur gerendert (Ordner %s)", self.rendered_dir)
         if self.dry_run:
             log.info("DRY-RUN: Es wird nichts hochgeladen")
-        log.info("KI-Titel: %s", "Claude" if self.metadata.uses_claude else "Vorlagen")
+        if not self.metadata.uses_claude:
+            log.info("KI-Titel: Vorlagen")
+        elif os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"):
+            log.info("KI-Titel: Claude (%s)", self.cfg.metadata.model)
+        else:
+            log.info("KI-Titel: Claude, sofern Zugangsdaten gefunden werden – sonst Vorlagen")
         self.cleanup_leftovers()
 
         self._live_wanted = self.cfg.live.enabled and not once
@@ -147,11 +152,14 @@ class ClipMachine:
                     log.info("%d neue Highlights in der Warteschlange", len(new))
             except TwitchAPIError as exc:
                 log.error("Clip-Suche fehlgeschlagen: %s – neuer Versuch in %g min", exc, d.interval_minutes)
-        self.expire_old()
-        self.prepare_pending()
-        self.post_ready()
-        self.finalize()
-        self.write_heartbeat()
+            except Exception:
+                log.exception("Clip-Suche fehlgeschlagen – neuer Versuch in %g min", d.interval_minutes)
+        # jede Stufe einzeln absichern: fällt z. B. Twitch aus, wird trotzdem weiter gepostet
+        for stage in (self.expire_old, self.prepare_pending, self.post_ready, self.finalize, self.write_heartbeat):
+            try:
+                stage()
+            except Exception:
+                log.exception("Fehler in %s – geht im nächsten Durchlauf weiter", stage.__name__)
 
     # ------------------------------------------------------------ Vorbereiten
     def expire_old(self) -> None:

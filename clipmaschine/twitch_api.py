@@ -55,15 +55,21 @@ class TwitchAPI:
         self._games: dict[str, str] = {}
 
     # ----------------------------------------------------------------- Tokens
+    def _post_token(self, data: dict) -> requests.Response:
+        try:
+            return self.session.post(f"{AUTH_URL}/token", data=data, timeout=20)
+        except requests.RequestException as exc:
+            raise TwitchAPIError(f"Twitch nicht erreichbar ({exc.__class__.__name__})") from exc
+
     def _app_access_token(self, force: bool = False) -> str:
         with self._lock:
             if not force and self._app_token and time.time() < self._app_token_expiry - 300:
                 return self._app_token
-            resp = self.session.post(f"{AUTH_URL}/token", data={
+            resp = self._post_token({
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
                 "grant_type": "client_credentials",
-            }, timeout=20)
+            })
             payload = _json(resp)
             if resp.status_code != 200 or "access_token" not in payload:
                 raise TwitchAPIError(f"App-Token fehlgeschlagen: HTTP {resp.status_code} {payload.get('message', '')}",
@@ -84,12 +90,12 @@ class TwitchAPI:
     def _refresh_user_token(self, data: dict) -> dict:
         if not data.get("refresh_token"):
             raise TwitchAPIError("Twitch-Token abgelaufen – bitte erneut: python -m clipmaschine auth twitch")
-        resp = self.session.post(f"{AUTH_URL}/token", data={
+        resp = self._post_token({
             "grant_type": "refresh_token",
             "refresh_token": data["refresh_token"],
             "client_id": self.client_id,
             "client_secret": self.client_secret,
-        }, timeout=20)
+        })
         payload = _json(resp)
         if resp.status_code != 200 or "access_token" not in payload:
             raise TwitchAPIError(
@@ -122,13 +128,13 @@ class TwitchAPI:
             "force_verify": "true",
         })
         code = obtain_authorization_code(url, self.redirect_uri, state)
-        resp = self.session.post(f"{AUTH_URL}/token", data={
+        resp = self._post_token({
             "client_id": self.client_id,
             "client_secret": self.client_secret,
             "code": code,
             "grant_type": "authorization_code",
             "redirect_uri": self.redirect_uri,
-        }, timeout=20)
+        })
         payload = _json(resp)
         if resp.status_code != 200 or "access_token" not in payload:
             raise TwitchAPIError(f"Token-Tausch fehlgeschlagen: HTTP {resp.status_code} {payload.get('message', '')}")
@@ -137,7 +143,10 @@ class TwitchAPI:
 
     def validate_user_token(self) -> dict:
         token = self._user_access_token()
-        resp = self.session.get(f"{AUTH_URL}/validate", headers={"Authorization": f"OAuth {token}"}, timeout=20)
+        try:
+            resp = self.session.get(f"{AUTH_URL}/validate", headers={"Authorization": f"OAuth {token}"}, timeout=20)
+        except requests.RequestException as exc:
+            raise TwitchAPIError(f"Twitch nicht erreichbar ({exc.__class__.__name__})") from exc
         if resp.status_code != 200:
             raise TwitchAPIError(f"Token ungültig (HTTP {resp.status_code})", resp.status_code)
         return _json(resp)
