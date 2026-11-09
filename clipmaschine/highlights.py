@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 from .config import AppConfig, StreamerConfig
 from .db import Database
-from .downloader import DownloadError, clip_id_from_ref
+from .downloader import DownloadError, QuietYtDlpLogger, clip_id_from_ref, short_error
 from .models import Clip, utcnow
 from .twitch_api import TwitchAPI, TwitchAPIError
 
@@ -66,12 +66,12 @@ def _list_public_clips(url: str, limit: int) -> list[dict]:
     except ImportError as exc:
         raise DownloadError("yt-dlp ist nicht installiert: pip install yt-dlp") from exc
     opts = {"quiet": True, "no_warnings": True, "extract_flat": "in_playlist", "playlistend": limit,
-            "socket_timeout": 30}
+            "socket_timeout": 30, "logger": QuietYtDlpLogger()}
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False) or {}
     except Exception as exc:  # yt-dlp wirft eigene Fehlertypen
-        raise DownloadError(f"Twitch-Clip-Seite nicht lesbar: {exc}") from exc
+        raise DownloadError(f"Twitch-Clip-Seite nicht lesbar: {short_error(exc)}") from exc
     return [entry for entry in (info.get("entries") or []) if entry]
 
 

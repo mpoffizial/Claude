@@ -43,6 +43,28 @@ automatisch weiter, und von den meisten Fehlern erholt sie sich selbst.
 
 ---
 
+## 🍎 Schnellstart auf dem Mac: ein Befehl
+
+Das **Terminal** öffnen (Cmd + Leertaste → „Terminal“ → Enter), diesen Befehl einfügen und Enter drücken:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mpoffizial/Claude/claude/blissful-turing-83j3hp/clipmaschine/deploy/install_mac.sh | bash
+```
+
+Der Installer
+* installiert bei Bedarf Homebrew, Python und ffmpeg. Homebrew fragt einmal nach deinem Mac-Passwort, beim Tippen
+  erscheinen keine Zeichen (das ist normal),
+* legt die Clipmaschine auf den **Schreibtisch**. Wird dein Schreibtisch mit iCloud synchronisiert, landet sie in
+  `~/Clipmaschine` (vermeidet Sync-Konflikte), und auf dem Schreibtisch liegen nur die Starter,
+* legt **„Clipmaschine starten“** und **„Clipmaschine aktualisieren“** auf den Schreibtisch,
+* startet die Maschine in einem neuen Terminal-Fenster. Beim ersten Mal fragt der Assistent deine Twitch-Kanäle ab
+  und öffnet die Anmeldung bei TikTok (QR-Code) und Instagram.
+
+Solange die Maschine läuft, geht der Mac nicht in den Ruhezustand. Ein **zugeklapptes MacBook** schläft trotzdem ein,
+also aufgeklappt und am Strom lassen.
+**Autostart nach dem Anmelden:** Systemeinstellungen → Allgemein → Anmeldeobjekte → „+“ →
+`Clipmaschine starten.command` vom Schreibtisch wählen.
+
 ## ⚡ Schnellstart unter Windows: ein Befehl
 
 **PowerShell** öffnen (Startmenü → „PowerShell“), diesen Befehl einfügen und Enter drücken:
@@ -342,6 +364,10 @@ sudo systemctl daemon-reload && sudo systemctl enable --now clipmaschine
 journalctl -u clipmaschine -f
 ```
 
+### Mac
+
+Doppelklick auf **„Clipmaschine starten“** auf dem Schreibtisch. Das Fenster startet die Maschine nach einem Absturz automatisch neu und verhindert den Ruhezustand. Für den Autostart siehe den Mac-Schnellstart oben.
+
 ### Windows
 
 `clipmaschine\deploy\start_windows.bat` per Doppelklick starten. Das Skript startet die Maschine nach einem
@@ -395,4 +421,5 @@ KI-Titel samt Fallbacks, Selbstheilung, Einzelinstanz-Sperre und die Kommandozei
 | Videos auf YouTube sind privat | Ungeprüftes API-Projekt. YouTube API Audit beantragen |
 | Schrift sieht anders aus | Eigene Schrift: `editing.font` plus `editing.fonts_dir` mit der .ttf-Datei |
 | Keine Clips gefunden | `min_views` senken, `lookback_hours` erhöhen, `discover` zum Testen nutzen |
+| Mac: Starter lässt sich nicht öffnen („nicht verifizierter Entwickler“) | Rechtsklick auf die Datei → „Öffnen“ → „Öffnen“ (nur beim ersten Mal, betrifft nur per Browser geladene ZIPs) |
 | „Die Clipmaschine läuft bereits“ | Es läuft schon eine Instanz. `status` zeigt die PID |

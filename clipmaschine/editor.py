@@ -72,6 +72,23 @@ def _run(cmd: list[str], timeout: float, cwd: Path | None = None) -> subprocess.
         raise RenderError(f"{Path(cmd[0]).name} hat nach {timeout:.0f}s nicht geantwortet – abgebrochen") from exc
 
 
+_filter_cache: dict[str, bool] = {}
+
+
+def has_filter(name: str) -> bool:
+    """Ist ein ffmpeg-Filter verfügbar? (z. B. 'ass' braucht ffmpeg mit libass)"""
+    if name not in _filter_cache:
+        try:
+            out = _run([_require("ffmpeg"), "-hide_banner", "-filters"], timeout=30).stdout
+            _filter_cache[name] = any(line.split()[1:2] == [name] for line in out.splitlines())
+        except RenderError:
+            _filter_cache[name] = False
+        if name == "ass" and not _filter_cache[name]:
+            log.warning("ffmpeg ohne libass – Hook, Untertitel und Credit werden weggelassen. Abhilfe: ffmpeg mit "
+                        "libass installieren (Mac: brew reinstall ffmpeg, Windows: winget install Gyan.FFmpeg)")
+    return _filter_cache[name]
+
+
 def probe(path: Path) -> MediaInfo:
     cmd = [_require("ffprobe"), "-v", "error", "-print_format", "json", "-show_streams", "-show_format", str(path)]
     proc = _run(cmd, timeout=60)
@@ -238,6 +255,8 @@ def render_vertical(src: Path, out: Path, cfg: EditingConfig, *, layout: str | N
     try:
         video_chain = f"[base]fps={cfg.fps},setsar=1"
         doc = build_overlay(plan, cfg, duration, hook, credit, captions or [])
+        if doc and not has_filter("ass"):
+            doc = None                     # lieber ohne Texte als gar kein Video
         if doc:
             (workdir / "overlay.ass").write_text(doc.render(), encoding="utf-8")
             # ffmpeg läuft im workdir → relativer Dateiname, kein Escaping-Ärger mit Pfaden
