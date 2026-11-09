@@ -243,8 +243,10 @@ def cmd_check(cfg: AppConfig, args) -> int:
         if not getattr(cfg, platform).enabled:
             line(None, platform, "deaktiviert")
             continue
-        problem = make_uploader(cfg, platform).problem()
-        line(problem is None, platform, problem or "bereit")
+        uploader = make_uploader(cfg, platform)
+        problem = uploader.problem()
+        detail = f"{uploader.description}: {problem}" if problem else f"bereit ({uploader.description})"
+        line(problem is None, platform, detail)
     print()
     return 0 if ok else 1
 

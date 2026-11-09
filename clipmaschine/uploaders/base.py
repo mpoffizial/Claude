@@ -33,6 +33,7 @@ class UploadError(Exception):
 
 class Uploader(ABC):
     name: str = ""
+    description: str = ""
 
     @abstractmethod
     def upload(self, video_path: Path, meta: PostMetadata, clip: Clip) -> UploadResult:
@@ -43,6 +44,17 @@ class Uploader(ABC):
 
     def problem(self) -> str | None:
         """Gibt einen Hinweis zurück, falls die Plattform noch nicht eingerichtet ist."""
+        return None
+
+    def connected_at(self) -> float | None:
+        """Zeitpunkt (Unix-Zeit) der letzten Anmeldung – ändert er sich, endet eine Login-Pause sofort."""
+        return None
+
+
+def file_mtime(path: Path) -> float | None:
+    try:
+        return Path(path).stat().st_mtime
+    except OSError:
         return None
 
 

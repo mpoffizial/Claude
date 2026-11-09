@@ -21,6 +21,10 @@ class FakeUploader(Uploader):
         self.name = name
         self.errors = list(errors or [])
         self.uploads = []
+        self.connected = None
+
+    def connected_at(self):
+        return self.connected
 
     def upload(self, video_path, meta, clip):
         assert video_path.is_file()
@@ -225,3 +229,20 @@ def test_leftovers_are_cleaned_on_start(app_config):
     machine.cleanup_leftovers()
     assert not (machine.rendered_dir / ".work_x").exists()
     assert not list(machine.downloads_dir.iterdir())
+
+
+def test_reconnect_ends_login_pause_immediately(app_config, clock, downloads):
+    import time as _time
+    app_config.posting.min_minutes_between_posts = 0
+    app_config.posting.queue_size = 1
+    tiktok = FakeUploader("tiktok", errors=[UploadError("Anmeldung abgelaufen", pause_seconds=6 * 3600)])
+    machine = make_machine(app_config, [tiktok])
+
+    machine.run_cycle()
+    assert "tiktok" in machine._paused_until
+    machine.run_cycle()
+    assert tiktok.uploads == []                                       # pausiert
+
+    tiktok.connected = _time.time() + 1                               # "python -m clipmaschine auth tiktok"
+    machine.run_cycle()                                               # ohne 6 h zu warten
+    assert tiktok.uploads == ["a1"] and "tiktok" not in machine._paused_until

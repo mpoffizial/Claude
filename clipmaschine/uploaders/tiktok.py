@@ -13,7 +13,7 @@ import requests
 from ..config import TikTokConfig
 from ..models import Clip, PostMetadata
 from ..oauth import TokenStore, generate_state, obtain_authorization_code, pkce_pair
-from .base import UploadError, UploadResult, Uploader, build_caption
+from .base import UploadError, UploadResult, Uploader, build_caption, file_mtime
 
 log = logging.getLogger(__name__)
 
@@ -46,11 +46,15 @@ def chunk_plan(size: int) -> ChunkPlan:
 
 class TikTokUploader(Uploader):
     name = "tiktok"
+    description = "offizielle API"
 
     def __init__(self, cfg: TikTokConfig, token_store: TokenStore, session: requests.Session | None = None):
         self.cfg = cfg
         self.store = token_store
         self.session = session or requests.Session()
+
+    def connected_at(self) -> float | None:
+        return file_mtime(self.store.path)
 
     @property
     def scopes(self) -> str:

@@ -38,7 +38,7 @@ automatisch weiter, und von den meisten Fehlern erholt sie sich selbst.
 | **Schnitt** | Drei Layouts: `blur` (Video mittig, unscharfer Hintergrund), `crop` (bildfüllend), `split` (Facecam oben, Gameplay unten). Dazu Hook-Text oben, Credit und Lautheits-Angleichung auf −14 LUFS. |
 | **Untertitel** *(optional)* | Läuft lokal und kostenlos mit faster-whisper. Wörter erscheinen in kurzen Häppchen, das gerade gesprochene Wort wird gelb hervorgehoben (Karaoke-Stil). |
 | **Titel & Hashtags** | Mit Claude (optional), sonst per Vorlage. Hook, Titel, Beschreibung mit Credit und 5–8 Hashtags. |
-| **Posten** | TikTok (Direct Post oder Entwurf), YouTube Shorts und Instagram Reels, mit Tageslimit, Mindestabstand und Uhrzeiten pro Plattform. |
+| **Posten** | TikTok (**direkt mit deinem Account** über den Browser oder per offizieller API), YouTube Shorts und Instagram Reels, mit Tageslimit, Mindestabstand und Uhrzeiten pro Plattform. |
 | **Dauerbetrieb** | Selbstheilung, Schutz vor Doppelstart, Heartbeat sowie Auto-Neustart per Docker, systemd oder Windows-Skript. |
 
 ---
@@ -90,13 +90,50 @@ Das fertige Video liegt danach in `clipmaschine_data/rendered/`.
    python -m clipmaschine auth twitch
    ```
 
-### TikTok
+### TikTok – direkt mit deinem Account verbinden (Browser-Modus, empfohlen)
+
+Du brauchst **kein Entwickler-Konto**, und die Videos sind sofort öffentlich, so wie bei einem normalen Upload.
+
+1. In der `config.yaml` setzen:
+   ```yaml
+   tiktok:
+     enabled: true
+     method: browser
+   ```
+2. Verbinden:
+   ```bash
+   python -m clipmaschine auth tiktok
+   ```
+   Ein Browserfenster öffnet sich. Melde dich dort ganz normal an, am einfachsten per **QR-Code**
+   (TikTok-App → Profil → ☰ → QR-Code scannen). Das Fenster schließt sich danach von selbst.
+   Dein Passwort bekommt die Clipmaschine nie zu sehen. Die Anmeldung liegt in einem eigenen
+   Browserprofil unter `clipmaschine_data/browser/tiktok/`.
+3. Fertig. Bei jedem Post öffnet sich kurz ein Browserfenster: Die Maschine lädt das Video in TikTok
+   Studio hoch, trägt Titel und Hashtags ein und klickt auf „Posten“.
+
+So bleibt es zuverlässig:
+
+* **Kein Doppel-Post:** Scheitert etwas *vor* dem Klick auf „Posten“, versucht die Maschine es später
+  erneut. Nach dem Klick wird nie automatisch noch einmal gepostet. Bleibt die Bestätigung aus, gilt das
+  Video als eingereicht, und ein Screenshot zur Kontrolle liegt in `clipmaschine_data/logs/tiktok_screenshots/`.
+* **Anmeldung abgelaufen:** TikTok pausiert, die anderen Plattformen laufen weiter. Sobald du
+  `python -m clipmaschine auth tiktok` erneut ausführst, geht es **sofort** weiter, auch während die Maschine läuft.
+* **Sicherheitsprüfung (Captcha):** Die Maschine holt das Fenster nach vorne und wartet bis zu 5 Minuten, bis du sie gelöst hast.
+* Nutzt dein installiertes **Google Chrome**. Ist keins installiert, einmal `python -m playwright install chromium` ausführen.
+* Ändert TikTok die Upload-Seite, lassen sich die Erkennungsmerkmale über `tiktok.browser_selectors` anpassen, ohne Code zu ändern.
+
+> ⚠️ Laut Nutzungsbedingungen erlaubt TikTok automatisiertes Hochladen über die Website eigentlich nicht.
+> Das Risiko betrifft nur deinen Account (im schlimmsten Fall Einschränkungen). Bleib deshalb bei moderaten
+> Limits (Standard: 4 Posts pro Tag, 2 Stunden Abstand). Der Browser-Modus ist für den Betrieb auf deinem
+> PC gedacht. Auf Servern ohne Bildschirm `browser_headless: true` setzen, besser aber die API nutzen.
+
+### TikTok – offizielle API (Alternative)
 
 1. Auf <https://developers.tiktok.com> eine App anlegen und die Produkte **Login Kit** und **Content Posting API** hinzufügen.
    Für `mode: direct` zusätzlich *Direct Post* aktivieren.
 2. Plattform **Desktop** wählen, Redirect-URI `http://localhost:17564/tiktok/callback`.
 3. Scopes: `user.info.basic` plus `video.publish` (direct) bzw. `video.upload` (inbox).
-4. `TIKTOK_CLIENT_KEY` und `TIKTOK_CLIENT_SECRET` in die `.env` eintragen und anmelden:
+4. `TIKTOK_CLIENT_KEY` und `TIKTOK_CLIENT_SECRET` in die `.env` eintragen, `tiktok.method: api` setzen und anmelden:
    ```bash
    python -m clipmaschine auth tiktok
    ```
@@ -200,6 +237,7 @@ Die Maschine ist so gebaut, dass sie **ohne Eingreifen** weiterläuft:
 | Gerendertes Video fehlt | Wird automatisch neu gerendert. |
 | Plattform lehnt ein Video endgültig ab | Kein weiterer Versuch für diesen Clip. Andere Clips und Plattformen laufen normal weiter. |
 | Tokens laufen ab | Twitch, TikTok, YouTube und Instagram werden automatisch erneuert. |
+| TikTok-Anmeldung im Browser-Modus abgelaufen | TikTok pausiert, der Rest läuft weiter. Nach `auth tiktok` geht es **sofort** weiter. |
 | Chat-Verbindung bricht ab | Automatischer Reconnect. Ein Watchdog startet abgestürzte Threads neu. |
 | Hängender ffmpeg- oder Download-Prozess | Zeitlimit, Abbruch, neuer Versuch. |
 | Wenig Speicherplatz | Downloads pausieren, bis wieder genug Platz frei ist (`min_free_disk_gb`). |
@@ -224,6 +262,8 @@ docker compose -f clipmaschine/docker-compose.yml logs -f
 
 `restart: unless-stopped` startet den Container nach Abstürzen und Server-Neustarts automatisch.
 Die Anmeldungen (`auth …`) vorher lokal am PC machen, weil dafür ein Browser nötig ist.
+Das Docker-Image enthält keinen Browser. Für TikTok im Container also `tiktok.method: api` nutzen
+oder die Maschine auf deinem PC laufen lassen (Windows-Skript unten).
 
 ### Linux (systemd)
 
@@ -281,7 +321,9 @@ KI-Titel samt Fallbacks, Selbstheilung, Einzelinstanz-Sperre und die Kommandozei
 |---|---|
 | `ffmpeg nicht gefunden` | ffmpeg installieren und Terminal neu öffnen (PATH) |
 | Twitch: „Kanal nicht gefunden“ | Login-Namen in `streamers` prüfen (klein, ohne `twitch.tv/`) |
-| TikTok: `unaudited_client_…` | App noch nicht geprüft: `privacy_level: SELF_ONLY` mit privatem Account, oder `mode: inbox` |
+| TikTok: `unaudited_client_…` | App noch nicht geprüft: `privacy_level: SELF_ONLY` mit privatem Account, `mode: inbox`, oder den Browser-Modus nutzen |
+| TikTok (Browser): „Kein Browser startbar“ | Google Chrome installieren oder `python -m playwright install chromium` |
+| TikTok (Browser): Post hängt | Screenshot in `clipmaschine_data/logs/tiktok_screenshots/` ansehen. Hat TikTok die Seite geändert, `tiktok.browser_selectors` anpassen |
 | YouTube-Login muss jede Woche neu | OAuth-App in der Google Cloud Console auf „In Produktion“ stellen |
 | Videos auf YouTube sind privat | Ungeprüftes API-Projekt. YouTube API Audit beantragen |
 | Schrift sieht anders aus | Eigene Schrift: `editing.font` plus `editing.fonts_dir` mit der .ttf-Datei |

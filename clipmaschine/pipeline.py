@@ -61,6 +61,7 @@ class ClipMachine:
         self._live_retry_at = 0.0
         self._last_discovery: float | None = None
         self._paused_until: dict[str, datetime] = {}
+        self._paused_since: dict[str, float] = {}
         self._announced_wait: dict[str, str] = {}
         self._disk_warned = False
         self._captions_enabled = cfg.captions.enabled
@@ -250,11 +251,15 @@ class ClipMachine:
                 return
             now = utcnow()
             paused = self._paused_until.get(uploader.name)
-            if paused and now < paused:
-                continue
             if paused:
+                # neu angemeldet (z. B. "auth tiktok") → Pause sofort beenden
+                reconnected = (uploader.connected_at() or 0) > self._paused_since.get(uploader.name, float("inf"))
+                if now < paused and not reconnected:
+                    continue
                 del self._paused_until[uploader.name]
-                log.info("%s: Pause vorbei – es geht automatisch weiter", uploader.name)
+                self._paused_since.pop(uploader.name, None)
+                log.info("%s: %s – es geht automatisch weiter", uploader.name,
+                         "neu verbunden" if reconnected else "Pause vorbei")
             when, reason = next_allowed_time(self.db, uploader.name, p, now)
             if when > now:
                 self._announce_wait(uploader.name, when, reason)
@@ -291,6 +296,7 @@ class ClipMachine:
             if exc.pause_seconds:
                 until = utcnow() + timedelta(seconds=exc.pause_seconds)
                 self._paused_until[uploader.name] = until
+                self._paused_since[uploader.name] = time.time()
                 log.warning("%s: %s – pausiert bis %s, danach geht es automatisch weiter",
                             uploader.name, exc, self._local(until))
             else:

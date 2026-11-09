@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 from ..config import YouTubeConfig
 from ..models import Clip, PostMetadata
-from .base import UploadError, UploadResult, Uploader
+from .base import UploadError, UploadResult, Uploader, file_mtime
 
 log = logging.getLogger(__name__)
 
@@ -63,10 +63,14 @@ def youtube_tags(hashtags: list[str]) -> list[str]:
 
 class YouTubeUploader(Uploader):
     name = "youtube"
+    description = "YouTube Data API"
 
     def __init__(self, cfg: YouTubeConfig, token_path: Path):
         self.cfg = cfg
         self.token_path = Path(token_path)
+
+    def connected_at(self) -> float | None:
+        return file_mtime(self.token_path)
 
     def problem(self) -> str | None:
         if not self.token_path.is_file():

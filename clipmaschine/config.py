@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 PACKAGE_DIR = Path(__file__).resolve().parent
 
 LAYOUTS = ("blur", "split", "crop")
+TIKTOK_METHODS = ("auto", "api", "browser")
 TIKTOK_MODES = ("direct", "inbox")
 TIKTOK_PRIVACY = ("PUBLIC_TO_EVERYONE", "MUTUAL_FOLLOW_FRIENDS", "FOLLOWER_OF_CREATOR", "SELF_ONLY")
 YOUTUBE_PRIVACY = ("public", "unlisted", "private")
@@ -148,6 +149,15 @@ class MetadataConfig:
 @dataclass
 class TikTokConfig:
     enabled: bool = False
+    # auto = API, wenn TIKTOK_CLIENT_KEY/SECRET gesetzt sind, sonst Browser
+    # browser = mit deinem normalen TikTok-Account über TikTok Studio (keine Entwickler-App nötig)
+    # api = offizielle Content Posting API (Entwickler-App)
+    method: str = "auto"
+    browser_headless: bool = False       # true nur für Server ohne Bildschirm
+    browser_channel: str | None = "chrome"   # installiertes Google Chrome; null = Playwright-Chromium
+    browser_executable: str | None = None    # optional: Pfad zu Chrome/Chromium
+    browser_upload_timeout_seconds: float = 600
+    browser_selectors: dict = field(default_factory=dict)   # nur nötig, falls TikTok die Seite umbaut
     client_key: str = ""
     client_secret: str = ""
     redirect_uri: str = "http://localhost:17564/tiktok/callback"
@@ -220,6 +230,13 @@ class AppConfig:
     @property
     def tokens_dir(self) -> Path:
         return self.data_dir / "tokens"
+
+    @property
+    def tiktok_method(self) -> str:
+        """Tatsächlich genutzte TikTok-Methode ('api' oder 'browser')."""
+        if self.tiktok.method == "auto":
+            return "api" if self.tiktok.client_key and self.tiktok.client_secret else "browser"
+        return self.tiktok.method
 
 
 def _section(cls, raw: Any, name: str):
@@ -351,6 +368,8 @@ def validate(cfg: AppConfig) -> None:
             problems.append(f"streamers[{s.login}].layout muss eines von {LAYOUTS} sein")
         if (s.layout or cfg.editing.layout) == "split" and not s.facecam:
             log.warning("Streamer '%s' nutzt layout 'split' ohne facecam – es wird 'blur' verwendet", s.login)
+    if cfg.tiktok.method not in TIKTOK_METHODS:
+        problems.append(f"tiktok.method muss eines von {TIKTOK_METHODS} sein")
     if cfg.tiktok.mode not in TIKTOK_MODES:
         problems.append(f"tiktok.mode muss eines von {TIKTOK_MODES} sein")
     if cfg.tiktok.privacy_level not in TIKTOK_PRIVACY:

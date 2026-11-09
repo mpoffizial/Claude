@@ -5,6 +5,10 @@ python-dotenv>=1.0
 yt-dlp>=2025.1.1
 tzdata; platform_system == "Windows"
 
+# TikTok mit deinem normalen Account (Browser-Modus). Ohne installiertes Google Chrome zusätzlich:
+#   python -m playwright install chromium
+playwright>=1.45
+
 # YouTube Shorts
 google-api-python-client>=2.100
 google-auth-oauthlib>=1.2
