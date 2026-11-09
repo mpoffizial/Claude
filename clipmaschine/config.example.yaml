@@ -1,0 +1,123 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  Clipmaschine – Konfiguration
+#  Kopieren:  cp clipmaschine/config.example.yaml config.yaml
+#  Zugangsdaten (Keys, Tokens) gehören in die .env – nicht in diese Datei.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Nur Streamer eintragen, die dir das Clippen/Reposten erlaubt haben
+# (oder dein eigener Kanal). Einfach als Liste von Twitch-Logins …
+streamers:
+  - login: dein_streamer
+    hashtags: [deinstreamer]          # immer mitposten
+  # … oder mit Facecam-Layout (Werte mit "python -m clipmaschine frame <clip>" ausmessen):
+  # - login: anderer_streamer
+  #   layout: split                   # Facecam oben, Gameplay unten
+  #   facecam: {x: 0.0, y: 0.0, w: 0.25, h: 0.3}
+  #   crop_x: 0.5                     # Bildmitte fürs Gameplay (0 = links, 1 = rechts)
+  #   min_views: 100
+
+data_dir: clipmaschine_data           # Datenbank, Videos, Logs, Tokens
+loop_interval_seconds: 60
+dry_run: false                        # true = alles außer Hochladen
+min_free_disk_gb: 1.0                 # darunter pausieren Downloads automatisch
+
+twitch:
+  redirect_uri: http://localhost:17563/twitch/callback   # genauso in der Twitch-App eintragen
+
+# ── 1) Top-Clips: die meistgesehenen Clips der letzten Stunden ──────────────
+discovery:
+  enabled: true
+  interval_minutes: 20
+  lookback_hours: 24
+  min_views: 50
+  min_duration: 6
+  max_duration: 60
+  gravity: 1.3                        # höher = frische Clips stärker bevorzugt
+  max_new_per_streamer: 3             # pro Suchlauf
+  dedupe_window_seconds: 30           # mehrere Clips vom selben Moment → nur der beste
+  featured_only: false
+  languages: []                       # z. B. [de, en]; leer = alle
+  exclude_keywords: []                # Clips mit diesen Wörtern im Titel überspringen
+
+# ── 2) Live-Modus: Chat-Hype erkennen und sofort selbst clippen ─────────────
+# Braucht einmalig: python -m clipmaschine auth twitch
+live:
+  enabled: false
+  window_seconds: 10
+  baseline_seconds: 180
+  spike_factor: 3.0                   # Chat muss 3× aktiver sein als normal
+  min_messages_per_second: 1.5
+  min_unique_chatters: 8
+  cooldown_seconds: 120
+  clip_delay_seconds: 4
+  # hype_keywords: [kekw, lul, pog, w, clip, …]   # Standardliste siehe config.py
+
+# ── Schnitt (ffmpeg) ────────────────────────────────────────────────────────
+editing:
+  layout: blur                        # blur = Video mittig + unscharfer Hintergrund
+                                      # crop = bildfüllender Ausschnitt
+                                      # split = Facecam oben, Gameplay unten (facecam nötig)
+  max_duration: 59
+  fps: 30
+  crf: 20                             # Qualität: niedriger = besser/größer
+  preset: medium                      # schneller: veryfast
+  loudnorm: true                      # Lautstärke auf -14 LUFS angleichen
+  hook_text: true                     # Hook oben im Video
+  hook_uppercase: false
+  credit_text: true                   # "twitch.tv/<streamer>" im Video
+  font: Arial                         # z. B. "Montserrat Black" (dann fonts_dir setzen)
+  fonts_dir: null
+  caption_highlight_color: "#FFE600"  # Farbe des gerade gesprochenen Wortes
+
+# ── Untertitel (optional, lokal, kostenlos): pip install faster-whisper ─────
+captions:
+  enabled: false
+  model: small                        # tiny | base | small | medium | large-v3
+  language: null                      # null = automatisch
+  max_words: 3
+  uppercase: true
+
+# ── Titel & Hashtags ────────────────────────────────────────────────────────
+metadata:
+  use_claude: auto                    # auto = Claude, wenn ANTHROPIC_API_KEY gesetzt ist; sonst Vorlagen
+  model: claude-opus-5-5
+  effort: low
+  language: de
+  default_hashtags: [twitch, twitchclips, gaming, fyp, viral]
+  max_hashtags: 8
+  extra_instructions: ""              # z. B. "Sprich die Community mit 'ihr' an."
+
+# ── Plattformen ─────────────────────────────────────────────────────────────
+tiktok:
+  enabled: false
+  redirect_uri: http://localhost:17564/tiktok/callback
+  mode: direct                        # direct = sofort posten | inbox = Entwurf in der TikTok-App
+  privacy_level: SELF_ONLY            # nach dem App-Audit: PUBLIC_TO_EVERYONE
+  disable_comment: false
+  disable_duet: false
+  disable_stitch: false
+
+youtube:
+  enabled: false
+  client_secrets_file: client_secret.json
+  privacy_status: public              # public | unlisted | private
+  category_id: "20"                   # Gaming
+  add_shorts_tag: true
+
+instagram:
+  enabled: false
+  graph_host: graph.instagram.com     # "Instagram API with Instagram Login" (Token wird automatisch erneuert)
+                                      # Facebook-Login-Variante mit Seiten-Token: graph.facebook.com
+  api_version: v23.0
+  share_to_feed: true
+
+# ── Zeitplan (pro Plattform) ────────────────────────────────────────────────
+posting:
+  max_posts_per_day: 4
+  min_minutes_between_posts: 120
+  active_hours: [10, 23]              # nur zwischen 10 und 23 Uhr posten; null = immer
+  timezone: Europe/Berlin
+  max_clip_age_hours: 72              # ältere Clips nicht mehr posten
+  max_attempts: 3
+  queue_size: 4                       # so viele fertige Videos auf Vorrat
+  cleanup_after_post: true

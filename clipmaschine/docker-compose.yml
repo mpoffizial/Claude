@@ -1,0 +1,16 @@
+# Start:  docker compose -f clipmaschine/docker-compose.yml up -d --build
+# Logs:   docker compose -f clipmaschine/docker-compose.yml logs -f
+# Vorher in clipmaschine/docker-data/ ablegen: config.yaml, .env, ggf. client_secret.json
+# und den Ordner clipmaschine_data/tokens/ aus der lokalen Anmeldung (python -m clipmaschine auth …).
+services:
+  clipmaschine:
+    build: .
+    container_name: clipmaschine
+    restart: unless-stopped          # nach Absturz oder Server-Neustart automatisch wieder starten
+    volumes:
+      - ./docker-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

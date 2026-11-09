@@ -1,0 +1,20 @@
+# Zusätzlich nötig: ffmpeg (mit libass) – https://ffmpeg.org/download.html
+requests>=2.31
+PyYAML>=6.0
+python-dotenv>=1.0
+yt-dlp>=2025.1.1
+tzdata; platform_system == "Windows"
+
+# YouTube Shorts
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.2
+google-auth-httplib2>=0.2
+
+# KI-Titel & Hashtags mit Claude (optional – ohne API-Key werden Vorlagen genutzt)
+anthropic>=2.6
+
+# Automatische Untertitel (optional, ~1 GB inkl. Modell) – bei captions.enabled: true
+# faster-whisper>=1.1
+
+# Tests
+pytest>=8

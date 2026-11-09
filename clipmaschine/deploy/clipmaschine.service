@@ -1,0 +1,25 @@
+# systemd-Dienst für Linux-Server: startet beim Booten und nach jedem Absturz automatisch neu.
+#
+#   1. Benutzer (User=) und Pfade unten anpassen
+#   2. sudo cp clipmaschine/deploy/clipmaschine.service /etc/systemd/system/
+#   3. sudo systemctl daemon-reload && sudo systemctl enable --now clipmaschine
+#   4. Logs: journalctl -u clipmaschine -f
+[Unit]
+Description=Clipmaschine - Twitch-Highlights automatisch auf TikTok, YouTube und Instagram
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clipper
+WorkingDirectory=/home/clipper/Claude
+ExecStart=/home/clipper/Claude/.venv/bin/python -m clipmaschine run
+Restart=always
+RestartSec=30
+# 2 = Konfigurationsfehler, 3 = läuft bereits: nicht endlos neu starten
+RestartPreventExitStatus=2 3
+Environment=PYTHONUNBUFFERED=1
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+# Keine Zugangsdaten oder Daten ins Image backen – die kommen per Volume nach /data
+.env
+*.env
+config.yaml
+client_secret*.json
+clipmaschine_data/
+docker-data/
+tests/
+__pycache__/
+*.pyc

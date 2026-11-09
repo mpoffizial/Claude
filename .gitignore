@@ -14,3 +14,9 @@ logs/
 # IDE
 .vscode/
 .idea/
+
+# Clipmaschine (Daten, Zugangsdaten, persönliche Konfiguration)
+clipmaschine_data/
+clipmaschine/docker-data/
+config.yaml
+client_secret*.json
