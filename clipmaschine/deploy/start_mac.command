@@ -53,7 +53,15 @@ if [ "$(uname -s)" = "Darwin" ] && [ ! -d "/Applications/Google Chrome.app" ] &&
 fi
 
 if [ ! -f "config.yaml" ]; then
-  "$VPY" -m clipmaschine setup --no-start || pause_and_exit 1
+  PRESET=""
+  if [ -f "preset.txt" ]; then
+    PRESET="$(tr -cd 'a-z0-9' < preset.txt)"
+  fi
+  if [ -n "$PRESET" ]; then
+    "$VPY" -m clipmaschine setup --no-start --preset "$PRESET" || pause_and_exit 1
+  else
+    "$VPY" -m clipmaschine setup --no-start || pause_and_exit 1
+  fi
 fi
 
 KEEP_AWAKE=""

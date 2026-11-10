@@ -63,6 +63,7 @@ class StudioServer:
     def __init__(self):
         self.mode = "normal"
         self.posted: list[dict] = []
+        self.content_html = "<h1>Beiträge verwalten</h1>"
         state = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -81,7 +82,7 @@ class StudioServer:
                 elif self.path.startswith("/login"):
                     self._html(LOGIN_PAGE)
                 elif self.path.startswith("/tiktokstudio/content"):
-                    self._html("<h1>Beiträge verwalten</h1>")
+                    self._html(state.content_html)
                 else:
                     self.send_response(404)
                     self.end_headers()
@@ -205,3 +206,40 @@ def test_method_auto_and_factory(tmp_path):
     assert isinstance(make_uploader(cfg, "tiktok"), TikTokUploader)
     cfg.tiktok.method = "browser"
     assert isinstance(make_uploader(cfg, "tiktok"), TikTokBrowserUploader)
+
+
+CONTENT_LIST = """<!doctype html><html><head><meta charset="utf-8"></head><body><h1>Beiträge</h1>
+<div class="list">
+  <div class="row"><a href="/@ich/video/111"><img alt="" width="40" height="40"></a>
+    <div class="info"><span>GTA 6: Erster Raubzug klappt | Streamer_A Original: twitch.tv/a</span>
+      <span>Alle</span><span>12.345 Aufrufe</span></div></div>
+  <div class="row"><a href="/@ich/video/222"><img alt="" width="40" height="40"></a>
+    <div class="info"><span>GTA 6: Polizei eskaliert | Streamer_B Original: twitch.tv/b</span>
+      <span>Alle</span><div class="warn">Nicht für den „Für dich“-Feed geeignet: nicht originaler Inhalt</div></div></div>
+  <div class="row"><a href="/@ich/video/333"><img alt="" width="40" height="40"></a>
+    <div class="info"><span>GTA 6: Stunt des Tages | Streamer_C</span><span>Wird überprüft</span></div></div>
+</div></body></html>"""
+
+
+def test_review_reads_recommendation_status(connected, studio):
+    studio.mode, studio.content_html = "normal", CONTENT_LIST
+    try:
+        results = connected.review_posts({
+            "ok": "GTA 6: Erster Raubzug kl", "bad": "GTA 6: Polizei eskaliert",
+            "wait": "GTA 6: Stunt des Tages", "gone": "GTA 6: gibt es nicht",
+        })
+    finally:
+        studio.content_html = "<h1>Beiträge verwalten</h1>"
+    assert results["ok"].status == "ok"
+    assert results["bad"].status == "restricted" and "nicht originaler Inhalt" in results["bad"].reason
+    assert results["wait"].status == "pending"
+    assert results["gone"].status == "unknown"
+    assert list(connected.debug_dir.glob("tiktok_*nicht-empfohlen.png"))
+
+
+def test_classify_ignores_own_caption():
+    from clipmaschine.uploaders.tiktok_browser import DEFAULT_SELECTORS, classify_review
+    own = "GTA 6: Für dich getestet – restricted area"
+    assert classify_review(f"{own}\nAlle\n500 Aufrufe", own, DEFAULT_SELECTORS).status == "ok"
+    same_line = classify_review(f"{own}Eingeschränkt: nicht empfohlen", own, DEFAULT_SELECTORS)
+    assert same_line.status == "restricted"

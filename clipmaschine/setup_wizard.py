@@ -69,8 +69,19 @@ def _yes(answer: str, default: bool = True) -> bool:
     return answer[0] in ("j", "y")
 
 
+def preset_path(name: str) -> Path:
+    if not re.fullmatch(r"[a-z0-9_-]+", name or ""):
+        raise ValueError(f"Ungültiger Preset-Name: {name!r}")
+    path = PACKAGE_DIR / "presets" / f"{name}.yaml"
+    if not path.is_file():
+        available = ", ".join(sorted(p.stem for p in (PACKAGE_DIR / "presets").glob("*.yaml")))
+        raise ValueError(f"Preset '{name}' gibt es nicht (vorhanden: {available})")
+    return path
+
+
 def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
-              ask_secret: Callable[[str], str] | None = None, connect: bool | None = None) -> Path:
+              ask_secret: Callable[[str], str] | None = None, connect: bool | None = None,
+              preset: str | None = None) -> Path:
     """Führt durch die Einrichtung und gibt den Pfad der config.yaml zurück."""
     ask = ask or input
     ask_secret = ask_secret or getpass.getpass
@@ -86,7 +97,14 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
     if config_path.exists():
         write_config = not _yes(ask(f"{config_path.name} gibt es schon. Behalten? [J/n] "))
 
-    if write_config:
+    if write_config and preset:
+        template = preset_path(preset).read_text(encoding="utf-8")
+        config_path.write_text(template, encoding="utf-8")
+        games = (yaml.safe_load(template).get("discovery") or {}).get("games") or []
+        print(f"1/5 + 2/5 Voreinstellung „{preset}“ übernommen: Clips aller Streamer von {', '.join(games)},")
+        print("    gepostet auf TikTok, Instagram und YouTube Shorts.")
+        print(f"    ✔ {config_path.name} geschrieben\n")
+    elif write_config:
         print("1/5 Welche Twitch-Kanäle sollen geclippt werden?")
         print("    Nur Kanäle, die dir das erlaubt haben (oder dein eigener). Mehrere mit Komma trennen.")
         logins: list[str] = []
@@ -102,12 +120,27 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
         print(f"    ✔ {config_path.name} geschrieben ({', '.join(logins)}; TikTok"
               f"{' + Instagram' if instagram else ''})\n")
 
-    print("3/5 Twitch-Zugang (optional – einfach Enter drücken)")
-    print("    Ohne Zugang findet die Maschine die Top-Clips über die öffentliche Twitch-Clip-Seite.")
-    print("    Nur für den Live-Modus nötig: App unter https://dev.twitch.tv/console/apps anlegen,")
-    print("    OAuth-Redirect-URL http://localhost:17563/twitch/callback, Client-Typ: Confidential")
-    client_id = ask("    Client-ID (Enter = ohne): ").strip()
-    client_secret = ask_secret("    Client-Secret (unsichtbar): ").strip() if client_id else ""
+    needs_twitch = bool(((yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}).get("discovery") or {})
+                        .get("games"))
+    if needs_twitch:
+        print("3/5 Twitch-Zugang (nötig, um die Clips eines ganzen Spiels zu finden – kostenlos, 2 Minuten)")
+        print("    1. https://dev.twitch.tv/console/apps öffnen → „Register Your Application“")
+        print("    2. Name beliebig, OAuth-Redirect-URL: http://localhost:17563/twitch/callback,")
+        print("       Kategorie beliebig, Client-Typ: Confidential → „Create“")
+        print("    3. „Manage“ → Client-ID kopieren, „New Secret“ → Secret kopieren")
+        client_id = ask("    Client-ID: ").strip()
+        client_secret = ask_secret("    Client-Secret (unsichtbar): ").strip() if client_id else ""
+        if not (client_id and client_secret) and "TWITCH_CLIENT_ID=\n" in (
+                env_path.read_text(encoding="utf-8") if env_path.exists() else "TWITCH_CLIENT_ID=\n"):
+            print("    ⚠ Ohne Twitch-Zugang findet die Maschine keine Clips. Später in die .env eintragen:")
+            print("      TWITCH_CLIENT_ID=…  und  TWITCH_CLIENT_SECRET=…")
+    else:
+        print("3/5 Twitch-Zugang (optional – einfach Enter drücken)")
+        print("    Ohne Zugang findet die Maschine die Top-Clips über die öffentliche Twitch-Clip-Seite.")
+        print("    Nur für den Live-Modus nötig: App unter https://dev.twitch.tv/console/apps anlegen,")
+        print("    OAuth-Redirect-URL http://localhost:17563/twitch/callback, Client-Typ: Confidential")
+        client_id = ask("    Client-ID (Enter = ohne): ").strip()
+        client_secret = ask_secret("    Client-Secret (unsichtbar): ").strip() if client_id else ""
 
     print("\n4/5 KI-Titel mit Claude (optional): Key von https://console.anthropic.com")
     anthropic_key = ask_secret("    ANTHROPIC_API_KEY (unsichtbar, Enter = Vorlagen nutzen): ").strip()
@@ -139,5 +172,11 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
         except Exception as exc:  # Einrichtung trotzdem abschließen
             print(f"    ✘ {platform}-Verbindung fehlgeschlagen: {exc}\n"
                   f"      Später erneut: python -m clipmaschine auth {platform}")
+    if cfg.youtube.enabled and not (cfg.tokens_dir / "youtube.json").is_file():
+        print("    YouTube Shorts: braucht einmalig eine Google-Freigabe (README, Abschnitt „YouTube Shorts“),")
+        print("    danach: python -m clipmaschine auth youtube. Bis dahin wird YouTube einfach übersprungen.")
+    if preset and (PACKAGE_DIR / "presets" / f"{preset}_profil.md").is_file():
+        print(f"    Tipp: Namen, Bio und Einstellungen für die Kanäle stehen in "
+              f"clipmaschine/presets/{preset}_profil.md")
     print("\n✔ Einrichtung abgeschlossen.\n")
     return config_path

@@ -35,10 +35,27 @@ from .oauth import TokenStore
 from .scheduler import local_timezone, next_allowed_time
 from .twitch_api import TwitchAPI, TwitchAPIError
 from .uploaders import UploadError, Uploader, enabled_uploaders
+from .uploaders.browser_base import browser_caption
 
 log = logging.getLogger(__name__)
 
 PREPARE_BACKOFF_MINUTES = 5
+REVIEW_INTERVAL_SECONDS = 1800
+REVIEW_PROBE_CHARS = 24
+
+
+def diagnose_restriction(reason: str) -> str:
+    """Übersetzt den Hinweis der Plattform in eine verständliche Ursache mit Abhilfe."""
+    low = reason.lower()
+    if "original" in low:
+        return ("Ursache: Die Plattform wertet das Video als nicht-originalen Inhalt (typisch für reine Reposts). "
+                "Abhilfe: Untertitel einschalten (captions.enabled), Layout 'split' nutzen und nur Kanäle clippen, "
+                "die das erlauben.")
+    if "violation" in low or "verstoß" in low:
+        return ("Ursache: gemeldeter Richtlinienverstoß. Details und Einspruch in der App unter "
+                "Posteingang → Systembenachrichtigungen.")
+    return ("Genaue Ursache in der App nachsehen: Video öffnen → „…“ → Analysen bzw. Posteingang → "
+            "Systembenachrichtigungen. Dort ist auch ein Einspruch möglich.")
 LIVE_RETRY_SECONDS = 600
 
 
@@ -63,6 +80,8 @@ class ClipMachine:
         self._paused_until: dict[str, datetime] = {}
         self._paused_since: dict[str, float] = {}
         self._announced_wait: dict[str, str] = {}
+        self._inactive_logged: dict[str, str] = {}
+        self._next_review: dict[str, float] = {}
         self._disk_warned = False
         self._captions_enabled = cfg.captions.enabled
         self._started_at = utcnow()
@@ -92,9 +111,12 @@ class ClipMachine:
 
     # ------------------------------------------------------------ Hauptloop
     def run_forever(self, once: bool = False) -> None:
-        if not self.cfg.streamers:
-            log.error("Keine Streamer in der config.yaml eingetragen")
+        if not self.cfg.streamers and not self.cfg.discovery.games:
+            log.error("Keine Streamer oder Spiele in der config.yaml eingetragen")
             return
+        if self.cfg.discovery.games and not self.has_twitch_credentials:
+            log.error("Für Clips nach Spiel (%s) braucht die Maschine TWITCH_CLIENT_ID/SECRET in der .env – "
+                      "siehe README, Abschnitt Twitch", ", ".join(self.cfg.discovery.games))
         for uploader in self.uploaders:
             problem = uploader.problem()
             if problem:
@@ -166,7 +188,8 @@ class ClipMachine:
             except Exception:
                 log.exception("Clip-Suche fehlgeschlagen – neuer Versuch in %g min", d.interval_minutes)
         # jede Stufe einzeln absichern: fällt z. B. Twitch aus, wird trotzdem weiter gepostet
-        for stage in (self.expire_old, self.prepare_pending, self.post_ready, self.finalize, self.write_heartbeat):
+        for stage in (self.expire_old, self.prepare_pending, self.post_ready, self.review_posts, self.finalize,
+                      self.write_heartbeat):
             try:
                 stage()
             except Exception:
@@ -262,10 +285,26 @@ class ClipMachine:
                 downloaded.unlink(missing_ok=True)
 
     # --------------------------------------------------------------- Posten
+    def active_uploaders(self) -> list[Uploader]:
+        """Nur verbundene Plattformen. Eine noch nicht eingerichtete Plattform darf nichts blockieren."""
+        active = []
+        for uploader in self.uploaders:
+            problem = uploader.problem()
+            if problem:
+                if self._inactive_logged.get(uploader.name) != problem:
+                    self._inactive_logged[uploader.name] = problem
+                    log.warning("%s wird übersprungen: %s", uploader.name, problem)
+                continue
+            if uploader.name in self._inactive_logged:
+                del self._inactive_logged[uploader.name]
+                log.info("%s ist jetzt verbunden – wird ab sofort mit bespielt", uploader.name)
+            active.append(uploader)
+        return active
+
     def post_ready(self) -> None:
         p = self.cfg.posting
         min_created = utcnow() - timedelta(hours=p.max_clip_age_hours)
-        for uploader in self.uploaders:
+        for uploader in self.active_uploaders():
             if self.stop_event.is_set():
                 return
             now = utcnow()
@@ -279,6 +318,11 @@ class ClipMachine:
                 self._paused_since.pop(uploader.name, None)
                 log.info("%s: %s – es geht automatisch weiter", uploader.name,
                          "neu verbunden" if reconnected else "Pause vorbei")
+            protect_until = self._protection_pause(uploader.name, now)
+            if protect_until:
+                self._announce_wait(uploader.name, protect_until,
+                                    "mehrere Videos werden nicht weiterempfohlen – Schutzpause für den Account")
+                continue
             when, reason = next_allowed_time(self.db, uploader.name, p, now)
             if when > now:
                 self._announce_wait(uploader.name, when, reason)
@@ -288,6 +332,58 @@ class ClipMachine:
                 continue
             self._announced_wait.pop(uploader.name, None)
             self.post_one(uploader, row)
+
+    # ------------------------------------------------ Weiterempfehlungs-Check
+    def _protection_pause(self, platform: str, now: datetime) -> datetime | None:
+        """Werden mehrere Videos in 24 h nicht weiterempfohlen, pausiert die Plattform 24 h.
+
+        Weiterposten würde die Einstufung des Accounts verschlechtern. Der Zustand kommt aus der
+        Datenbank und übersteht deshalb auch einen Neustart.
+        """
+        threshold = getattr(getattr(self.cfg, platform, None), "restricted_pause_threshold", 0)
+        if not threshold:
+            return None
+        times = self.db.restricted_review_times(platform, now - timedelta(hours=24))
+        if len(times) < threshold:
+            return None
+        until = times[0] + timedelta(hours=24)
+        return until if until > now else None
+
+    def review_posts(self) -> None:
+        """Prüft nach dem Posten, ob die Videos weiterempfohlen werden, und nennt bei Problemen den Grund."""
+        if self.dry_run:
+            return
+        now = utcnow()
+        for uploader in self.active_uploaders():
+            cfg = getattr(self.cfg, uploader.name, None)
+            if not uploader.supports_review or not getattr(cfg, "check_recommendation", False):
+                continue
+            if time.monotonic() < self._next_review.get(uploader.name, 0):
+                continue
+            rows = self.db.uploads_to_review(uploader.name, now - timedelta(minutes=cfg.check_after_minutes),
+                                             now - timedelta(hours=48))
+            if not rows:
+                continue
+            self._next_review[uploader.name] = time.monotonic() + REVIEW_INTERVAL_SECONDS
+            probes = {}
+            for row in rows:
+                meta = PostMetadata.from_dict(json.loads(row["meta_json"] or "{}"))
+                probes[row["clip_id"]] = browser_caption(meta)[:REVIEW_PROBE_CHARS].strip()
+            try:
+                results = uploader.review_posts(probes)
+            except UploadError as exc:
+                log.warning("%s: Weiterempfehlungs-Check nicht möglich: %s", uploader.name, exc)
+                continue
+            for clip_id, result in results.items():
+                self.db.set_review(clip_id, uploader.name, result.status, result.reason)
+                if result.status == "ok":
+                    log.info("%s: „%s“ wird normal ausgespielt ✔", uploader.name, probes[clip_id])
+                elif result.status == "restricted":
+                    log.warning("%s: „%s“ wird NICHT weiterempfohlen. Hinweis von %s: „%s“. %s", uploader.name,
+                                probes[clip_id], uploader.name, result.reason, diagnose_restriction(result.reason))
+            if self._protection_pause(uploader.name, utcnow()):
+                log.warning("%s: mehrere Videos nicht weiterempfohlen – 24 h Schutzpause, damit der Account nicht "
+                            "weiter abgestuft wird. Die anderen Plattformen laufen weiter.", uploader.name)
 
     def _announce_wait(self, platform: str, when: datetime, reason: str) -> None:
         """Wartezeit einmal verständlich loggen statt jede Minute."""
@@ -337,7 +433,9 @@ class ClipMachine:
 
     def finalize(self) -> None:
         """Clips, die überall erledigt sind, abschließen und Dateien aufräumen."""
-        platforms = [u.name for u in self.uploaders]
+        platforms = [u.name for u in self.active_uploaders()]
+        if self.uploaders and not platforms:
+            return                          # noch keine Plattform verbunden → Videos aufheben
         for row in self.db.clips_with_status("rendered"):
             if platforms:
                 statuses = self.db.upload_statuses(row["id"])

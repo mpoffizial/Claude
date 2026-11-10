@@ -38,6 +38,12 @@ discovery:
   featured_only: false
   languages: []                       # z. B. [de, en]; leer = alle
   exclude_keywords: []                # Clips mit diesen Wörtern im Titel überspringen
+  # Spiele-Modus: Top-Clips ALLER Streamer eines Spiels (braucht TWITCH_CLIENT_ID/SECRET), siehe presets/gta6.yaml
+  games: []                           # z. B. ["Grand Theft Auto VI"]
+  # games_start_at: "2026-11-19"      # erst ab diesem Tag clippen
+  max_new_per_game: 10
+  max_per_broadcaster_per_day: 3
+  exclude_broadcasters: []
 
 # ── 2) Live-Modus: Chat-Hype erkennen und sofort selbst clippen ─────────────
 # Braucht einmalig: python -m clipmaschine auth twitch
@@ -97,6 +103,9 @@ tiktok:
   method: browser
   browser_headless: false             # true nur auf Servern ohne Bildschirm
   browser_channel: chrome             # nutzt dein installiertes Google Chrome; null = Playwright-Chromium
+  check_recommendation: true          # nach dem Posten prüfen, ob das Video weiterempfohlen wird
+  check_after_minutes: 20
+  restricted_pause_threshold: 2       # so viele nicht empfohlene Videos in 24 h → 24 h Schutzpause (0 = aus)
   # nur für method: api
   redirect_uri: http://localhost:17564/tiktok/callback
   mode: direct                        # direct = sofort posten | inbox = Entwurf in der TikTok-App

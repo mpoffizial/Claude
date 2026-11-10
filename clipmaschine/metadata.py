@@ -97,6 +97,14 @@ def _limit_words(text: str, max_words: int) -> str:
     return " ".join(words[:max_words])
 
 
+def with_prefix(title: str, prefix: str) -> str:
+    """Stellt z. B. "GTA 6: " voran – außer der Titel enthält es schon."""
+    core = prefix.strip(" :-|")
+    if not core or core.lower() in title.lower():
+        return title
+    return f"{prefix}{title}"
+
+
 def template_metadata(ctx: MetadataContext, cfg: MetadataConfig) -> PostMetadata:
     clip = ctx.clip
     lang = cfg.language if cfg.language in _DESCRIPTION else "en"
@@ -107,7 +115,7 @@ def template_metadata(ctx: MetadataContext, cfg: MetadataConfig) -> PostMetadata
         hook = options[digest % len(options)]
     else:
         hook = _limit_words(clean_title, 7)
-    title = _truncate(f"{clip.title or hook} | {clip.broadcaster_name}", 90)
+    title = _truncate(with_prefix(f"{clip.title or hook} | {clip.broadcaster_name}", cfg.title_prefix), 90)
     description = _DESCRIPTION[lang].format(name=clip.broadcaster_name, login=clip.broadcaster_login)
     hashtags = merge_hashtags([clip.broadcaster_login, clip.game_name], ctx.extra_hashtags, cfg.default_hashtags,
                               limit=cfg.max_hashtags)
@@ -237,7 +245,7 @@ class MetadataGenerator:
     def _postprocess(self, data: dict, ctx: MetadataContext) -> PostMetadata:
         clip = ctx.clip
         hook = _limit_words(strip_emojis(str(data["hook"])).replace("#", ""), 9)
-        title = _truncate(str(data["title"]).replace("#", ""), 95)
+        title = _truncate(with_prefix(str(data["title"]).replace("#", ""), self.cfg.title_prefix), 95)
         description = " ".join(str(data["description"]).split())
         credit = f"twitch.tv/{clip.broadcaster_login}"
         if credit.lower() not in description.lower():

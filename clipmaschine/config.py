@@ -77,6 +77,13 @@ class DiscoveryConfig:
     featured_only: bool = False          # nur vom Streamer "gefeaturete" Clips
     languages: list[str] = field(default_factory=list)       # leer = alle Sprachen
     exclude_keywords: list[str] = field(default_factory=list)  # Clips mit diesen Wörtern im Titel überspringen
+    # Spiele-Modus: Top-Clips ALLER Streamer eines Spiels (braucht TWITCH_CLIENT_ID/SECRET)
+    games: list[str] = field(default_factory=list)            # z. B. ["Grand Theft Auto VI"]
+    max_new_per_game: int = 10                                # neue Clips pro Spiel und Suchlauf
+    max_per_broadcaster_per_day: int = 3                       # Abwechslung: max. Clips je Streamer in 24 h
+    exclude_broadcasters: list[str] = field(default_factory=list)  # z. B. Streamer, die Clips verbieten
+    only_listed_streamers: bool = False                        # Spiele-Modus nur für Kanäle aus "streamers"
+    games_start_at: str | None = None                          # z. B. "2026-11-19": erst ab dann (Release) clippen
 
 
 @dataclass
@@ -144,6 +151,7 @@ class MetadataConfig:
     default_hashtags: list[str] = field(default_factory=lambda: ["twitch", "twitchclips", "gaming", "fyp", "viral"])
     max_hashtags: int = 8
     extra_instructions: str = ""
+    title_prefix: str = ""               # z. B. "GTA 6: " – wird vorangestellt, falls nicht schon enthalten
 
 
 @dataclass
@@ -169,6 +177,10 @@ class TikTokConfig:
     cover_timestamp_ms: int = 1000
     use_pkce: bool = True
     status_timeout_seconds: float = 300
+    # Weiterempfehlungs-Check (Browser-Modus): nach dem Posten in TikTok Studio nachsehen
+    check_recommendation: bool = True
+    check_after_minutes: float = 20
+    restricted_pause_threshold: int = 2   # so viele eingeschränkte Videos in 24 h → TikTok 24 h pausieren
 
 
 @dataclass
@@ -410,6 +422,14 @@ def validate(cfg: AppConfig) -> None:
             ZoneInfo(p.timezone)
         except Exception:
             problems.append(f"posting.timezone '{p.timezone}' ist unbekannt (Windows: pip install tzdata)")
+    if cfg.discovery.games_start_at:
+        try:
+            from datetime import date
+            date.fromisoformat(str(cfg.discovery.games_start_at))
+        except ValueError:
+            problems.append("discovery.games_start_at muss ein Datum wie 2026-11-19 sein")
+    if not cfg.streamers and not cfg.discovery.games:
+        problems.append("Trag in config.yaml Streamer (streamers) oder Spiele (discovery.games) ein")
     if cfg.loop_interval_seconds < 5:
         problems.append("loop_interval_seconds muss mindestens 5 sein")
     if problems:

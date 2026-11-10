@@ -31,9 +31,20 @@ class UploadError(Exception):
         self.pause_seconds = pause_seconds   # Plattform eine Weile pausieren (z. B. Quota aufgebraucht)
 
 
+@dataclass
+class ReviewResult:
+    status: str          # ok | restricted | pending | unknown
+    reason: str = ""
+
+
 class Uploader(ABC):
     name: str = ""
     description: str = ""
+    supports_review: bool = False     # kann nach dem Posten prüfen, ob das Video weiterempfohlen wird
+
+    def review_posts(self, probes: dict[str, str]) -> dict[str, "ReviewResult"]:
+        """probes: {clip_id: Anfang der Beschreibung}. Gibt den Empfehlungs-Status je Video zurück."""
+        raise NotImplementedError
 
     @abstractmethod
     def upload(self, video_path: Path, meta: PostMetadata, clip: Clip) -> UploadResult:

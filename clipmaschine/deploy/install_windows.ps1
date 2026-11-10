@@ -36,7 +36,16 @@
         $InstallBase = $env:LOCALAPPDATA
         $ViaOneDrive = $true
     }
-    $Target = Join-Path $InstallBase 'Clipmaschine'
+    # Optional eine fertige Voreinstellung als eigene, getrennte Maschine installieren, z. B.:
+    #   $env:CLIPMASCHINE_PRESET='gta6'; irm <diese URL> | iex
+    $Preset = ([string]$env:CLIPMASCHINE_PRESET).ToLower() -replace '[^a-z0-9]', ''
+    $Folder = 'Clipmaschine'
+    $Title = 'Clipmaschine'
+    if ($Preset) {
+        $Folder = 'Clipmaschine-' + $Preset.ToUpper()
+        $Title = $Preset.ToUpper() + '-Clipmaschine'
+    }
+    $Target = Join-Path $InstallBase $Folder
 
     function Write-Step([string]$Text) { Write-Host "`n==> $Text" -ForegroundColor Cyan }
     function Write-Ok([string]$Text) { Write-Host "    OK  $Text" -ForegroundColor Green }
@@ -123,6 +132,7 @@
             if (-not $root) { throw 'Download unvollstaendig - bitte erneut versuchen.' }
             $source = Join-Path $root.FullName 'clipmaschine'
             if (-not (Test-Path (Join-Path $source '__main__.py'))) { throw 'Download unvollstaendig - bitte erneut versuchen.' }
+            if ($Preset -and -not (Test-Path (Join-Path $source "presets\$Preset.yaml"))) { throw "Die Voreinstellung '$Preset' gibt es nicht." }
             Write-Ok 'heruntergeladen'
 
             Write-Step "Installiere nach $Target ..."
@@ -134,6 +144,7 @@
             $code = Join-Path $Target 'clipmaschine'
             if (Test-Path $code) { Remove-Item -Path $code -Recurse -Force }   # nur Programmcode, keine Daten
             Copy-Item -Path $source -Destination $Target -Recurse -Force
+            if ($Preset) { Set-Content -Path (Join-Path $Target 'preset.txt') -Value $Preset -Encoding ascii }
         } finally {
             Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
         }
@@ -142,12 +153,12 @@
         $startScript = Join-Path $Target 'clipmaschine\deploy\start_windows.bat'
         if ($OnWindows) {
             Write-Step 'Erstelle Verknuepfungen auf dem Desktop ...'
-            New-Shortcut 'Clipmaschine starten' $startScript '' 'Clipmaschine starten'
+            New-Shortcut "$Title starten" $startScript '' "$Title starten"
             $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-            $updateArgs = "-NoProfile -ExecutionPolicy Bypass -Command `"irm $SelfUrl | iex; Read-Host 'Enter zum Schliessen'`""
-            New-Shortcut 'Clipmaschine aktualisieren' $powershell $updateArgs 'Clipmaschine auf die neueste Version bringen'
-            if ($ViaOneDrive) { New-Shortcut 'Clipmaschine (Ordner)' $Target '' 'Ordner der Clipmaschine' }
-            Write-Ok 'Clipmaschine starten / Clipmaschine aktualisieren'
+            $updateArgs = "-NoProfile -ExecutionPolicy Bypass -Command `"`$env:CLIPMASCHINE_PRESET='$Preset'; irm $SelfUrl | iex; Read-Host 'Enter zum Schliessen'`""
+            New-Shortcut "$Title aktualisieren" $powershell $updateArgs "$Title auf die neueste Version bringen"
+            if ($ViaOneDrive) { New-Shortcut "$Title (Ordner)" $Target '' "Ordner der $Title" }
+            Write-Ok "$Title starten / $Title aktualisieren"
         }
 
         if ($env:CLIPMASCHINE_NO_START) {
@@ -156,7 +167,7 @@
         }
         if (Test-Running) {
             Write-Host "`nDie Clipmaschine laeuft bereits. Fuer die neue Version ihr Fenster schliessen und" -ForegroundColor Yellow
-            Write-Host 'per Doppelklick auf "Clipmaschine starten" neu starten.' -ForegroundColor Yellow
+            Write-Host "per Doppelklick auf '$Title starten' neu starten." -ForegroundColor Yellow
             return
         }
         Write-Step 'Starte die Clipmaschine ...'

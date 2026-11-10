@@ -1,0 +1,69 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  GTA-6-Clipmaschine
+#  Clippt die Highlights ALLER Twitch-Streams von Grand Theft Auto VI und postet sie
+#  auf TikTok, Instagram Reels und YouTube Shorts.
+#  Braucht TWITCH_CLIENT_ID/SECRET in der .env (kostenlose App: dev.twitch.tv/console/apps).
+#  Alle weiteren Optionen: clipmaschine/config.example.yaml
+# ═══════════════════════════════════════════════════════════════════════════
+
+streamers: []                         # optional: Kanäle mit eigenem Facecam-Layout
+
+data_dir: clipmaschine_data
+
+discovery:
+  games: ["Grand Theft Auto VI"]      # die Maschine wartet, bis es Kategorie und Clips gibt
+  games_start_at: "2026-11-19"        # Release – vorher wird nichts geclippt (bei Verschiebung anpassen)
+  interval_minutes: 10                # alle 10 Minuten nach neuen Highlights suchen
+  lookback_hours: 12
+  min_views: 150                      # nur Clips, die schon gut laufen
+  min_duration: 8
+  max_duration: 60
+  gravity: 1.5                        # frische, schnell wachsende Clips zuerst
+  max_new_per_game: 12
+  max_per_broadcaster_per_day: 2      # Abwechslung statt 10 Clips vom selben Streamer
+  languages: []                       # leer = alle; nur deutsche Streams: [de]
+  exclude_broadcasters: []            # Streamer, die keine Reposts möchten
+  exclude_keywords: [leak, spoiler]
+
+editing:
+  layout: blur
+  max_duration: 59
+  hook_text: true
+  credit_text: true                   # twitch.tv/<streamer> im Video
+
+captions:
+  enabled: false                      # empfohlen: pip install faster-whisper, dann true
+
+metadata:
+  use_claude: auto
+  language: de
+  title_prefix: "GTA 6: "
+  default_hashtags: [gta6, gtavi, grandtheftauto6, rockstargames, gta6clips, gaming, fyp]
+  max_hashtags: 8
+
+tiktok:
+  enabled: true
+  method: browser
+  check_recommendation: true          # nach dem Posten prüfen, ob das Video weiterempfohlen wird
+  check_after_minutes: 20
+  restricted_pause_threshold: 2       # 2 nicht empfohlene Videos in 24 h → 24 h Schutzpause
+
+instagram:
+  enabled: true
+  method: browser
+
+youtube:
+  enabled: true                       # wird übersprungen, bis "auth youtube" eingerichtet ist
+  privacy_status: public
+  category_id: "20"
+
+# So viel wie sinnvoll: Mehr Posts pro Tag führen bei neuen Accounts dazu, dass die Plattformen
+# die Videos als Spam einstufen und nicht mehr weiterempfehlen. YouTube erlaubt per API ohnehin
+# nur etwa 6 Uploads pro Tag. Nach 2–3 Wochen ohne Probleme kannst du vorsichtig erhöhen.
+posting:
+  max_posts_per_day: 6
+  min_minutes_between_posts: 150
+  active_hours: [8, 24]
+  timezone: Europe/Berlin
+  max_clip_age_hours: 36
+  queue_size: 6

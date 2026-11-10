@@ -81,6 +81,11 @@ class Database:
                           ("context_json", "TEXT")):
             if name not in columns:
                 self._conn.execute(f"ALTER TABLE clips ADD COLUMN {name} {ddl}")
+        columns = {row["name"] for row in self._conn.execute("PRAGMA table_info(uploads)")}
+        for name, ddl in (("review_status", "TEXT"), ("review_reason", "TEXT"), ("review_at", "TEXT"),
+                          ("review_attempts", "INTEGER NOT NULL DEFAULT 0")):
+            if name not in columns:
+                self._conn.execute(f"ALTER TABLE uploads ADD COLUMN {name} {ddl}")
 
     def close(self) -> None:
         with self._lock:
@@ -145,6 +150,10 @@ class Database:
                 (clip.id, clip.broadcaster_id, iso(clip.created_at), window_seconds),
             )
         return bool(rows)
+
+    def count_from_broadcaster_since(self, broadcaster_id: str, since: datetime) -> int:
+        return self._query("SELECT COUNT(*) AS n FROM clips WHERE broadcaster_id = ? AND discovered_at >= ?",
+                           (broadcaster_id, iso(since)))[0]["n"]
 
     def mark(self, clip_id: str, status: str, **fields) -> None:
         allowed = {"video_path", "rendered_path", "meta_json", "error", "score"}
@@ -229,6 +238,33 @@ class Database:
         """Keine weiteren Versuche für diese Plattform (nicht behebbarer Fehler)."""
         self._execute("UPDATE uploads SET attempts = MAX(attempts, ?) WHERE clip_id = ? AND platform = ?",
                       (attempts, clip_id, platform))
+
+    # ------------------------------------------------- Weiterempfehlungs-Check
+    def uploads_to_review(self, platform: str, posted_before: datetime, posted_after: datetime,
+                          max_attempts: int = 3, limit: int = 10) -> list[sqlite3.Row]:
+        """Gepostete Videos, deren Empfehlungs-Status noch nicht (abschließend) geprüft wurde."""
+        return self._query(
+            """SELECT u.clip_id, u.updated_at, c.meta_json, c.title FROM uploads u JOIN clips c ON c.id = u.clip_id
+               WHERE u.platform = ? AND u.status IN ('posted', 'submitted')
+                 AND (u.review_status IS NULL OR u.review_status IN ('pending', 'unknown'))
+                 AND u.review_attempts < ? AND u.updated_at <= ? AND u.updated_at >= ?
+               ORDER BY u.updated_at LIMIT ?""",
+            (platform, max_attempts, iso(posted_before), iso(posted_after), limit),
+        )
+
+    def set_review(self, clip_id: str, platform: str, status: str, reason: str = "") -> None:
+        # updated_at bleibt unberührt – es ist der Post-Zeitpunkt für Tageslimit und Mindestabstand
+        self._execute(
+            """UPDATE uploads SET review_status = ?, review_reason = ?, review_at = ?,
+                   review_attempts = review_attempts + 1 WHERE clip_id = ? AND platform = ?""",
+            (status, reason, iso(utcnow()), clip_id, platform),
+        )
+
+    def restricted_review_times(self, platform: str, since: datetime) -> list[datetime]:
+        rows = self._query(
+            """SELECT review_at FROM uploads WHERE platform = ? AND review_status = 'restricted'
+               AND review_at >= ? ORDER BY review_at DESC""", (platform, iso(since)))
+        return [parse_time(row["review_at"]) for row in rows]
 
     def upload_statuses(self, clip_id: str) -> dict[str, sqlite3.Row]:
         return {row["platform"]: row for row in self._query("SELECT * FROM uploads WHERE clip_id = ?", (clip_id,))}

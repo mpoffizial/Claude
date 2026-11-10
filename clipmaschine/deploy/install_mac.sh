@@ -23,6 +23,16 @@ SELF_URL="https://raw.githubusercontent.com/$REPO/$BRANCH/clipmaschine/deploy/in
 HOME_DIR="${CLIPMASCHINE_HOME:-$HOME}"
 DESKTOP="$HOME_DIR/Desktop"
 TEST_MODE="${CLIPMASCHINE_TEST:-}"
+# Optional eine fertige Voreinstellung als eigene, getrennte Maschine installieren, z. B.:
+#   curl -fsSL <diese URL> | CLIPMASCHINE_PRESET=gta6 bash
+PRESET="$(printf '%s' "${CLIPMASCHINE_PRESET:-}" | tr -cd 'a-z0-9')"
+FOLDER="Clipmaschine"
+TITLE="Clipmaschine"
+if [ -n "$PRESET" ]; then
+  PRESET_UPPER="$(printf '%s' "$PRESET" | tr '[:lower:]' '[:upper:]')"
+  FOLDER="Clipmaschine-$PRESET_UPPER"
+  TITLE="$PRESET_UPPER-Clipmaschine"
+fi
 
 step() { printf '\n\033[1;36m==> %s\033[0m\n' "$1"; }
 ok() { printf '    \033[32mOK\033[0m  %s\n' "$1"; }
@@ -85,7 +95,7 @@ if [ -d "$HOME_DIR/Library/Mobile Documents/com~apple~CloudDocs/Desktop" ]; then
   INSTALL_BASE="$HOME_DIR"
   VIA_ICLOUD=1
 fi
-TARGET="$INSTALL_BASE/Clipmaschine"
+TARGET="$INSTALL_BASE/$FOLDER"
 START="$TARGET/clipmaschine/deploy/start_mac.command"
 
 step "Lade die neueste Version ..."
@@ -95,6 +105,9 @@ curl -fsSL "$ZIP_URL" -o "$TMP_DIR/clipmaschine.zip" || fail "Download fehlgesch
 unzip -q "$TMP_DIR/clipmaschine.zip" -d "$TMP_DIR/x" || fail "Entpacken fehlgeschlagen"
 SRC="$(find "$TMP_DIR/x" -mindepth 1 -maxdepth 1 -type d | head -n 1)/clipmaschine"
 [ -f "$SRC/__main__.py" ] || fail "Download unvollstaendig - bitte erneut versuchen"
+if [ -n "$PRESET" ] && [ ! -f "$SRC/presets/$PRESET.yaml" ]; then
+  fail "Die Voreinstellung '$PRESET' gibt es nicht"
+fi
 ok "heruntergeladen"
 
 step "Installiere nach $TARGET ..."
@@ -106,22 +119,25 @@ mkdir -p "$TARGET"
 rm -rf "$TARGET/clipmaschine"                       # nur Programmcode, keine Daten
 cp -R "$SRC" "$TARGET/clipmaschine"
 chmod +x "$TARGET/clipmaschine/deploy/start_mac.command" "$TARGET/clipmaschine/deploy/install_mac.sh"
+if [ -n "$PRESET" ]; then
+  printf '%s\n' "$PRESET" > "$TARGET/preset.txt"
+fi
 ok "Dateien aktualisiert (config.yaml, .env, Logins und Daten bleiben erhalten)"
 
 step "Lege die Starter auf den Schreibtisch ..."
 mkdir -p "$DESKTOP"
-cat > "$DESKTOP/Clipmaschine starten.command" <<EOF
+cat > "$DESKTOP/$TITLE starten.command" <<EOF
 #!/bin/bash
 exec "$START"
 EOF
-cat > "$DESKTOP/Clipmaschine aktualisieren.command" <<EOF
+cat > "$DESKTOP/$TITLE aktualisieren.command" <<EOF
 #!/bin/bash
-curl -fsSL "$SELF_URL" | bash
+curl -fsSL "$SELF_URL" | CLIPMASCHINE_PRESET="$PRESET" bash
 echo
 read -r -p "Enter zum Schliessen " _
 EOF
-chmod +x "$DESKTOP/Clipmaschine starten.command" "$DESKTOP/Clipmaschine aktualisieren.command"
-ok "\"Clipmaschine starten\" und \"Clipmaschine aktualisieren\""
+chmod +x "$DESKTOP/$TITLE starten.command" "$DESKTOP/$TITLE aktualisieren.command"
+ok "\"$TITLE starten\" und \"$TITLE aktualisieren\""
 
 if [ -n "${CLIPMASCHINE_NO_START:-}" ]; then
   printf '\n\033[32mFertig - installiert in %s\033[0m\n' "$TARGET"
@@ -129,7 +145,7 @@ if [ -n "${CLIPMASCHINE_NO_START:-}" ]; then
 fi
 if [ -n "$(find "$TARGET/clipmaschine_data/heartbeat.json" -mmin -10 2>/dev/null)" ]; then
   printf '\n\033[33mDie Clipmaschine laeuft bereits. Fuer die neue Version ihr Terminal-Fenster schliessen\n'
-  printf 'und per Doppelklick auf "Clipmaschine starten" neu starten.\033[0m\n'
+  printf 'und per Doppelklick auf "%s starten" neu starten.\033[0m\n' "$TITLE"
   exit 0
 fi
 step "Starte die Clipmaschine ..."

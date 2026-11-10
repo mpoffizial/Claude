@@ -34,7 +34,10 @@ if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set CHROME_F
 if "%CHROME_FOUND%"=="0" %PY% -m playwright install chromium
 
 if exist "config.yaml" goto loop
-%PY% -m clipmaschine setup --no-start
+set PRESET_ARGS=
+if exist "preset.txt" set /p PRESET=<preset.txt
+if exist "preset.txt" set PRESET_ARGS=--preset %PRESET%
+%PY% -m clipmaschine setup --no-start %PRESET_ARGS%
 if errorlevel 1 goto ende
 
 :loop

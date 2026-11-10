@@ -213,14 +213,14 @@ class TwitchAPI:
                 live[stream["user_id"]] = stream
         return live
 
-    def get_clips(self, broadcaster_id: str, started_at: datetime, ended_at: datetime,
-                  limit: int = 100, featured_only: bool = False) -> list[dict]:
-        """Top-Clips eines Kanals im Zeitraum (Twitch sortiert nach Views)."""
+    def get_clips(self, broadcaster_id: str | None, started_at: datetime, ended_at: datetime,
+                  limit: int = 100, featured_only: bool = False, game_id: str | None = None) -> list[dict]:
+        """Top-Clips eines Kanals oder (mit game_id) eines Spiels im Zeitraum – Twitch sortiert nach Views."""
         clips: list[dict] = []
         cursor = None
         while len(clips) < limit:
             params = {
-                "broadcaster_id": broadcaster_id,
+                **({"game_id": game_id} if game_id else {"broadcaster_id": broadcaster_id}),
                 "started_at": rfc3339(started_at),
                 "ended_at": rfc3339(ended_at),
                 "first": str(min(100, limit - len(clips))),
@@ -235,6 +235,16 @@ class TwitchAPI:
             if not cursor or not data.get("data"):
                 break
         return clips[:limit]
+
+    def get_games(self, names: list[str]) -> dict[str, dict]:
+        """Spiele/Kategorien per exaktem Namen. Gibt {name_klein: spiel} zurück."""
+        params = [("name", n) for n in names if n]
+        if not params:
+            return {}
+        return {g["name"].lower(): g for g in self._request("GET", "/games", params=params).get("data", [])}
+
+    def search_categories(self, query: str, limit: int = 20) -> list[dict]:
+        return self._request("GET", "/search/categories", params={"query": query, "first": str(limit)}).get("data", [])
 
     def get_clip(self, clip_id: str) -> dict | None:
         data = self._request("GET", "/clips", params={"id": clip_id}).get("data", [])

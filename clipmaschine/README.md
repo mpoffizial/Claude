@@ -101,6 +101,47 @@ Updates: Doppelklick auf „Clipmaschine aktualisieren“. Deine Einstellungen, 
 Ab dann reicht ein Doppelklick auf dieselbe Datei. Den Assistenten kannst du jederzeit erneut starten:
 `python -m clipmaschine setup`.
 
+## 🎮 GTA-6-Clipmaschine (eigene, getrennte Maschine)
+
+Clippt die Highlights **aller** Twitch-Streams von *Grand Theft Auto VI* und postet sie auf TikTok,
+Instagram Reels und YouTube Shorts. Sie läuft in einem eigenen Ordner mit eigenen Logins, unabhängig von
+deiner ersten Clipmaschine. Vor dem Release (`games_start_at: "2026-11-19"`) wartet sie und legt dann von selbst los.
+
+**Mac** (Terminal):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mpoffizial/Claude/claude/blissful-turing-83j3hp/clipmaschine/deploy/install_mac.sh | CLIPMASCHINE_PRESET=gta6 bash
+```
+
+**Windows** (PowerShell):
+
+```powershell
+$env:CLIPMASCHINE_PRESET='gta6'; irm https://raw.githubusercontent.com/mpoffizial/Claude/claude/blissful-turing-83j3hp/clipmaschine/deploy/install_windows.ps1 | iex
+```
+
+Auf dem Schreibtisch entstehen „GTA6-Clipmaschine starten“ und „GTA6-Clipmaschine aktualisieren“. Beim ersten Start
+fragt der Assistent nach dem **Twitch-Zugang** (hier Pflicht, kostenlos, 2 Minuten, die Schritte stehen im Fenster)
+und öffnet die Anmeldung bei TikTok und Instagram. YouTube wird übersprungen, bis `auth youtube` eingerichtet ist.
+
+* **Accounts:** Die Kanäle legst du selbst an, die Plattformen verlangen dafür deine Telefonnummer oder E-Mail.
+  Namen, Bio und Einstellungen zum Kopieren stehen in [`presets/gta6_profil.md`](presets/gta6_profil.md).
+* **Menge:** 6 Posts pro Tag und Plattform (YouTube lässt per API ohnehin nur etwa 6 Uploads zu). Mehr führt bei
+  neuen Accounts dazu, dass Videos als Spam gelten und nicht mehr empfohlen werden. Anpassen unter `posting:`.
+* **Abwechslung:** höchstens 2 Clips pro Streamer und Tag (`max_per_broadcaster_per_day`). Streamer, die keine
+  Reposts möchten, trägst du unter `exclude_broadcasters` ein.
+* Jedes andere Spiel geht genauso: in der `config.yaml` unter `discovery.games` den Twitch-Kategorienamen eintragen.
+
+### Weiterempfehlungs-Check (TikTok)
+
+20 Minuten nach jedem Post öffnet die Maschine die Beitragsliste in TikTok Studio und prüft, ob das Video normal
+ausgespielt wird. `python -m clipmaschine status` zeigt das Ergebnis pro Video.
+
+* Wird ein Video **nicht weiterempfohlen**, steht im Log der Hinweis von TikTok samt Ursache und Abhilfe, und ein
+  Screenshot liegt in `clipmaschine_data/logs/tiktok_screenshots/`.
+* Bei 2 solchen Videos in 24 Stunden macht TikTok **24 Stunden Schutzpause**. Die anderen Plattformen laufen weiter.
+* Ein eingeschränktes Video wird **nicht automatisch erneut hochgeladen**: Dasselbe Video noch einmal zu posten,
+  um die Einstufung zu umgehen, werten die Plattformen als Spam und stufen den ganzen Account ab.
+
 ## 🚀 Installation (manuell, alle Systeme)
 
 **Voraussetzungen:** Python 3.10 oder neuer und **ffmpeg** (mit libass, bei den üblichen Builds dabei).
@@ -280,7 +321,7 @@ Danach in der `config.yaml` `captions.enabled: true` setzen. Läuft auf der CPU.
 
 | Befehl | Zweck |
 |---|---|
-| `python -m clipmaschine setup` | Einrichtungs-Assistent: Kanäle, Zugangsdaten, TikTok verbinden |
+| `python -m clipmaschine setup` | Einrichtungs-Assistent: Kanäle, Zugangsdaten, TikTok verbinden (`--preset gta6` für die GTA-6-Maschine) |
 | `python -m clipmaschine check` | Einrichtung prüfen: ffmpeg, Twitch, Plattformen, KI, Untertitel |
 | `python -m clipmaschine discover` | Aktuelle Top-Clips suchen, anzeigen und vormerken |
 | `python -m clipmaschine process <clip-url>` | Einen bestimmten Clip schneiden (mit `--upload` sofort posten) |
@@ -324,6 +365,8 @@ Die Maschine ist so gebaut, dass sie **ohne Eingreifen** weiterläuft:
 | Netzwerkfehler, Server-Fehler (5xx) | Sofortige Wiederholung mit wachsender Wartezeit, sonst neuer Versuch im nächsten Slot (bis zu `max_attempts`). |
 | Clip lässt sich nicht laden oder rendern | Neuer Versuch nach 5, dann 10 Minuten. Erst danach wird er übersprungen und der nächste Clip genommen. |
 | Gerendertes Video fehlt | Wird automatisch neu gerendert. |
+| Eine Plattform ist noch nicht verbunden | Sie wird übersprungen und hält nichts auf. Sobald sie verbunden ist, wird sie mit bespielt. |
+| TikTok empfiehlt ein Video nicht weiter | Ursache steht im Log, bei Häufung 24 Stunden Schutzpause (siehe Weiterempfehlungs-Check). |
 | Plattform lehnt ein Video endgültig ab | Kein weiterer Versuch für diesen Clip. Andere Clips und Plattformen laufen normal weiter. |
 | Tokens laufen ab | Twitch, TikTok, YouTube und Instagram werden automatisch erneuert. |
 | TikTok- oder Instagram-Anmeldung im Browser-Modus abgelaufen | Nur diese Plattform pausiert, der Rest läuft weiter. Nach `auth tiktok` bzw. `auth instagram` geht es **sofort** weiter. |

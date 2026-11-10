@@ -54,8 +54,10 @@ def cmd_run(cfg: AppConfig, args) -> int:
         machine = _machine(cfg, dry_run=args.dry_run)
         if hasattr(signal, "SIGTERM"):
             signal.signal(signal.SIGTERM, lambda *_: machine.stop())
-        log.info("Clipmaschine %s startet – %d Streamer: %s", __version__, len(cfg.streamers),
-                 ", ".join(s.login for s in cfg.streamers))
+        log.info("Clipmaschine %s startet – %s", __version__, " | ".join(filter(None, [
+            f"Spiele: {', '.join(cfg.discovery.games)}" if cfg.discovery.games else "",
+            f"{len(cfg.streamers)} Streamer: {', '.join(s.login for s in cfg.streamers)}" if cfg.streamers else "",
+        ])))
         try:
             machine.run_forever(once=args.once)
         except KeyboardInterrupt:
@@ -175,6 +177,10 @@ def cmd_status(cfg: AppConfig, args) -> int:
         print("\nLetzte Uploads:")
         for row in uploads:
             detail = row["url"] or row["remote_id"] or (row["error"] or "")[:80]
+            if row["review_status"] == "restricted":
+                detail += f"  ⚠ nicht weiterempfohlen: {(row['review_reason'] or '')[:60]}"
+            elif row["review_status"] == "ok":
+                detail += "  ✔ wird ausgespielt"
             print(f"  {row['updated_at'][:16]}  {row['platform']:<9} {row['status']:<9} "
                   f"{row['broadcaster_login']:<14} {detail}")
     print()
@@ -201,7 +207,9 @@ def cmd_check(cfg: AppConfig, args) -> int:
     except ImportError:
         line(False, "yt-dlp", "pip install yt-dlp")
 
-    line(bool(cfg.streamers), "Streamer", ", ".join(s.login for s in cfg.streamers) or "keine eingetragen")
+    games = cfg.discovery.games
+    if cfg.streamers or not games:
+        line(bool(cfg.streamers), "Streamer", ", ".join(s.login for s in cfg.streamers) or "keine eingetragen")
     from .twitch_api import TwitchAPIError
     machine = _machine(cfg)
     if machine.has_twitch_credentials:
@@ -211,8 +219,21 @@ def cmd_check(cfg: AppConfig, args) -> int:
             line(not missing, "Twitch-API", "alle Kanäle gefunden" if not missing else f"nicht gefunden: {missing}")
         except TwitchAPIError as exc:
             line(False, "Twitch-API", f"{exc} – solange wird die öffentliche Clip-Seite genutzt")
+    elif games:
+        line(False, "Twitch-API", "TWITCH_CLIENT_ID/SECRET fehlen in der .env – nötig für Clips nach Spiel")
     else:
         line(None, "Twitch", "ohne Entwickler-App – Top-Clips kommen von der öffentlichen Clip-Seite")
+    if games and machine.has_twitch_credentials:
+        try:
+            found = machine.discovery.resolve_games()
+            for name in games:
+                line(True if name in found else None, f"Spiel „{name}“",
+                     f"Twitch-Kategorie {found[name]['name']}" if name in found
+                     else "Kategorie gibt es noch nicht – die Maschine wartet darauf")
+        except TwitchAPIError as exc:
+            line(False, "Spiele", str(exc))
+        if cfg.discovery.games_start_at:
+            line(None, "Start", f"Clips ab {cfg.discovery.games_start_at}")
     if cfg.live.enabled:
         try:
             login = machine.twitch.validate_user_token().get("login")
@@ -255,7 +276,7 @@ def cmd_check(cfg: AppConfig, args) -> int:
 def cmd_setup(args) -> int:
     from .setup_wizard import run_setup
 
-    config_path = run_setup(Path.cwd())
+    config_path = run_setup(Path.cwd(), preset=args.preset)
     cfg = load_config(config_path)
     _setup_logging(cfg, args.verbose)
     cmd_check(cfg, args)
@@ -280,6 +301,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("setup", help="Einrichtungs-Assistent (erster Start)")
     p.add_argument("--no-start", action="store_true", help="nach der Einrichtung nicht direkt starten")
+    p.add_argument("--preset", help="fertige Voreinstellung, z. B. gta6 (Clips eines ganzen Spiels)")
 
     p = sub.add_parser("run", help="Maschine im Dauerbetrieb starten")
     p.add_argument("--dry-run", action="store_true", help="alles machen außer hochladen")
@@ -319,7 +341,7 @@ def main(argv: list[str] | None = None) -> int:
         except (KeyboardInterrupt, EOFError):
             print("\nEinrichtung abgebrochen.")
             return 130
-        except ConfigError as exc:
+        except (ConfigError, ValueError) as exc:
             print(f"Konfigurationsfehler: {exc}", file=sys.stderr)
             return 2
     try:
