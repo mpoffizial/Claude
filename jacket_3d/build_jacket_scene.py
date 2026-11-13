@@ -193,6 +193,8 @@ LOGO_PLACEMENTS = {
 }
 LOGO_SIZE = [float(v) for v in A.get("logo_size", "").split(",") if v]   # Breite in m je Logo
 LOGO_ROT = [float(v) for v in A.get("logo_rot", "").split(",") if v]     # Drehung in der Ebene (Grad)
+LOGO_DX = [float(v) for v in A.get("logo_dx", "").split(",") if v]       # Verschiebung seitlich (m)
+LOGO_DZ = [float(v) for v in A.get("logo_dz", "").split(",") if v]       # Verschiebung hoch/runter (m)
 
 
 def snap_to_surface(loc, rot):
@@ -205,10 +207,10 @@ def snap_to_surface(loc, rot):
     return p if hit else loc
 
 
-def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0):
+def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0, dz=0.0):
     loc_fn, rot, default_width = LOGO_PLACEMENTS[placement]
     width = width or default_width
-    loc = snap_to_surface(loc_fn(), rot)
+    loc = snap_to_surface(loc_fn() + Vector((dx, 0.0, dz)), rot)
     # Drehung in der Logo-Ebene = Euler-Y (Projektionsachse liegt nach X=90 Grad auf der Welt-Y-Achse)
     rot = (rot[0], math.radians(inplane_deg), rot[2])
     emp = bpy.data.objects.new(name, None)
@@ -323,7 +325,9 @@ for i, path in enumerate(LOGOS):
     pos = LOGO_POS[i] if i < len(LOGO_POS) else LOGO_POS[-1]
     size = LOGO_SIZE[i] if i < len(LOGO_SIZE) else None
     rotd = LOGO_ROT[i] if i < len(LOGO_ROT) else 0.0
-    logo_empties.append(add_decal(f"Logo_{pos}", img, pos, FINISH, size, rotd))
+    dx = LOGO_DX[i] if i < len(LOGO_DX) else 0.0
+    dz = LOGO_DZ[i] if i < len(LOGO_DZ) else 0.0
+    logo_empties.append(add_decal(f"Logo_{pos}", img, pos, FINISH, size, rotd, dx, dz))
 
 # ---------------------------------------------------------------- studio
 world = bpy.data.worlds.new("Studio")
