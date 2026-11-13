@@ -182,7 +182,17 @@ LOGO_PLACEMENTS = {
                      (math.radians(90), 0, 0), 0.16),
     "back":        (lambda: Vector((CENTER.x, mx.y, mn.z + (mx.z - mn.z) * 0.45)),
                     (math.radians(90), 0, math.radians(180)), 0.28),
+    # vorne unten seitlich auf Bauch/Rippen (zwischen Reissverschluss und Seitentasche)
+    "ribs_left":   (lambda: Vector((CENTER.x + 0.075, mn.y, mn.z + (mx.z - mn.z) * 0.24)),
+                    (math.radians(90), 0, 0), 0.11),
+    "ribs_right":  (lambda: Vector((CENTER.x - 0.075, mn.y, mn.z + (mx.z - mn.z) * 0.24)),
+                    (math.radians(90), 0, 0), 0.11),
+    # hinten klein unter dem Nacken
+    "nape":        (lambda: Vector((CENTER.x, mx.y, mn.z + (mx.z - mn.z) * 0.655)),
+                    (math.radians(90), 0, math.radians(180)), 0.05),
 }
+LOGO_SIZE = [float(v) for v in A.get("logo_size", "").split(",") if v]   # Breite in m je Logo
+LOGO_ROT = [float(v) for v in A.get("logo_rot", "").split(",") if v]     # Drehung in der Ebene (Grad)
 
 
 def snap_to_surface(loc, rot):
@@ -195,9 +205,12 @@ def snap_to_surface(loc, rot):
     return p if hit else loc
 
 
-def add_decal(name, img, placement, finish):
-    loc_fn, rot, width = LOGO_PLACEMENTS[placement]
+def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0):
+    loc_fn, rot, default_width = LOGO_PLACEMENTS[placement]
+    width = width or default_width
     loc = snap_to_surface(loc_fn(), rot)
+    # Drehung in der Logo-Ebene = Euler-Y (Projektionsachse liegt nach X=90 Grad auf der Welt-Y-Achse)
+    rot = (rot[0], math.radians(inplane_deg), rot[2])
     emp = bpy.data.objects.new(name, None)
     scene.collection.objects.link(emp)
     emp.empty_display_type = "IMAGE"
@@ -308,7 +321,9 @@ for i, path in enumerate(LOGOS):
     img = bpy.data.images.load(os.path.abspath(path))
     img.name = os.path.basename(path)
     pos = LOGO_POS[i] if i < len(LOGO_POS) else LOGO_POS[-1]
-    logo_empties.append(add_decal(f"Logo_{pos}", img, pos, FINISH))
+    size = LOGO_SIZE[i] if i < len(LOGO_SIZE) else None
+    rotd = LOGO_ROT[i] if i < len(LOGO_ROT) else 0.0
+    logo_empties.append(add_decal(f"Logo_{pos}", img, pos, FINISH, size, rotd))
 
 # ---------------------------------------------------------------- studio
 world = bpy.data.worlds.new("Studio")
@@ -423,11 +438,16 @@ def camera(name, az_deg, el_deg, dist, lens, at=None):
 
 camera("Cam_Front", 0, 4, 2.3, 70)
 camera("Cam_ThreeQuarter", -35, 8, 2.3, 70)
-if logo_empties:
-    e = logo_empties[0]
+for i, e in enumerate(logo_empties):
+    # Nahaufnahme je Logo (Rueckseiten-Logos werden ueber den Drehteller nach vorne gedreht)
     p = e.matrix_world.translation.copy()
-    az = 180 if "back" in e.name else (14 if p.x > CENTER.x else -14)
-    camera("Cam_Logo_Closeup", az, 6, 0.75, 85, at=p)
+    on_back = p.y > CENTER.y
+    if on_back:
+        p = Vector((2 * CENTER.x - p.x, 2 * CENTER.y - p.y, p.z))  # Position nach 180-Grad-Drehung
+    az = 14 if p.x > CENTER.x else -14
+    cam_name = "Cam_Logo_Closeup" if i == 0 else f"Cam_{e.name}"
+    camera(cam_name, az, 8, 0.75, 85, at=p)
+    cams[cam_name]["on_back"] = on_back
 scene.camera = cams["Cam_ThreeQuarter"]
 
 # ---------------------------------------------------------------- render settings
@@ -477,8 +497,12 @@ SHOTS = {  # key: (camera, turntable-Frame)  Frame 1 = 0 Grad, 31 = 90 Grad, 61 
     "side": ("Cam_Front", 31),
     "back": ("Cam_Front", 61),
     "backquarter": ("Cam_ThreeQuarter", 61),
-    "logo": ("Cam_Logo_Closeup", 1),
 }
+for cname, cobj in cams.items():
+    if cname.startswith("Cam_Logo"):
+        key = "logo" if cname == "Cam_Logo_Closeup" else cname[len("Cam_"):].lower()
+        SHOTS[key] = (cname, 61 if cobj.get("on_back") else 1)
+print("SHOTS", sorted(SHOTS))
 for key in RENDER:
     if key == "turntable":
         scene.camera = cams["Cam_Front"]
