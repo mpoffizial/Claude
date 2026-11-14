@@ -190,7 +190,22 @@ LOGO_PLACEMENTS = {
     # hinten klein unter dem Nacken
     "nape":        (lambda: Vector((CENTER.x, mx.y, mn.z + (mx.z - mn.z) * 0.655)),
                     (math.radians(90), 0, math.radians(180)), 0.05),
+    # vorne mittig auf dem Kapuzenrand ueber der Gesichtsoeffnung
+    "hood_front":  (lambda: Vector((CENTER.x, mn.y, mn.z + (mx.z - mn.z) * 0.9275)),
+                    (math.radians(90), 0, 0), 0.075),
+    # seitlich an der Kapuze (rechte Seite des Traegers), Schrift laeuft nach vorne
+    "hood_side_right": (lambda: Vector((CENTER.x - 0.4, CENTER.y - 0.01, mn.z + (mx.z - mn.z) * 0.82)),
+                        (math.radians(90), 0, math.radians(-90)), 0.09),
 }
+# Rundum-Logos: zylindrisch um den Koerper gewickelt (laufen z.B. von vorne ueber die Seite nach hinten).
+# name: (Mittelpunkt als Winkel in Grad: 0 = vorne, 90 = rechte Seite des Traegers, 180 = hinten,
+#        Hoehe als Anteil der Jackenhoehe, Standard-Breite in m)
+WRAP_PLACEMENTS = {
+    "wrap_side_right":      (90.0, 0.31, 0.16),
+    "wrap_frontside_right": (62.0, 0.31, 0.16),
+}
+WRAP_RADIUS = 0.17      # Referenzradius fuer die Bogenlaenge (Rumpf ~17 cm)
+WRAP_MAX_R = 0.195      # nur Rumpf, nicht die Aermel (die haengen bei ~26-29 cm)
 LOGO_SIZE = [float(v) for v in A.get("logo_size", "").split(",") if v]   # Breite in m je Logo
 LOGO_ROT = [float(v) for v in A.get("logo_rot", "").split(",") if v]     # Drehung in der Ebene (Grad)
 LOGO_DX = [float(v) for v in A.get("logo_dx", "").split(",") if v]       # Verschiebung seitlich (m)
@@ -208,26 +223,38 @@ def snap_to_surface(loc, rot):
 
 
 def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0, dz=0.0):
-    loc_fn, rot, default_width = LOGO_PLACEMENTS[placement]
-    width = width or default_width
-    loc = snap_to_surface(loc_fn() + Vector((dx, 0.0, dz)), rot)
-    # Drehung in der Logo-Ebene = Euler-Y (Projektionsachse liegt nach X=90 Grad auf der Welt-Y-Achse)
-    rot = (rot[0], math.radians(inplane_deg), rot[2])
-    emp = bpy.data.objects.new(name, None)
-    scene.collection.objects.link(emp)
-    emp.empty_display_type = "IMAGE"
-    emp.data = img
-    emp.empty_display_size = 1.0
-    emp.empty_image_offset = (-0.5, -0.5)
-    emp.empty_image_depth = "FRONT"
-    emp.use_empty_image_alpha = True
-    emp.color[3] = 0.55
-    emp.location = loc
-    emp.rotation_euler = rot
-    emp.scale = (width, width, width)
-
     w, h = img.size
     m = max(w, h)
+    wrap = placement in WRAP_PLACEMENTS
+    emp = bpy.data.objects.new(name, None)
+    scene.collection.objects.link(emp)
+    if wrap:
+        # Empty sitzt auf der Koerperachse; Drehen um Z verschiebt das Logo um den Koerper,
+        # Hoch/Runter-Schieben verschiebt es in der Hoehe. Breite: Node "Wrap Width".
+        phi0, zf, default_width = WRAP_PLACEMENTS[placement]
+        width = width or default_width
+        emp.empty_display_type = "SINGLE_ARROW"
+        emp.empty_display_size = 0.25
+        emp.location = Vector((CENTER.x, CENTER.y, mn.z + (mx.z - mn.z) * zf + dz))
+        emp.rotation_euler = (0.0, 0.0, -math.radians(phi0))
+        emp["wrap"] = True
+        emp["wrap_phi0"] = phi0
+    else:
+        loc_fn, rot, default_width = LOGO_PLACEMENTS[placement]
+        width = width or default_width
+        loc = snap_to_surface(loc_fn() + Vector((dx, 0.0, dz)), rot)
+        # Drehung in der Logo-Ebene = Euler-Y (Projektionsachse liegt nach X=90 Grad auf der Welt-Y-Achse)
+        rot = (rot[0], math.radians(inplane_deg), rot[2])
+        emp.empty_display_type = "IMAGE"
+        emp.data = img
+        emp.empty_display_size = 1.0
+        emp.empty_image_offset = (-0.5, -0.5)
+        emp.empty_image_depth = "FRONT"
+        emp.use_empty_image_alpha = True
+        emp.color[3] = 0.55
+        emp.location = loc
+        emp.rotation_euler = rot
+        emp.scale = (width, width, width)
     for mat in mats:
         N, L = mat.node_tree.nodes, mat.node_tree.links
         b = principled(mat)
@@ -242,26 +269,54 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
             return n
 
         tc = new("ShaderNodeTexCoord", object=emp)
-        mp = new("ShaderNodeMapping")
-        mp.inputs["Location"].default_value = (0.5, 0.5, 0.0)
-        mp.inputs["Scale"].default_value = (m / w, m / h, 1.0)
-        L.new(tc.outputs["Object"], mp.inputs["Vector"])
         tex = new("ShaderNodeTexImage", image=img, extension="CLIP", interpolation="Cubic")
         tex.label = "LOGO IMAGE (hier tauschen)"
-        L.new(mp.outputs["Vector"], tex.inputs["Vector"])
-
-        # nur auf der Oberflaeche nahe dem Projektor (nicht durch die Jacke hindurch)
         sep = new("ShaderNodeSeparateXYZ")
         L.new(tc.outputs["Object"], sep.inputs["Vector"])
-        ab = new("ShaderNodeMath", operation="ABSOLUTE")
-        L.new(sep.outputs["Z"], ab.inputs[0])
-        depth = new("ShaderNodeMath", operation="LESS_THAN")
-        depth.label = "Projection Depth"
-        depth.inputs[1].default_value = 0.6
-        L.new(ab.outputs[0], depth.inputs[0])
+
+        def math_node(op, a, b=None, label=None):
+            n = new("ShaderNodeMath", operation=op)
+            if label:
+                n.label = label
+            for i, v in enumerate((a, b)):
+                if v is None:
+                    continue
+                if isinstance(v, (int, float)):
+                    n.inputs[i].default_value = v
+                else:
+                    L.new(v, n.inputs[i])
+            return n.outputs[0]
+
+        if wrap:
+            # Zylinder-Koordinaten um die Koerperachse: Winkel -> u (Bogenlaenge), Hoehe -> v
+            x, y, z = sep.outputs["X"], sep.outputs["Y"], sep.outputs["Z"]
+            phi = math_node("ARCTAN2", math_node("MULTIPLY", x, -1.0), math_node("MULTIPLY", y, -1.0))
+            wv = new("ShaderNodeValue")
+            wv.label = "Wrap Width (m)"
+            wv.outputs[0].default_value = width
+            s = math_node("MULTIPLY", phi, -WRAP_RADIUS)
+            u = math_node("ADD", math_node("DIVIDE", s, wv.outputs[0]), 0.5)
+            hgt = math_node("MULTIPLY", wv.outputs[0], h / w)
+            v = math_node("ADD", math_node("DIVIDE", z, hgt), 0.5)
+            cmb = new("ShaderNodeCombineXYZ")
+            L.new(u, cmb.inputs["X"])
+            L.new(v, cmb.inputs["Y"])
+            L.new(cmb.outputs["Vector"], tex.inputs["Vector"])
+            r = math_node("SQRT", math_node("ADD", math_node("MULTIPLY", x, x), math_node("MULTIPLY", y, y)))
+            depth_out = math_node("LESS_THAN", r, WRAP_MAX_R, label="Only torso (not sleeves)")
+        else:
+            mp = new("ShaderNodeMapping")
+            mp.inputs["Location"].default_value = (0.5, 0.5, 0.0)
+            mp.inputs["Scale"].default_value = (m / w, m / h, 1.0)
+            L.new(tc.outputs["Object"], mp.inputs["Vector"])
+            L.new(mp.outputs["Vector"], tex.inputs["Vector"])
+            # nur auf der Oberflaeche nahe dem Projektor (nicht durch die Jacke hindurch)
+            ab = math_node("ABSOLUTE", sep.outputs["Z"])
+            depth_out = math_node("LESS_THAN", ab, 0.6, label="Projection Depth")
+
         m1 = new("ShaderNodeMath", operation="MULTIPLY")
         L.new(tex.outputs["Alpha"], m1.inputs[0])
-        L.new(depth.outputs[0], m1.inputs[1])
+        L.new(depth_out, m1.inputs[1])
         opac = new("ShaderNodeMath", operation="MULTIPLY")
         opac.label = "Logo Opacity"
         opac.inputs[1].default_value = 1.0
@@ -442,15 +497,25 @@ def camera(name, az_deg, el_deg, dist, lens, at=None):
 
 camera("Cam_Front", 0, 4, 2.3, 70)
 camera("Cam_ThreeQuarter", -35, 8, 2.3, 70)
+# Halbnah auf den Rumpf (fuer Rundum-Logos zusammen mit gedrehtem Drehteller: "torso@90" usw.)
+camera("Cam_Torso", 0, 3, 1.35, 60, at=Vector((CENTER.x, CENTER.y, mn.z + (mx.z - mn.z) * 0.36)))
 for i, e in enumerate(logo_empties):
     # Nahaufnahme je Logo (Rueckseiten-Logos werden ueber den Drehteller nach vorne gedreht)
+    if e.get("wrap"):
+        continue  # Rundum-Logos: Ansichten ueber "torso@<Grad>"
     p = e.matrix_world.translation.copy()
-    on_back = p.y > CENTER.y
+    nrm = (e.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized()  # zeigt aus der Jacke heraus
+    on_back = nrm.y > 0.5
     if on_back:
         p = Vector((2 * CENTER.x - p.x, 2 * CENTER.y - p.y, p.z))  # Position nach 180-Grad-Drehung
-    az = 14 if p.x > CENTER.x else -14
+        nrm = Vector((-nrm.x, -nrm.y, nrm.z))
+    az = math.degrees(math.atan2(nrm.x, -nrm.y))
+    if abs(az) < 30:
+        az += 14 if p.x > CENTER.x else -14
+    else:
+        az -= math.copysign(14, az)   # leicht von vorne
     cam_name = "Cam_Logo_Closeup" if i == 0 else f"Cam_{e.name}"
-    camera(cam_name, az, 8, 0.75, 85, at=p)
+    camera(cam_name, az, 8, 0.75 if e.scale.x > 0.07 else 0.55, 85, at=p)
     cams[cam_name]["on_back"] = on_back
 scene.camera = cams["Cam_ThreeQuarter"]
 
@@ -519,11 +584,20 @@ for key in RENDER:
         scene.render.image_settings.file_format = "PNG"
         print("RENDERED", scene.render.filepath)
         continue
-    cam, frame = SHOTS.get(key, (None, 1))
-    if cam not in cams:
-        continue
-    scene.frame_set(frame)
+    if "@" in key:   # z.B. "torso@90": Kamera + Drehteller-Winkel in Grad (3 Grad pro Frame)
+        base, deg = key.split("@")
+        cam = SHOTS.get(base, (f"Cam_{base.capitalize()}", 1))[0]
+        f = 1 + float(deg) / 3.0
+        if cam not in cams:
+            continue
+        scene.frame_set(int(f), subframe=f - int(f))
+    else:
+        cam, frame = SHOTS.get(key, (None, 1))
+        if cam not in cams:
+            continue
+        scene.frame_set(frame)
     scene.camera = cams[cam]
+    key = key.replace("@", "_")
     scene.render.filepath = os.path.join(RENDER_DIR, f"{key}{TAG}.png")
     bpy.ops.render.render(write_still=True)
     print("RENDERED", scene.render.filepath)
