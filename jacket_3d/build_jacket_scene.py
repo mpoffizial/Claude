@@ -313,6 +313,32 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
             # nur auf der Oberflaeche nahe dem Projektor (nicht durch die Jacke hindurch)
             ab = math_node("ABSOLUTE", sep.outputs["Z"])
             depth_out = math_node("LESS_THAN", ab, 0.6, label="Projection Depth")
+            # ... und nur auf Flaechen, die dem Logo zugewandt sind (kein Durchscheinen aufs Innenfutter).
+            # Blickrichtung des Logo-Empties per Treiber (folgt, wenn man das Logo verschiebt/dreht).
+            facing_dir = new("ShaderNodeCombineXYZ")
+            facing_dir.label = "Logo direction (driver)"
+            exprs = {"X": "cos(rx)*sin(ry)*cos(rz)+sin(rx)*sin(rz)",
+                     "Y": "cos(rx)*sin(ry)*sin(rz)-sin(rx)*cos(rz)",
+                     "Z": "cos(rx)*cos(ry)"}
+            for axis, expr in exprs.items():
+                fc = facing_dir.inputs[axis].driver_add("default_value")
+                drv = fc.driver
+                drv.type = "SCRIPTED"
+                for vname, ch in (("rx", "ROT_X"), ("ry", "ROT_Y"), ("rz", "ROT_Z")):
+                    var = drv.variables.new()
+                    var.name, var.type = vname, "TRANSFORMS"
+                    var.targets[0].id = emp
+                    var.targets[0].transform_type = ch
+                    var.targets[0].transform_space = "TRANSFORM_SPACE"
+                drv.expression = expr
+            geo = new("ShaderNodeNewGeometry")
+            vt = new("ShaderNodeVectorTransform", vector_type="NORMAL", convert_from="WORLD", convert_to="OBJECT")
+            L.new(geo.outputs["Normal"], vt.inputs["Vector"])
+            dot = new("ShaderNodeVectorMath", operation="DOT_PRODUCT")
+            L.new(vt.outputs["Vector"], dot.inputs[0])
+            L.new(facing_dir.outputs["Vector"], dot.inputs[1])
+            facing = math_node("GREATER_THAN", dot.outputs["Value"], 0.05, label="Only surfaces facing the logo")
+            depth_out = math_node("MULTIPLY", depth_out, facing)
 
         m1 = new("ShaderNodeMath", operation="MULTIPLY")
         L.new(tex.outputs["Alpha"], m1.inputs[0])
