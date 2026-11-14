@@ -131,6 +131,28 @@ und öffnet die Anmeldung bei TikTok und Instagram. YouTube wird übersprungen, 
   Reposts möchten, trägst du unter `exclude_broadcasters` ein.
 * Jedes andere Spiel geht genauso: in der `config.yaml` unter `discovery.games` den Twitch-Kategorienamen eintragen.
 
+### Probelauf: erst einen Clip ansehen
+
+Die GTA-6-Voreinstellung startet im **Probelauf** (`test_mode: true`): Zum Release schneidet die Maschine genau
+**einen** GTA-6-Clip, postet **nichts**, öffnet dir das Video und **stoppt sich selbst** (auch der automatische
+Neustart bleibt aus). Gefällt dir der Clip, setzt du in der `config.yaml` `test_mode: false` und startest neu.
+Jederzeit auch von Hand möglich: `python -m clipmaschine run --test-clip`.
+
+### Das virale Format „Hook-First“
+
+Jeder Clip wird lokal mit ffmpeg so geschnitten, dass möglichst viele bis zum Ende schauen (kostenlos, bei jedem Clip):
+
+1. **Teaser:** Die ersten 1,2 Sekunden zeigen den lautesten Moment (Reaktion, Explosion) gezoomt mit
+   „WARTE BIS ZUM ENDE“, dann ein Blitz-Schnitt zum Anfang der Szene (`cold_open`).
+2. **Auf den Höhepunkt gekürzt:** 10 Sekunden Vorlauf, 4 Sekunden danach, höchstens 25 Sekunden.
+   Kurze Videos mit frühem Ende werden öfter zu Ende und erneut geschaut (`smart_trim`).
+3. **Zoom-Schnitt** im Moment des Höhepunkts (`punch_zoom`).
+4. **Hook-Text** oben, **Karaoke-Untertitel** in Vice-City-Pink, Credit des Streamers.
+5. **Fortschrittsbalken** in Vice-City-Türkis am unteren Rand (`progress_bar`).
+
+Gibt es keinen klar lauteren Moment, bleibt der Clip ungekürzt. Alle Schalter stehen unter `editing:`.
+In der normalen Clipmaschine sind Kürzen, Zoom und Fortschrittsbalken ebenfalls an, der Teaser ist optional.
+
 ### Weiterempfehlungs-Check (TikTok)
 
 20 Minuten nach jedem Post öffnet die Maschine die Beitragsliste in TikTok Studio und prüft, ob das Video normal

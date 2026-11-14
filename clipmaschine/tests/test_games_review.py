@@ -224,3 +224,38 @@ def test_mac_installer_with_preset(tmp_path):
     env["CLIPMASCHINE_PRESET"] = "gibtsnicht"
     bad = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=120)
     assert bad.returncode != 0 and "gibt es nicht" in bad.stdout
+
+
+@needs_ffmpeg
+def test_test_mode_renders_one_clip_posts_nothing_and_stops(app_config, clock, downloads):  # noqa: F811
+    app_config.test_mode = True
+    tiktok = FakeUploader("tiktok")
+    machine = make_machine(app_config, [tiktok])
+    machine.run_forever()                                       # Dauerbetrieb – muss von selbst enden
+    assert machine.test_clip is not None and machine.test_clip.is_file()
+    assert tiktok.uploads == []                                 # Probelauf postet nie
+    assert len(downloads["calls"]) == 1                         # genau ein Clip geschnitten
+    assert machine.stop_event.is_set()
+
+
+def test_cli_test_clip_exit_code(app_config, monkeypatch, tmp_path):
+    import argparse
+
+    from clipmaschine import __main__ as cli
+
+    class DoneMachine:
+        def __init__(self, cfg, **kwargs):
+            self.cfg, self.test_clip = cfg, tmp_path / "test.mp4"
+
+        def run_forever(self, once=False):
+            assert self.cfg.test_mode
+
+        def stop(self):
+            pass
+
+    opened = []
+    monkeypatch.setattr(cli, "_machine", lambda cfg, **kw: DoneMachine(cfg, **kw))
+    monkeypatch.setattr(cli, "open_file", opened.append)
+    args = argparse.Namespace(dry_run=False, once=False, test_clip=True)
+    assert cli.cmd_run(app_config, args) == cli.EXIT_TEST_CLIP_DONE   # Startskripte starten dann nicht neu
+    assert opened == [tmp_path / "test.mp4"]

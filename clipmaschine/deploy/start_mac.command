@@ -46,6 +46,8 @@ if ! "$VPY" -m pip install --disable-pip-version-check -q -r clipmaschine/requir
 fi
 # yt-dlp aktuell halten - Twitch aendert seine Seite oefter
 "$VPY" -m pip install --disable-pip-version-check -q --upgrade yt-dlp >/dev/null 2>&1 || true
+# Untertitel (optional): klappt die Installation nicht, laufen die Videos einfach ohne Untertitel
+"$VPY" -m pip install --disable-pip-version-check -q faster-whisper >/dev/null 2>&1 || true
 
 # Ohne Google Chrome einmalig den Browser fuer TikTok/Instagram laden
 if [ "$(uname -s)" = "Darwin" ] && [ ! -d "/Applications/Google Chrome.app" ] && [ ! -d "$HOME/Applications/Google Chrome.app" ]; then
@@ -74,6 +76,11 @@ while true; do
   # shellcheck disable=SC2086  # KEEP_AWAKE soll in Woerter zerfallen
   $KEEP_AWAKE "$VPY" -m clipmaschine run ${CLIPMASCHINE_RUN_ARGS:-}
   code=$?
+  if [ "$code" = "4" ]; then
+    echo "Probelauf fertig: Der Testclip wurde geoeffnet. Die Maschine bleibt gestoppt."
+    echo "Fuer den echten Betrieb in der config.yaml test_mode: false setzen und neu starten."
+    pause_and_exit 0
+  fi
   if [ "$code" = "2" ] || [ "$code" = "3" ]; then
     echo "Konfigurationsfehler oder die Maschine laeuft bereits - kein automatischer Neustart."
     pause_and_exit "$code"

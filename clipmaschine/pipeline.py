@@ -63,7 +63,9 @@ class ClipMachine:
     def __init__(self, cfg: AppConfig, dry_run: bool = False, uploaders: list[Uploader] | None = None,
                  metadata: MetadataGenerator | None = None, twitch: TwitchAPI | None = None):
         self.cfg = cfg
-        self.dry_run = dry_run or cfg.dry_run
+        self.test_mode = cfg.test_mode
+        self.dry_run = dry_run or cfg.dry_run or cfg.test_mode      # Probelauf postet nie
+        self.test_clip: Path | None = None
         self.downloads_dir = cfg.data_dir / "downloads"
         self.rendered_dir = cfg.data_dir / "rendered"
         self.heartbeat_path = cfg.data_dir / "heartbeat.json"
@@ -123,7 +125,10 @@ class ClipMachine:
                 log.warning("%s: %s", uploader.name, problem)
         if not self.uploaders:
             log.warning("Keine Plattform aktiviert – Videos werden nur gerendert (Ordner %s)", self.rendered_dir)
-        if self.dry_run:
+        if self.test_mode:
+            log.info("PROBELAUF: Die Maschine schneidet genau einen Clip, postet nichts und stoppt danach. "
+                     "Für den echten Betrieb in der config.yaml test_mode: false setzen.")
+        elif self.dry_run:
             log.info("DRY-RUN: Es wird nichts hochgeladen")
         if not self.metadata.uses_claude:
             log.info("KI-Titel: Vorlagen")
@@ -133,7 +138,7 @@ class ClipMachine:
             log.info("KI-Titel: Claude, sofern Zugangsdaten gefunden werden – sonst Vorlagen")
         self.cleanup_leftovers()
 
-        self._live_wanted = self.cfg.live.enabled and not once
+        self._live_wanted = self.cfg.live.enabled and not once and not self.test_mode
         if self._live_wanted and not self.has_twitch_credentials:
             log.warning("Live-Modus braucht TWITCH_CLIENT_ID/SECRET in der .env – läuft ohne Live-Modus weiter")
             self._live_wanted = False
@@ -146,6 +151,11 @@ class ClipMachine:
                     self.run_cycle()
                 except Exception:
                     log.exception("Fehler im Durchlauf – die Maschine macht im nächsten Durchlauf weiter")
+                if self.test_clip:
+                    log.info("✔ PROBELAUF fertig – Testclip: %s. Die Maschine stoppt jetzt (nichts gepostet). "
+                             "Gefällt er dir: in der config.yaml test_mode: false setzen und neu starten.",
+                             self.test_clip)
+                    break
                 if once:
                     break
                 remaining = self.cfg.loop_interval_seconds - (time.monotonic() - started)
@@ -220,13 +230,15 @@ class ClipMachine:
     def prepare_pending(self) -> None:
         if not self._enough_disk():
             return
-        if self.uploaders:
+        if self.test_mode:
+            missing = 0 if self.test_clip else 1
+        elif self.uploaders:
             missing = self.cfg.posting.queue_size - self.db.count_with_status("rendered")
         else:
             missing = self.cfg.posting.queue_size
         min_created = utcnow() - timedelta(hours=self.cfg.posting.max_clip_age_hours)
         for row in self.db.clips_to_prepare(missing, min_created):
-            if self.stop_event.is_set():
+            if self.stop_event.is_set() or (self.test_mode and self.test_clip):
                 return
             context = json.loads(row["context_json"] or "{}")
             self.prepare(Clip.from_row(row), row["source"] or "top_clips", context)
@@ -273,6 +285,8 @@ class ClipMachine:
                          video_path=str(src) if (local_file or self.cfg.editing.keep_source) else None,
                          meta_json=json.dumps(meta.to_dict(), ensure_ascii=False))
             log.info("✔ Fertig: %s | Hook: „%s“ | Titel: %s (%s)", out.name, meta.hook, meta.title, meta.source)
+            if self.test_mode and not self.test_clip:
+                self.test_clip = out
             return out, meta
         except Exception as exc:
             gave_up = self.db.prepare_failed(clip.id, str(exc)[:1000], self.cfg.posting.max_attempts,

@@ -6,6 +6,10 @@
 #  Alle weiteren Optionen: clipmaschine/config.example.yaml
 # ═══════════════════════════════════════════════════════════════════════════
 
+# PROBELAUF: Zum Release schneidet die Maschine genau EINEN GTA-6-Clip, postet nichts, öffnet dir
+# das Video und stoppt sich selbst. Gefällt er dir: auf false setzen und neu starten.
+test_mode: true
+
 streamers: []                         # optional: Kanäle mit eigenem Facecam-Layout
 
 data_dir: clipmaschine_data
@@ -29,15 +33,32 @@ editing:
   layout: blur
   max_duration: 59
   hook_text: true
+  hook_uppercase: true
   credit_text: true                   # twitch.tv/<streamer> im Video
+  # Virales Format "Hook-First":
+  cold_open: true                     # 1,2 s Teaser vom Höhepunkt + "WARTE BIS ZUM ENDE" + Blitz-Schnitt
+  cold_open_text: "WARTE BIS ZUM ENDE"
+  smart_trim: true                    # auf den lautesten Moment kürzen ...
+  trim_before_peak: 10
+  trim_after_peak: 4                  # ... und kurz danach enden (Loop, hohe Abschlussrate)
+  trim_max_seconds: 25
+  punch_zoom: true                    # Zoom-Schnitt beim Höhepunkt
+  progress_bar: true
+  progress_bar_color: "#2DE2E6"       # Vice-City-Türkis
+  caption_highlight_color: "#FF3EA5"  # Vice-City-Pink
+  hook_color: "#FFFFFF"
 
 captions:
-  enabled: false                      # empfohlen: pip install faster-whisper, dann true
+  enabled: true                       # die meisten schauen ohne Ton – Untertitel halten sie im Video
+  model: small                        # wird beim Start automatisch installiert (ohne: Videos ohne Untertitel)
 
 metadata:
   use_claude: auto
   language: de
   title_prefix: "GTA 6: "
+  extra_instructions: >-
+    Die Clips stammen aus GTA 6 (Grand Theft Auto VI), kurz nach dem Release. Der Hook soll neugierig auf
+    den Höhepunkt machen, ihn aber nicht verraten. Keine Spoiler zur Story.
   default_hashtags: [gta6, gtavi, grandtheftauto6, rockstargames, gta6clips, gaming, fyp]
   max_hashtags: 8
 

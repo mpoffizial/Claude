@@ -26,6 +26,8 @@ echo Pruefe Pakete ...
 if errorlevel 1 goto pip_failed
 REM yt-dlp aktuell halten - Twitch aendert seine Seite oefter
 %PY% -m pip install --disable-pip-version-check -q --upgrade yt-dlp >nul 2>nul
+REM Untertitel (optional) - ohne laufen die Videos einfach ohne Untertitel
+%PY% -m pip install --disable-pip-version-check -q faster-whisper >nul 2>nul
 
 set CHROME_FOUND=0
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set CHROME_FOUND=1
@@ -43,12 +45,18 @@ if errorlevel 1 goto ende
 :loop
 %PY% -m clipmaschine run
 set CODE=%ERRORLEVEL%
+if "%CODE%"=="4" goto probelauf
 if "%CODE%"=="2" goto ende
 if "%CODE%"=="3" goto ende
 echo.
 echo Clipmaschine wurde beendet (Code %CODE%) - Neustart in 30 Sekunden ... (Strg+C zum Abbrechen)
 timeout /t 30 /nobreak >nul
 goto loop
+
+:probelauf
+echo Probelauf fertig: Der Testclip wurde geoeffnet. Die Maschine bleibt gestoppt.
+echo Fuer den echten Betrieb in der config.yaml test_mode: false setzen und neu starten.
+goto ende
 
 :no_ffmpeg
 echo ffmpeg fehlt. Installieren mit:   winget install Gyan.FFmpeg

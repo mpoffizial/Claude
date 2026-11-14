@@ -41,8 +41,28 @@ def _machine(cfg: AppConfig, **kwargs):
 
 
 # ---------------------------------------------------------------- Befehle
+EXIT_TEST_CLIP_DONE = 4      # Probelauf fertig – die Startskripte starten dann nicht neu
+
+
+def open_file(path: Path) -> None:
+    """Öffnet das Video im Standard-Player (Mac: QuickTime, Windows: Filme & TV)."""
+    import subprocess
+    try:
+        if sys.platform == "darwin":
+            subprocess.Popen(["open", str(path)])
+        elif os.name == "nt":
+            os.startfile(str(path))  # type: ignore[attr-defined]
+        elif shutil.which("xdg-open"):
+            subprocess.Popen(["xdg-open", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as exc:  # Öffnen ist nur Komfort
+        log.debug("Video nicht automatisch geöffnet: %s", exc)
+
+
 def cmd_run(cfg: AppConfig, args) -> int:
     from .lock import AlreadyRunning, SingleInstanceLock
+
+    if getattr(args, "test_clip", False):
+        cfg.test_mode = True
 
     lock = SingleInstanceLock(cfg.data_dir / "clipmaschine.lock")
     try:
@@ -62,6 +82,10 @@ def cmd_run(cfg: AppConfig, args) -> int:
             machine.run_forever(once=args.once)
         except KeyboardInterrupt:
             machine.stop()
+        if machine.test_clip:
+            open_file(machine.test_clip)
+            print(f"\nTestclip: {machine.test_clip}\n")
+            return EXIT_TEST_CLIP_DONE
         log.info("Beendet.")
         return 0
     finally:
@@ -306,6 +330,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("run", help="Maschine im Dauerbetrieb starten")
     p.add_argument("--dry-run", action="store_true", help="alles machen außer hochladen")
     p.add_argument("--once", action="store_true", help="nur einen Durchlauf (ohne Live-Modus)")
+    p.add_argument("--test-clip", action="store_true",
+                   help="Probelauf: einen Clip schneiden, nichts posten, Video öffnen und stoppen")
     p.set_defaults(func=cmd_run)
 
     p = sub.add_parser("discover", help="aktuelle Top-Clips suchen und anzeigen")

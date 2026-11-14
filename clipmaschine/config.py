@@ -128,6 +128,18 @@ class EditingConfig:
     caption_color: str = "#FFFFFF"
     caption_highlight_color: str = "#FFE600"
     keep_source: bool = False            # Original-Download nach dem Rendern behalten
+    # Virales Format "Hook-First" (alles lokal mit ffmpeg, kostenlos)
+    smart_trim: bool = True              # auf den Höhepunkt (lautester Moment) kürzen
+    trim_before_peak: float = 12         # so viele Sekunden Vorlauf vor dem Höhepunkt
+    trim_after_peak: float = 5           # und so viele danach (kurzes Ende = gute Loop)
+    trim_max_seconds: float = 28         # kurze Videos werden öfter zu Ende geschaut
+    punch_zoom: bool = True              # harter Zoom-Schnitt beim Höhepunkt
+    punch_zoom_factor: float = 1.12
+    cold_open: bool = False              # Höhepunkt als 1,2-s-Teaser an den Anfang
+    cold_open_seconds: float = 1.2
+    cold_open_text: str = "WARTE BIS ZUM ENDE"
+    progress_bar: bool = True            # Fortschrittsbalken am unteren Rand
+    progress_bar_color: str = "#2DE2E6"
 
 
 @dataclass
@@ -231,6 +243,7 @@ class AppConfig:
     data_dir: Path
     loop_interval_seconds: float = 60
     dry_run: bool = False
+    test_mode: bool = False              # Probelauf: genau EIN Clip, nichts posten, Video öffnen, dann stoppen
     min_free_disk_gb: float = 1.0        # darunter wird nichts Neues heruntergeladen/gerendert
     twitch: TwitchConfig = field(default_factory=TwitchConfig)
     discovery: DiscoveryConfig = field(default_factory=DiscoveryConfig)
@@ -348,6 +361,7 @@ def load_config(path: str | os.PathLike | None = None) -> AppConfig:
         data_dir=data_dir,
         loop_interval_seconds=float(raw.get("loop_interval_seconds", 60)),
         dry_run=bool(raw.get("dry_run", False)),
+        test_mode=bool(raw.get("test_mode", False)),
         min_free_disk_gb=float(raw.get("min_free_disk_gb", 1.0)),
         twitch=_section(TwitchConfig, raw.get("twitch"), "twitch"),
         discovery=_section(DiscoveryConfig, raw.get("discovery"), "discovery"),
@@ -361,7 +375,8 @@ def load_config(path: str | os.PathLike | None = None) -> AppConfig:
         posting=_section(PostingConfig, raw.get("posting"), "posting"),
         config_path=config_path,
     )
-    known_top = {"streamers", "data_dir", "loop_interval_seconds", "dry_run", "min_free_disk_gb", "twitch",
+    known_top = {"streamers", "data_dir", "loop_interval_seconds", "dry_run", "test_mode", "min_free_disk_gb",
+                 "twitch",
                  "discovery", "live", "editing", "captions", "metadata", "tiktok", "youtube", "instagram", "posting"}
     for key in raw:
         if key not in known_top:

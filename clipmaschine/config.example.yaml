@@ -74,6 +74,16 @@ editing:
   font: Arial                         # z. B. "Montserrat Black" (dann fonts_dir setzen)
   fonts_dir: null
   caption_highlight_color: "#FFE600"  # Farbe des gerade gesprochenen Wortes
+  # Virales Format "Hook-First" (lokal mit ffmpeg, kostenlos)
+  smart_trim: true                    # auf den lautesten Moment (Höhepunkt) kürzen
+  trim_before_peak: 12
+  trim_after_peak: 5
+  trim_max_seconds: 28
+  punch_zoom: true                    # Zoom-Schnitt beim Höhepunkt
+  cold_open: false                    # Höhepunkt als 1,2-s-Teaser an den Anfang + Blitz-Schnitt
+  cold_open_text: "WARTE BIS ZUM ENDE"
+  progress_bar: true
+  progress_bar_color: "#2DE2E6"
 
 # ── Untertitel (optional, lokal, kostenlos): pip install faster-whisper ─────
 captions:
