@@ -201,9 +201,49 @@ LOGO_PLACEMENTS = {
 # name: (Mittelpunkt als Winkel in Grad: 0 = vorne, 90 = rechte Seite des Traegers, 180 = hinten,
 #        Hoehe als Anteil der Jackenhoehe, Standard-Breite in m)
 WRAP_PLACEMENTS = {
-    "wrap_side_right":      (90.0, 0.31, 0.16),
-    "wrap_frontside_right": (62.0, 0.31, 0.16),
+    # name: (Mittelpunkt-Winkel, Hoehe-Anteil, Breite, max. Winkel bis zum Aermelansatz oder None)
+    "wrap_side_right":      (90.0, 0.31, 0.16, None),
+    "wrap_frontside_right": (45.0, 0.31, 0.15, 71.0),   # endet vor dem Aermel (~73 Grad)
 }
+
+
+def compute_body_mask(z_lo, z_hi):
+    """Vertex-Attribut 'body_mask': 1 = Jackenkoerper, 0 = Aermel.
+    Ein Punkt gehoert zum Aermel, wenn zwischen ihm und der Koerperachse mehr als eine Stofflage liegt
+    (Futter + Koerper-Aussenseite). Nur im Hoehenband des Logos berechnet, sonst 1."""
+    from mathutils.bvhtree import BVHTree
+    me = jacket.data
+    attr = me.attributes.get("body_mask")
+    if attr is None:
+        attr = me.attributes.new("body_mask", "FLOAT", "POINT")
+        vals = [1.0] * len(me.vertices)
+    else:
+        vals = [d.value for d in attr.data]
+    bvh = BVHTree.FromObject(jacket, bpy.context.evaluated_depsgraph_get())
+    n_sleeve = 0
+    for v in me.vertices:
+        co = v.co
+        if co.z < z_lo or co.z > z_hi:
+            continue
+        axis_pt = Vector((CENTER.x, CENTER.y, co.z))
+        dv = co - axis_pt
+        dist = dv.length
+        if dist < 1e-4:
+            continue
+        d = dv / dist
+        o, remaining, layers = axis_pt, dist - 0.004, 0
+        while remaining > 0:
+            loc, _n, _i, t = bvh.ray_cast(o, d, remaining)
+            if loc is None:
+                break
+            layers += 1
+            o = loc + d * 0.002
+            remaining -= t + 0.002
+        is_body = layers <= 1
+        vals[v.index] = 1.0 if is_body else 0.0
+        n_sleeve += 0 if is_body else 1
+    attr.data.foreach_set("value", vals)
+    print("BODY_MASK band", round(z_lo, 3), round(z_hi, 3), "sleeve verts", n_sleeve)
 WRAP_RADIUS = 0.17      # Referenzradius fuer die Bogenlaenge (Rumpf ~17 cm)
 WRAP_MAX_R = 0.195      # nur Rumpf, nicht die Aermel (die haengen bei ~26-29 cm)
 LOGO_SIZE = [float(v) for v in A.get("logo_size", "").split(",") if v]   # Breite in m je Logo
@@ -231,7 +271,7 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
     if wrap:
         # Empty sitzt auf der Koerperachse; Drehen um Z verschiebt das Logo um den Koerper,
         # Hoch/Runter-Schieben verschiebt es in der Hoehe. Breite: Node "Wrap Width".
-        phi0, zf, default_width = WRAP_PLACEMENTS[placement]
+        phi0, zf, default_width, max_angle = WRAP_PLACEMENTS[placement]
         width = width or default_width
         emp.empty_display_type = "SINGLE_ARROW"
         emp.empty_display_size = 0.25
@@ -239,6 +279,8 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
         emp.rotation_euler = (0.0, 0.0, -math.radians(phi0))
         emp["wrap"] = True
         emp["wrap_phi0"] = phi0
+        half_h = width * h / w / 2 + 0.03
+        compute_body_mask(emp.location.z - half_h, emp.location.z + half_h)
     else:
         loc_fn, rot, default_width = LOGO_PLACEMENTS[placement]
         width = width or default_width
@@ -304,6 +346,13 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
             L.new(cmb.outputs["Vector"], tex.inputs["Vector"])
             r = math_node("SQRT", math_node("ADD", math_node("MULTIPLY", x, x), math_node("MULTIPLY", y, y)))
             depth_out = math_node("LESS_THAN", r, WRAP_MAX_R, label="Only torso (not sleeves)")
+            body = new("ShaderNodeAttribute", attribute_type="GEOMETRY", attribute_name="body_mask")
+            body.label = "Body mask (no sleeves)"
+            depth_out = math_node("MULTIPLY", depth_out, math_node("GREATER_THAN", body.outputs["Fac"], 0.5))
+            if max_angle is not None:
+                # harte Grenze vor dem Aermelansatz (Winkel relativ zur Logo-Mitte)
+                cut = math_node("LESS_THAN", phi, math.radians(max_angle - phi0), label="Sleeve cutoff angle")
+                depth_out = math_node("MULTIPLY", depth_out, cut)
         else:
             mp = new("ShaderNodeMapping")
             mp.inputs["Location"].default_value = (0.5, 0.5, 0.0)
