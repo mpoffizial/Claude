@@ -18,3 +18,4 @@ logs/
 # Blender-Szenen (zu gross fuer GitHub, werden per build_jacket_scene.py erzeugt)
 *.blend
 *.blend1
+*.zip

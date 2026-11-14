@@ -201,9 +201,12 @@ LOGO_PLACEMENTS = {
 # name: (Mittelpunkt als Winkel in Grad: 0 = vorne, 90 = rechte Seite des Traegers, 180 = hinten,
 #        Hoehe als Anteil der Jackenhoehe, Standard-Breite in m)
 WRAP_PLACEMENTS = {
-    # name: (Mittelpunkt-Winkel, Hoehe-Anteil, Breite, max. Winkel bis zum Aermelansatz oder None)
-    "wrap_side_right":      (90.0, 0.31, 0.16, None),
-    "wrap_frontside_right": (45.0, 0.31, 0.15, 71.0),   # endet vor dem Aermel (~73 Grad)
+    # name: (Mittelpunkt-Winkel, Hoehe-Anteil, Breite, max. Winkel oder None, max. Abstand zur Koerperachse in m)
+    "wrap_side_right":      (90.0, 0.31, 0.16, None, 0.195),
+    # seitlich: laeuft unter den Aermel und schaut vorne heraus (nur auf dem Koerper, nicht auf dem Aermel)
+    "wrap_frontside_right": (66.0, 0.31, 0.15, None, 0.178),
+    # weiter vorne, endet vor dem Aermel (komplett sichtbar)
+    "wrap_front_right":     (45.0, 0.31, 0.15, 71.0, 0.195),
 }
 
 
@@ -271,7 +274,7 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
     if wrap:
         # Empty sitzt auf der Koerperachse; Drehen um Z verschiebt das Logo um den Koerper,
         # Hoch/Runter-Schieben verschiebt es in der Hoehe. Breite: Node "Wrap Width".
-        phi0, zf, default_width, max_angle = WRAP_PLACEMENTS[placement]
+        phi0, zf, default_width, max_angle, max_r = WRAP_PLACEMENTS[placement]
         width = width or default_width
         emp.empty_display_type = "SINGLE_ARROW"
         emp.empty_display_size = 0.25
@@ -345,7 +348,7 @@ def add_decal(name, img, placement, finish, width=None, inplane_deg=0.0, dx=0.0,
             L.new(v, cmb.inputs["Y"])
             L.new(cmb.outputs["Vector"], tex.inputs["Vector"])
             r = math_node("SQRT", math_node("ADD", math_node("MULTIPLY", x, x), math_node("MULTIPLY", y, y)))
-            depth_out = math_node("LESS_THAN", r, WRAP_MAX_R, label="Only torso (not sleeves)")
+            depth_out = math_node("LESS_THAN", r, max_r, label="Only torso (not sleeves)")
             body = new("ShaderNodeAttribute", attribute_type="GEOMETRY", attribute_name="body_mask")
             body.label = "Body mask (no sleeves)"
             depth_out = math_node("MULTIPLY", depth_out, math_node("GREATER_THAN", body.outputs["Fac"], 0.5))
