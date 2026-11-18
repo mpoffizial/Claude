@@ -38,7 +38,7 @@ automatisch weiter, und von den meisten Fehlern erholt sie sich selbst.
 | **Schnitt** | Drei Layouts: `blur` (Video mittig, unscharfer Hintergrund), `crop` (bildfüllend), `split` (Facecam oben, Gameplay unten). Dazu Hook-Text oben, Credit und Lautheits-Angleichung auf −14 LUFS. |
 | **Untertitel** *(optional)* | Läuft lokal und kostenlos mit faster-whisper. Wörter erscheinen in kurzen Häppchen, das gerade gesprochene Wort wird gelb hervorgehoben (Karaoke-Stil). |
 | **Titel & Hashtags** | Mit Claude (optional), sonst per Vorlage. Hook, Titel, Beschreibung mit Credit und 5–8 Hashtags. |
-| **Posten** | TikTok und Instagram Reels (**direkt mit deinem Account** über den Browser oder per offizieller API) sowie YouTube Shorts, mit Tageslimit, Mindestabstand und Uhrzeiten pro Plattform. |
+| **Posten** | TikTok, Instagram Reels und YouTube Shorts, jeweils **direkt mit deinem Account** über den Browser oder per offizieller API, mit Tageslimit, Mindestabstand und Uhrzeiten pro Plattform. |
 | **Dauerbetrieb** | Selbstheilung, Schutz vor Doppelstart, Heartbeat sowie Auto-Neustart per Docker, systemd oder Windows-Skript. |
 
 ---
@@ -119,14 +119,17 @@ curl -fsSL https://raw.githubusercontent.com/mpoffizial/Claude/claude/blissful-t
 $env:CLIPMASCHINE_PRESET='gta6'; irm https://raw.githubusercontent.com/mpoffizial/Claude/claude/blissful-turing-83j3hp/clipmaschine/deploy/install_windows.ps1 | iex
 ```
 
-Auf dem Schreibtisch entstehen „GTA6-Clipmaschine starten“ und „GTA6-Clipmaschine aktualisieren“. Beim ersten Start
-fragt der Assistent nach dem **Twitch-Zugang** (hier Pflicht, kostenlos, 2 Minuten, die Schritte stehen im Fenster)
-und öffnet die Anmeldung bei TikTok und Instagram. YouTube wird übersprungen, bis `auth youtube` eingerichtet ist.
+Auf dem Schreibtisch entstehen „GTA6-Clipmaschine starten“, „GTA6-Clipmaschine Konten verbinden“ und
+„GTA6-Clipmaschine aktualisieren“. Beim ersten Start fragt der Assistent nach dem **Twitch-Zugang** (hier Pflicht,
+kostenlos, 2 Minuten, die Schritte stehen im Fenster) und öffnet die Anmeldung bei TikTok, Instagram und YouTube.
+Ein Konto später verbinden oder eine abgelaufene Anmeldung erneuern: **„Konten verbinden“** doppelklicken.
 
 * **Accounts:** Die Kanäle legst du selbst an, die Plattformen verlangen dafür deine Telefonnummer oder E-Mail.
   Namen, Bio und Einstellungen zum Kopieren stehen in [`presets/gta6_profil.md`](presets/gta6_profil.md).
-* **Menge:** 6 Posts pro Tag und Plattform (YouTube lässt per API ohnehin nur etwa 6 Uploads zu). Mehr führt bei
-  neuen Accounts dazu, dass Videos als Spam gelten und nicht mehr empfohlen werden. Anpassen unter `posting:`.
+* **Menge:** siehe Profile unten. Mehr führt bei neuen Accounts dazu, dass Videos als Spam gelten und nicht mehr
+  empfohlen werden.
+* **Profilbild und Banner:** fertige Vorlagen im Vice-City-Stil liegen in `presets/branding/`
+  (`gta6_profilbild_800.jpg` für alle drei Plattformen, `gta6_banner_2560x1440.jpg` für YouTube).
 * **Abwechslung:** höchstens 2 Clips pro Streamer und Tag (`max_per_broadcaster_per_day`). Streamer, die keine
   Reposts möchten, trägst du unter `exclude_broadcasters` ein.
 * Jedes andere Spiel geht genauso: in der `config.yaml` unter `discovery.games` den Twitch-Kategorienamen eintragen.
@@ -134,7 +137,7 @@ und öffnet die Anmeldung bei TikTok und Instagram. YouTube wird übersprungen, 
 ### Wie viel gepostet wird: Profile
 
 Die GTA-6-Voreinstellung postet im **Maximal-Profil**: 10 Videos pro Tag auf TikTok und Instagram, 6 auf YouTube
-(mehr erlaubt das kostenlose Kontingent nicht), mindestens 60 Minuten Abstand, zwischen 8 und 24 Uhr.
+(mehr löst bei neuen Kanälen das YouTube-Upload-Limit aus), mindestens 60 Minuten Abstand, zwischen 8 und 24 Uhr.
 Umschalten ohne Texteditor (im Ordner der Maschine):
 
 | Befehl | Wirkung |
@@ -278,7 +281,29 @@ So bleibt es zuverlässig:
 
 > Falls der Login mit „invalid code_verifier“ o. Ä. scheitert (bei Web- statt Desktop-Apps): `tiktok.use_pkce: false`.
 
-### YouTube Shorts
+### YouTube Shorts – direkt mit deinem Google-Konto (Browser-Modus, empfohlen)
+
+Keine Google-Cloud-Einrichtung, kein API-Audit, und die Videos sind **sofort öffentlich**.
+
+1. Mac: **„Konten verbinden“** auf dem Schreibtisch doppelklicken → `1` (YouTube).
+   Sonst im Ordner der Maschine:
+   ```bash
+   python -m clipmaschine auth youtube
+   ```
+2. Im Browserfenster ganz normal mit dem Google-Konto anmelden, zu dem dein YouTube-Kanal gehört.
+   Das Fenster schließt sich danach von selbst. Die laufende Maschine postet ab sofort auch auf YouTube.
+3. Die Maschine lädt jedes Video über YouTube Studio hoch: Titel mit `#Shorts`, Beschreibung mit Credit und
+   Hashtags, „Nicht speziell für Kinder“, Sichtbarkeit nach `youtube.privacy_status` (Standard: öffentlich).
+   Veröffentlicht wird erst, wenn die Datei komplett hochgeladen ist.
+
+* Hat das Google-Konto noch keinen Kanal, pausiert YouTube, bis du auf youtube.com einen erstellt hast.
+* Meldet YouTube das tägliche Upload-Limit, pausiert YouTube 12 Stunden. Die anderen Plattformen laufen weiter.
+* Lässt Google die Anmeldung im Fenster nicht zu („Browser … möglicherweise nicht sicher“): Google Chrome
+  installieren und erneut versuchen, oder die API-Variante unten nutzen.
+
+### YouTube Shorts per API (Alternative)
+
+Nur nötig, wenn du statt des Browsers die offizielle Schnittstelle willst (`youtube.method: api`).
 
 1. In der [Google Cloud Console](https://console.cloud.google.com/) ein Projekt anlegen und die **YouTube Data API v3** aktivieren.
 2. Den **OAuth-Zustimmungsbildschirm** einrichten (extern, dich selbst als Testnutzer eintragen).
@@ -401,7 +426,8 @@ Die Maschine ist so gebaut, dass sie **ohne Eingreifen** weiterläuft:
 | TikTok empfiehlt ein Video nicht weiter | Ursache steht im Log, bei Häufung 24 Stunden Schutzpause (siehe Weiterempfehlungs-Check). |
 | Plattform lehnt ein Video endgültig ab | Kein weiterer Versuch für diesen Clip. Andere Clips und Plattformen laufen normal weiter. |
 | Tokens laufen ab | Twitch, TikTok, YouTube und Instagram werden automatisch erneuert. |
-| TikTok- oder Instagram-Anmeldung im Browser-Modus abgelaufen | Nur diese Plattform pausiert, der Rest läuft weiter. Nach `auth tiktok` bzw. `auth instagram` geht es **sofort** weiter. |
+| TikTok-, Instagram- oder YouTube-Anmeldung im Browser-Modus abgelaufen | Nur diese Plattform pausiert, der Rest läuft weiter. Nach „Konten verbinden“ (bzw. `auth tiktok`, `auth instagram`, `auth youtube`) geht es **sofort** weiter. |
+| YouTube-Upload-Limit (Browser-Modus) | YouTube pausiert 12 Stunden, die anderen Plattformen laufen weiter. |
 | Chat-Verbindung bricht ab | Automatischer Reconnect. Ein Watchdog startet abgestürzte Threads neu. |
 | Hängender ffmpeg- oder Download-Prozess | Zeitlimit, Abbruch, neuer Versuch. |
 | Wenig Speicherplatz | Downloads pausieren, bis wieder genug Platz frei ist (`min_free_disk_gb`). |
@@ -492,8 +518,9 @@ KI-Titel samt Fallbacks, Selbstheilung, Einzelinstanz-Sperre und die Kommandozei
 | TikTok: `unaudited_client_…` | App noch nicht geprüft: `privacy_level: SELF_ONLY` mit privatem Account, `mode: inbox`, oder den Browser-Modus nutzen |
 | TikTok (Browser): „Kein Browser startbar“ | Google Chrome installieren oder `python -m playwright install chromium` |
 | TikTok (Browser): Post hängt | Screenshot in `clipmaschine_data/logs/tiktok_screenshots/` ansehen. Hat TikTok die Seite geändert, `tiktok.browser_selectors` anpassen |
-| YouTube-Login muss jede Woche neu | OAuth-App in der Google Cloud Console auf „In Produktion“ stellen |
-| Videos auf YouTube sind privat | Ungeprüftes API-Projekt. YouTube API Audit beantragen |
+| YouTube (Browser): Post hängt | Screenshot in `clipmaschine_data/logs/youtube_screenshots/` ansehen. Hat YouTube Studio die Seite geändert, `youtube.browser_selectors` anpassen |
+| YouTube (API): Login muss jede Woche neu | OAuth-App in der Google Cloud Console auf „In Produktion“ stellen |
+| YouTube (API): Videos sind privat | Ungeprüftes API-Projekt. Browser-Modus nutzen (`youtube.method: browser`) oder YouTube API Audit beantragen |
 | Schrift sieht anders aus | Eigene Schrift: `editing.font` plus `editing.fonts_dir` mit der .ttf-Datei |
 | Keine Clips gefunden | `min_views` senken, `lookback_hours` erhöhen, `discover` zum Testen nutzen |
 | Mac: Starter lässt sich nicht öffnen („nicht verifizierter Entwickler“) | Rechtsklick auf die Datei → „Öffnen“ → „Öffnen“ (nur beim ersten Mal, betrifft nur per Browser geladene ZIPs) |

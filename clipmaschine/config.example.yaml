@@ -126,6 +126,14 @@ tiktok:
 
 youtube:
   enabled: false
+  # browser = mit deinem normalen Google-Konto über YouTube Studio (keine Google-Cloud-Einrichtung,
+  #           Videos sofort öffentlich): einmal "python -m clipmaschine auth youtube" → anmelden → fertig
+  # api     = YouTube Data API (Google-Cloud-Projekt, siehe README; ohne API-Audit bleiben Videos privat)
+  # auto    = api, wenn schon per API verbunden, sonst browser
+  method: browser
+  browser_headless: false
+  browser_channel: chrome
+  # nur für method: api
   client_secrets_file: client_secret.json
   privacy_status: public              # public | unlisted | private
   category_id: "20"                   # Gaming

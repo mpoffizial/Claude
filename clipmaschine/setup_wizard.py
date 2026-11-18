@@ -157,7 +157,10 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
     cfg = load_config(config_path)
     from .uploaders import make_uploader
     platforms = [name for name in ("tiktok", "instagram") if getattr(cfg, name).enabled]
-    labels = " und ".join({"tiktok": "TikTok", "instagram": "Instagram"}[p] for p in platforms)
+    if cfg.youtube.enabled and cfg.youtube_method == "browser":
+        platforms.append("youtube")
+    names = [{"tiktok": "TikTok", "instagram": "Instagram", "youtube": "YouTube"}[p] for p in platforms]
+    labels = ", ".join(names[:-1]) + " und " + names[-1] if len(names) > 1 else "".join(names)
     print(f"5/5 {labels} mit deinem Account verbinden")
     if connect is None:
         connect = _yes(ask("    Jetzt verbinden? Es öffnen sich Browserfenster zum Anmelden. [J/n] "))
@@ -172,8 +175,8 @@ def run_setup(target_dir: Path, ask: Callable[[str], str] | None = None,
         except Exception as exc:  # Einrichtung trotzdem abschließen
             print(f"    ✘ {platform}-Verbindung fehlgeschlagen: {exc}\n"
                   f"      Später erneut: python -m clipmaschine auth {platform}")
-    if cfg.youtube.enabled and not (cfg.tokens_dir / "youtube.json").is_file():
-        print("    YouTube Shorts: braucht einmalig eine Google-Freigabe (README, Abschnitt „YouTube Shorts“),")
+    if cfg.youtube.enabled and cfg.youtube_method == "api" and not (cfg.tokens_dir / "youtube.json").is_file():
+        print("    YouTube Shorts per API: braucht einmalig eine Google-Freigabe (README, Abschnitt „YouTube Shorts“),")
         print("    danach: python -m clipmaschine auth youtube. Bis dahin wird YouTube einfach übersprungen.")
     if preset and (PACKAGE_DIR / "presets" / f"{preset}_profil.md").is_file():
         print(f"    Tipp: Namen, Bio und Einstellungen für die Kanäle stehen in "

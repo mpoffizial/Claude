@@ -200,6 +200,16 @@ class TikTokConfig:
 class YouTubeConfig:
     enabled: bool = False
     max_posts_per_day: int | None = None   # eigenes Tageslimit (sonst posting.max_posts_per_day)
+    # auto = API, wenn schon per Google-Freigabe verbunden (Token vorhanden), sonst Browser
+    # browser = mit deinem normalen Google-Konto über YouTube Studio (keine Google-Cloud-Einrichtung,
+    #           Videos sofort öffentlich)
+    # api = YouTube Data API (Google-Cloud-Projekt; ohne API-Audit bleiben die Videos privat)
+    method: str = "auto"
+    browser_headless: bool = False
+    browser_channel: str | None = "chrome"
+    browser_executable: str | None = None
+    browser_upload_timeout_seconds: float = 900
+    browser_selectors: dict = field(default_factory=dict)
     client_secrets_file: str = "client_secret.json"
     privacy_status: str = "public"
     category_id: str = "20"              # 20 = Gaming
@@ -274,6 +284,13 @@ class AppConfig:
         if self.tiktok.method == "auto":
             return "api" if self.tiktok.client_key and self.tiktok.client_secret else "browser"
         return self.tiktok.method
+
+    @property
+    def youtube_method(self) -> str:
+        """Tatsächlich genutzte YouTube-Methode ('api' oder 'browser')."""
+        if self.youtube.method == "auto":
+            return "api" if (self.tokens_dir / "youtube.json").is_file() else "browser"
+        return self.youtube.method
 
     @property
     def instagram_method(self) -> str:
@@ -418,6 +435,8 @@ def validate(cfg: AppConfig) -> None:
         problems.append(f"tiktok.method muss eines von {TIKTOK_METHODS} sein")
     if cfg.instagram.method not in TIKTOK_METHODS:
         problems.append(f"instagram.method muss eines von {TIKTOK_METHODS} sein")
+    if cfg.youtube.method not in TIKTOK_METHODS:
+        problems.append(f"youtube.method muss eines von {TIKTOK_METHODS} sein")
     if cfg.tiktok.mode not in TIKTOK_MODES:
         problems.append(f"tiktok.mode muss eines von {TIKTOK_MODES} sein")
     if cfg.tiktok.privacy_level not in TIKTOK_PRIVACY:

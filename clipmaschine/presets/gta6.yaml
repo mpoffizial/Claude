@@ -76,8 +76,9 @@ instagram:
   method: browser
 
 youtube:
-  enabled: true                       # wird übersprungen, bis "auth youtube" eingerichtet ist
-  max_posts_per_day: 6                # mehr erlaubt das kostenlose YouTube-Kontingent nicht
+  enabled: true                       # wird übersprungen, bis YouTube verbunden ist ("Konten verbinden")
+  max_posts_per_day: 6                # neue Kanäle: mehr löst schnell das YouTube-Upload-Limit aus
+  method: browser                     # mit deinem Google-Konto über YouTube Studio – Videos sofort öffentlich
   privacy_status: public
   category_id: "20"
 

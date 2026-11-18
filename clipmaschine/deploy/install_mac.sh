@@ -118,7 +118,8 @@ fi
 mkdir -p "$TARGET"
 rm -rf "$TARGET/clipmaschine"                       # nur Programmcode, keine Daten
 cp -R "$SRC" "$TARGET/clipmaschine"
-chmod +x "$TARGET/clipmaschine/deploy/start_mac.command" "$TARGET/clipmaschine/deploy/install_mac.sh"
+chmod +x "$TARGET/clipmaschine/deploy/start_mac.command" "$TARGET/clipmaschine/deploy/connect_mac.command" \
+  "$TARGET/clipmaschine/deploy/install_mac.sh"
 if [ -n "$PRESET" ]; then
   printf '%s\n' "$PRESET" > "$TARGET/preset.txt"
 fi
@@ -130,14 +131,19 @@ cat > "$DESKTOP/$TITLE starten.command" <<EOF
 #!/bin/bash
 exec "$START"
 EOF
+cat > "$DESKTOP/$TITLE Konten verbinden.command" <<EOF
+#!/bin/bash
+exec "$TARGET/clipmaschine/deploy/connect_mac.command"
+EOF
 cat > "$DESKTOP/$TITLE aktualisieren.command" <<EOF
 #!/bin/bash
 curl -fsSL "$SELF_URL" | CLIPMASCHINE_PRESET="$PRESET" bash
 echo
 read -r -p "Enter zum Schliessen " _
 EOF
-chmod +x "$DESKTOP/$TITLE starten.command" "$DESKTOP/$TITLE aktualisieren.command"
-ok "\"$TITLE starten\" und \"$TITLE aktualisieren\""
+chmod +x "$DESKTOP/$TITLE starten.command" "$DESKTOP/$TITLE Konten verbinden.command" \
+  "$DESKTOP/$TITLE aktualisieren.command"
+ok "\"$TITLE starten\", \"$TITLE Konten verbinden\" und \"$TITLE aktualisieren\""
 
 if [ -n "${CLIPMASCHINE_NO_START:-}" ]; then
   printf '\n\033[32mFertig - installiert in %s\033[0m\n' "$TARGET"

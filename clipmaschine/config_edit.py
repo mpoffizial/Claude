@@ -16,7 +16,7 @@ PROFILES: dict[str, dict[str, str]] = {
         "posting.min_minutes_between_posts": "60",
         "posting.active_hours": "[8, 24]",
         "posting.queue_size": "10",
-        "youtube.max_posts_per_day": "6",           # mehr erlaubt das kostenlose YouTube-Kontingent nicht
+        "youtube.max_posts_per_day": "6",           # mehr löst bei neuen Kanälen das Upload-Limit aus
         "discovery.interval_minutes": "10",
     },
     "normal": {

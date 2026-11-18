@@ -19,8 +19,14 @@ Kanal und wird wegen Identitätstäuschung entfernt.
 
 ## Profilbild und Banner
 
-* Eigenes, einfaches Logo: z. B. Buchstaben „VC“ in Pink/Türkis auf dunklem Grund (Canva genügt).
-* **Kein** Rockstar-Logo und kein Original-Cover als Profilbild (Markenrecht).
+Fertig zum Hochladen in `presets/branding/`:
+
+| Datei | Wofür |
+|---|---|
+| `gta6_profilbild_800.jpg` | Profilbild auf TikTok, Instagram und YouTube („VC“ in Pink/Türkis, Vice-City-Sonnenuntergang) |
+| `gta6_banner_2560x1440.jpg` | YouTube-Kanalbanner (Schrift liegt im sicheren Bereich, wird auf Handy und TV nicht abgeschnitten) |
+
+* **Kein** Rockstar-Logo und kein Original-Cover als Profilbild (Markenrecht). Die Vorlagen enthalten keins.
 
 ## Bio / Beschreibung
 
@@ -56,4 +62,5 @@ Inoffizieller Fan-Kanal, nicht verbunden mit Rockstar Games oder Take-Two.
 
 * Neue Accounts zuerst zwei, drei Tage normal benutzen (ein paar Videos ansehen, liken), bevor die
   Maschine postet. Frisch erstellte Accounts, die sofort im Akkord posten, werden schnell eingeschränkt.
-* Danach im Starter-Fenster verbinden: `python -m clipmaschine auth tiktok` bzw. `auth instagram`.
+* Danach verbinden: auf dem Mac „GTA6-Clipmaschine Konten verbinden“ doppelklicken (YouTube, TikTok, Instagram),
+  sonst `python -m clipmaschine auth youtube` bzw. `auth tiktok` / `auth instagram`.

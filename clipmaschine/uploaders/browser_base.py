@@ -1,4 +1,4 @@
-"""Gemeinsame Basis für Uploads mit deinem normalen Account über die Website (TikTok, Instagram).
+"""Gemeinsame Basis für Uploads mit deinem normalen Account über die Website (TikTok, Instagram, YouTube).
 
 Du meldest dich einmal selbst im Browserfenster an (Passwort/QR-Code bleiben im Browser – die
 Clipmaschine sieht sie nie). Die Sitzung liegt in einem eigenen Browserprofil; danach lädt die
@@ -56,9 +56,12 @@ class BrowserUploader(Uploader):
     BASE_URL = ""
     START_PATH = "/"
     LOGIN_PATH = "/login"
+    LOGIN_URL_PARTS: tuple[str, ...] = ()        # woran eine Login-Seite zu erkennen ist (Standard: LOGIN_PATH)
+    LAUNCH_OPTIONS: dict = {}                    # zusätzliche Browser-Startoptionen der Plattform
     SESSION_COOKIES: tuple[str, ...] = ()
     DEFAULT_SELECTORS: dict = {}
     LOGIN_HINT = "Melde dich dort ganz normal an."
+    LOGIN_BLOCKED_HINT = ""
     MAX_HASHTAGS: int | None = None
     CONFIRM_TIMEOUT = CONFIRM_TIMEOUT_SECONDS
 
@@ -96,7 +99,7 @@ class BrowserUploader(Uploader):
         _, PlaywrightError = _playwright()
         self.profile_dir.mkdir(parents=True, exist_ok=True)
         options = {"user_data_dir": str(self.profile_dir), "headless": headless,
-                   "viewport": {"width": 1366, "height": 900}}
+                   "viewport": {"width": 1366, "height": 900}, **self.LAUNCH_OPTIONS}
         candidates = []
         if self.cfg.browser_executable:
             candidates.append({"executable_path": self.cfg.browser_executable})
@@ -118,7 +121,8 @@ class BrowserUploader(Uploader):
         return any(c["name"] in self.SESSION_COOKIES and c.get("value") for c in ctx.cookies(self.base_url))
 
     def _ensure_session(self, ctx, page) -> None:
-        if self.LOGIN_PATH in page.url or not self._has_session(ctx):
+        on_login_page = any(part in page.url for part in (self.LOGIN_URL_PARTS or (self.LOGIN_PATH,)))
+        if on_login_page or not self._has_session(ctx):
             raise UploadError(f"{self.label}-Anmeldung abgelaufen – bitte neu verbinden: python -m clipmaschine "
                               f"auth {self.name} (danach geht es sofort weiter)", pause_seconds=SESSION_PAUSE_SECONDS)
 
@@ -137,6 +141,10 @@ class BrowserUploader(Uploader):
                 while not self._has_session(ctx):
                     if time.monotonic() > deadline:
                         raise UploadError("Anmeldung nicht abgeschlossen (Zeitlimit 10 Minuten)", retryable=False)
+                    blocked = self._visible_text(page, self.sel.get("login_blocked_texts", []))
+                    if blocked:
+                        raise UploadError(f"{self.label} lässt die Anmeldung in diesem Fenster nicht zu („{blocked}“). "
+                                          f"{self.LOGIN_BLOCKED_HINT}".strip(), retryable=False)
                     page.wait_for_timeout(1500)
                 page.wait_for_timeout(2000)        # Cookies vollständig speichern lassen
             except PlaywrightError as exc:

@@ -10,6 +10,7 @@ from .instagram_browser import InstagramBrowserUploader
 from .tiktok import TikTokUploader
 from .tiktok_browser import TikTokBrowserUploader
 from .youtube import YouTubeUploader
+from .youtube_browser import YouTubeBrowserUploader
 
 PLATFORMS = ("tiktok", "youtube", "instagram")
 
@@ -25,6 +26,13 @@ def make_uploader(cfg: AppConfig, platform: str) -> Uploader:
             )
         return TikTokUploader(cfg.tiktok, TokenStore(cfg.tokens_dir / "tiktok.json"))
     if platform == "youtube":
+        if cfg.youtube_method == "browser":
+            return YouTubeBrowserUploader(
+                cfg.youtube,
+                profile_dir=cfg.data_dir / "browser" / "youtube",
+                marker_path=cfg.tokens_dir / "youtube_browser.json",
+                debug_dir=cfg.data_dir / "logs" / "youtube_screenshots",
+            )
         return YouTubeUploader(cfg.youtube, cfg.tokens_dir / "youtube.json")
     if platform == "instagram":
         if cfg.instagram_method == "browser":
