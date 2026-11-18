@@ -337,7 +337,8 @@ class ClipMachine:
                 self._announce_wait(uploader.name, protect_until,
                                     "mehrere Videos werden nicht weiterempfohlen – Schutzpause für den Account")
                 continue
-            when, reason = next_allowed_time(self.db, uploader.name, p, now)
+            platform_limit = getattr(getattr(self.cfg, uploader.name, None), "max_posts_per_day", None)
+            when, reason = next_allowed_time(self.db, uploader.name, p, now, platform_limit)
             if when > now:
                 self._announce_wait(uploader.name, when, reason)
                 continue

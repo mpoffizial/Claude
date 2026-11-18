@@ -169,6 +169,7 @@ class MetadataConfig:
 @dataclass
 class TikTokConfig:
     enabled: bool = False
+    max_posts_per_day: int | None = None   # eigenes Tageslimit (sonst posting.max_posts_per_day)
     # auto = API, wenn TIKTOK_CLIENT_KEY/SECRET gesetzt sind, sonst Browser
     # browser = mit deinem normalen TikTok-Account über TikTok Studio (keine Entwickler-App nötig)
     # api = offizielle Content Posting API (Entwickler-App)
@@ -198,6 +199,7 @@ class TikTokConfig:
 @dataclass
 class YouTubeConfig:
     enabled: bool = False
+    max_posts_per_day: int | None = None   # eigenes Tageslimit (sonst posting.max_posts_per_day)
     client_secrets_file: str = "client_secret.json"
     privacy_status: str = "public"
     category_id: str = "20"              # 20 = Gaming
@@ -208,6 +210,7 @@ class YouTubeConfig:
 @dataclass
 class InstagramConfig:
     enabled: bool = False
+    max_posts_per_day: int | None = None   # eigenes Tageslimit (sonst posting.max_posts_per_day)
     # auto = API, wenn INSTAGRAM_USER_ID/ACCESS_TOKEN gesetzt sind, sonst Browser
     # browser = mit deinem normalen Instagram-Account über instagram.com (kein Business-Konto nötig)
     # api = Instagram Graph API (Business/Creator-Account + Meta-App)

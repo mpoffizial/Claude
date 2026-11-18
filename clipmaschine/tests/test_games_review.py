@@ -259,3 +259,53 @@ def test_cli_test_clip_exit_code(app_config, monkeypatch, tmp_path):
     args = argparse.Namespace(dry_run=False, once=False, test_clip=True)
     assert cli.cmd_run(app_config, args) == cli.EXIT_TEST_CLIP_DONE   # Startskripte starten dann nicht neu
     assert opened == [tmp_path / "test.mp4"]
+
+
+def test_set_command_keeps_comments_and_validates(tmp_path, monkeypatch, capsys):
+    from clipmaschine.__main__ import main
+    from clipmaschine.config_edit import set_value
+
+    for name in ("TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET", "CLIPMASCHINE_CONFIG"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.chdir(tmp_path)
+    config = tmp_path / "config.yaml"
+    text = preset_path("gta6").read_text(encoding="utf-8").replace("test_mode: false", "test_mode: true")
+    text = text.replace("  max_posts_per_day: 10\n  min_minutes_between_posts: 60",
+                        "  max_posts_per_day: 6\n  min_minutes_between_posts: 150")
+    config.write_text(text, encoding="utf-8")
+
+    assert main(["-c", str(config), "set", "--profil", "maximal"]) == 0
+    cfg = load_config(config)
+    assert cfg.test_mode is False and cfg.posting.max_posts_per_day == 10
+    assert cfg.posting.min_minutes_between_posts == 60 and cfg.youtube.max_posts_per_day == 6
+    assert "# Vice-City-Türkis" in config.read_text(encoding="utf-8")      # Kommentare bleiben
+
+    before = config.read_text(encoding="utf-8")
+    assert main(["-c", str(config), "set", "editing.layout=kaputt"]) == 2  # ungültig → unverändert
+    assert config.read_text(encoding="utf-8") == before
+    assert main(["-c", str(config), "set", "posting.queue_size"]) == 2
+    assert main(["-c", str(config), "set", "--profil", "test"]) == 0
+    assert load_config(config).test_mode is True
+
+    assert set_value("a: 1\n", "neu.wert", "5").endswith("neu:\n  wert: 5\n")
+    assert set_value("# Kopf\nx: 1\n", "test_mode", "true").splitlines()[1] == "test_mode: true"
+
+
+def test_per_platform_daily_limit():
+    from datetime import datetime, timezone
+
+    from clipmaschine.config import PostingConfig
+    from clipmaschine.db import Database
+    from clipmaschine.scheduler import next_allowed_time
+
+    db = Database(":memory:")
+    now = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
+    for i in range(6):
+        db.upsert_clip(make_clip(f"y{i}"), "top_clips", 1)
+        t = (now - timedelta(hours=10 - i)).isoformat(timespec="seconds")
+        db._execute("INSERT INTO uploads (clip_id, platform, status, attempts, created_at, updated_at) "
+                    "VALUES (?, 'youtube', 'posted', 1, ?, ?)", (f"y{i}", t, t))
+    cfg = PostingConfig(max_posts_per_day=10, min_minutes_between_posts=60, active_hours=None, timezone="UTC")
+    assert next_allowed_time(db, "youtube", cfg, now)[0] == now               # allgemeines Limit 10
+    when, reason = next_allowed_time(db, "youtube", cfg, now, max_posts=6)    # YouTube-eigenes Limit 6
+    assert when > now and "Tageslimit erreicht (6/6)" in reason

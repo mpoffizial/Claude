@@ -6,9 +6,9 @@
 #  Alle weiteren Optionen: clipmaschine/config.example.yaml
 # ═══════════════════════════════════════════════════════════════════════════
 
-# PROBELAUF: Zum Release schneidet die Maschine genau EINEN GTA-6-Clip, postet nichts, öffnet dir
-# das Video und stoppt sich selbst. Gefällt er dir: auf false setzen und neu starten.
-test_mode: true
+# Dauerbetrieb: postet so viel, wie die Plattformen zuverlässig mitmachen.
+# Erst nur EINEN Probeclip ansehen (nichts posten, danach stoppen): test_mode: true
+test_mode: false
 
 streamers: []                         # optional: Kanäle mit eigenem Facecam-Layout
 
@@ -64,6 +64,7 @@ metadata:
 
 tiktok:
   enabled: true
+  max_posts_per_day: 10
   method: browser
   check_recommendation: true          # nach dem Posten prüfen, ob das Video weiterempfohlen wird
   check_after_minutes: 20
@@ -71,20 +72,23 @@ tiktok:
 
 instagram:
   enabled: true
+  max_posts_per_day: 10
   method: browser
 
 youtube:
   enabled: true                       # wird übersprungen, bis "auth youtube" eingerichtet ist
+  max_posts_per_day: 6                # mehr erlaubt das kostenlose YouTube-Kontingent nicht
   privacy_status: public
   category_id: "20"
 
-# So viel wie sinnvoll: Mehr Posts pro Tag führen bei neuen Accounts dazu, dass die Plattformen
-# die Videos als Spam einstufen und nicht mehr weiterempfehlen. YouTube erlaubt per API ohnehin
-# nur etwa 6 Uploads pro Tag. Nach 2–3 Wochen ohne Probleme kannst du vorsichtig erhöhen.
+# Maximal-Profil: 10 Posts pro Tag auf TikTok und Instagram, 6 auf YouTube (Kontingent),
+# mindestens 60 Minuten Abstand, 8–24 Uhr. Mehr lassen neue Accounts kaum zu, ohne dass die Videos
+# als Spam gelten. Stuft TikTok trotzdem mehrere Videos herab, greift automatisch die Schutzpause.
+# Ruhiger: python -m clipmaschine set --profil normal
 posting:
-  max_posts_per_day: 6
-  min_minutes_between_posts: 150
+  max_posts_per_day: 10
+  min_minutes_between_posts: 60
   active_hours: [8, 24]
   timezone: Europe/Berlin
   max_clip_age_hours: 36
-  queue_size: 6
+  queue_size: 10

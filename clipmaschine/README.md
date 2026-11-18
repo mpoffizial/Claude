@@ -131,12 +131,21 @@ und öffnet die Anmeldung bei TikTok und Instagram. YouTube wird übersprungen, 
   Reposts möchten, trägst du unter `exclude_broadcasters` ein.
 * Jedes andere Spiel geht genauso: in der `config.yaml` unter `discovery.games` den Twitch-Kategorienamen eintragen.
 
-### Probelauf: erst einen Clip ansehen
+### Wie viel gepostet wird: Profile
 
-Die GTA-6-Voreinstellung startet im **Probelauf** (`test_mode: true`): Zum Release schneidet die Maschine genau
-**einen** GTA-6-Clip, postet **nichts**, öffnet dir das Video und **stoppt sich selbst** (auch der automatische
-Neustart bleibt aus). Gefällt dir der Clip, setzt du in der `config.yaml` `test_mode: false` und startest neu.
-Jederzeit auch von Hand möglich: `python -m clipmaschine run --test-clip`.
+Die GTA-6-Voreinstellung postet im **Maximal-Profil**: 10 Videos pro Tag auf TikTok und Instagram, 6 auf YouTube
+(mehr erlaubt das kostenlose Kontingent nicht), mindestens 60 Minuten Abstand, zwischen 8 und 24 Uhr.
+Umschalten ohne Texteditor (im Ordner der Maschine):
+
+| Befehl | Wirkung |
+|---|---|
+| `.venv/bin/python -m clipmaschine set --profil maximal` | so viel posten, wie zuverlässig geht |
+| `.venv/bin/python -m clipmaschine set --profil normal` | 6 pro Tag, 2,5 Stunden Abstand |
+| `.venv/bin/python -m clipmaschine set --profil test` | **Probelauf**: genau ein Clip, nichts posten, Video öffnen, dann stoppen |
+| `.venv/bin/python -m clipmaschine set posting.max_posts_per_day=8` | einzelne Einstellung ändern |
+
+Ungültige Werte werden abgelehnt, die `config.yaml` bleibt dann unverändert. Änderungen wirken beim nächsten Start.
+Einen einzelnen Probeclip gibt es auch direkt: `.venv/bin/python -m clipmaschine run --test-clip`.
 
 ### Das virale Format „Hook-First“
 
@@ -345,6 +354,7 @@ Danach in der `config.yaml` `captions.enabled: true` setzen. Läuft auf der CPU.
 |---|---|
 | `python -m clipmaschine setup` | Einrichtungs-Assistent: Kanäle, Zugangsdaten, TikTok verbinden (`--preset gta6` für die GTA-6-Maschine) |
 | `python -m clipmaschine check` | Einrichtung prüfen: ffmpeg, Twitch, Plattformen, KI, Untertitel |
+| `python -m clipmaschine set --profil maximal` | Einstellungen per Befehl ändern (Profile: maximal, normal, test) |
 | `python -m clipmaschine discover` | Aktuelle Top-Clips suchen, anzeigen und vormerken |
 | `python -m clipmaschine process <clip-url>` | Einen bestimmten Clip schneiden (mit `--upload` sofort posten) |
 | `python -m clipmaschine process --file video.mp4 --streamer name` | Lokale Videodatei schneiden |

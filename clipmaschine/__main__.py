@@ -297,6 +297,34 @@ def cmd_check(cfg: AppConfig, args) -> int:
     return 0 if ok else 1
 
 
+def cmd_set(cfg: AppConfig, args) -> int:
+    """Einstellungen ändern, ohne die config.yaml von Hand zu bearbeiten."""
+    from .config_edit import PROFILES, apply_changes, parse_assignments
+
+    try:
+        changes = dict(PROFILES[args.profil]) if args.profil else {}
+        changes.update(parse_assignments(args.werte))
+    except ValueError as exc:
+        print(f"Fehler: {exc}", file=sys.stderr)
+        return 2
+    if not changes:
+        print("Nichts zu ändern. Beispiel: python -m clipmaschine set --profil maximal")
+        return 2
+    path = cfg.config_path
+    original = path.read_text(encoding="utf-8")
+    path.write_text(apply_changes(original, changes), encoding="utf-8")
+    try:
+        load_config(path)
+    except ConfigError as exc:
+        path.write_text(original, encoding="utf-8")       # ungültig → alles zurück
+        print(f"Nicht übernommen, die Datei ist unverändert: {exc}", file=sys.stderr)
+        return 2
+    for key, value in changes.items():
+        print(f"  ✔ {key} = {value}")
+    print(f"\nGespeichert in {path}. Wirkt beim nächsten Start der Maschine.")
+    return 0
+
+
 def cmd_setup(args) -> int:
     from .setup_wizard import run_setup
 
@@ -354,6 +382,12 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("auth", help="bei Twitch/TikTok/YouTube/Instagram anmelden")
     p.add_argument("platform", choices=["twitch", "tiktok", "youtube", "instagram"])
     p.set_defaults(func=cmd_auth)
+
+    p = sub.add_parser("set", help="Einstellungen ändern, z. B. --profil maximal oder posting.max_posts_per_day=8")
+    p.add_argument("werte", nargs="*", help="Zuweisungen wie posting.max_posts_per_day=10")
+    p.add_argument("--profil", choices=["maximal", "normal", "test"],
+                   help="maximal = so viel posten wie möglich, test = nur ein Probeclip")
+    p.set_defaults(func=cmd_set)
 
     sub.add_parser("status", help="Warteschlange und letzte Uploads").set_defaults(func=cmd_status)
     sub.add_parser("check", help="Einrichtung prüfen").set_defaults(func=cmd_check)

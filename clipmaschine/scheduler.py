@@ -42,15 +42,20 @@ def next_active_time(when: datetime, hours: list[int] | None, tz: tzinfo) -> dat
     return start.astimezone(timezone.utc)
 
 
-def next_allowed_time(db: Database, platform: str, cfg: PostingConfig, now: datetime) -> tuple[datetime, str]:
-    """Wann darf auf `platform` frühestens wieder gepostet werden – und warum nicht sofort?"""
+def next_allowed_time(db: Database, platform: str, cfg: PostingConfig, now: datetime,
+                      max_posts: int | None = None) -> tuple[datetime, str]:
+    """Wann darf auf `platform` frühestens wieder gepostet werden – und warum nicht sofort?
+
+    max_posts überschreibt das allgemeine Tageslimit für diese Plattform (z. B. YouTube-Kontingent).
+    """
+    limit = max_posts or cfg.max_posts_per_day
     when, reason = now, ""
     recent = db.post_times_since(platform, now - timedelta(hours=24))
-    if len(recent) >= cfg.max_posts_per_day:
+    if len(recent) >= limit:
         # sobald der älteste der letzten N Posts aus dem 24-h-Fenster fällt, ist wieder Platz
-        free_at = recent[cfg.max_posts_per_day - 1] + timedelta(hours=24)
+        free_at = recent[limit - 1] + timedelta(hours=24)
         if free_at > when:
-            when, reason = free_at, f"Tageslimit erreicht ({len(recent)}/{cfg.max_posts_per_day})"
+            when, reason = free_at, f"Tageslimit erreicht ({len(recent)}/{limit})"
     if recent:
         gap_end = recent[0] + timedelta(minutes=cfg.min_minutes_between_posts)
         if gap_end > when:
