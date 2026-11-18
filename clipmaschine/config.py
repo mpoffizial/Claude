@@ -140,6 +140,11 @@ class EditingConfig:
     cold_open_text: str = "WARTE BIS ZUM ENDE"
     progress_bar: bool = True            # Fortschrittsbalken am unteren Rand
     progress_bar_color: str = "#2DE2E6"
+    # Kanal-Banner über dem Video – nur wo Platz ist (blur-Layout mit Querformat-Stream), sonst weggelassen
+    banner: str = ""                     # Video-Loop (.mp4/.mov/.webm/.gif) oder Bild (.png/.jpg); leer = aus
+    banner_width: float = 0.84           # Breite als Anteil der Videobreite
+    banner_max_height: float = 0.13      # höchstens so hoch (Anteil der Videohöhe)
+    banner_border_color: str = "#2DE2E6" # Rahmenfarbe; leer = ohne Rahmen
 
 
 @dataclass
@@ -417,9 +422,23 @@ def load_config(path: str | os.PathLike | None = None) -> AppConfig:
         # relativ zur config.yaml, falls dort vorhanden – sonst relativ zum Arbeitsverzeichnis
         beside_config = config_path.parent / yt_path
         cfg.youtube.client_secrets_file = str(beside_config if beside_config.exists() else Path.cwd() / yt_path)
+    if cfg.editing.banner:
+        cfg.editing.banner = str(resolve_asset(cfg.editing.banner, config_path.parent))
 
     validate(cfg)
     return cfg
+
+
+def resolve_asset(value: str, config_dir: Path) -> Path:
+    """Relativer Pfad: neben der config.yaml, sonst im Programmordner (z. B. presets/branding/…)."""
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path
+    package_dir = Path(__file__).resolve().parent
+    for base in (config_dir, package_dir, package_dir.parent):
+        if (base / path).exists():
+            return (base / path).resolve()
+    return (config_dir / path).resolve()
 
 
 def validate(cfg: AppConfig) -> None:

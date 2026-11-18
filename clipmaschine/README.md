@@ -136,8 +136,9 @@ Ein Konto später verbinden oder eine abgelaufene Anmeldung erneuern: **„Konte
 
 ### Wie viel gepostet wird: Profile
 
-Die GTA-6-Voreinstellung postet im **Maximal-Profil**: 10 Videos pro Tag auf TikTok und Instagram, 6 auf YouTube
-(mehr löst bei neuen Kanälen das YouTube-Upload-Limit aus), mindestens 60 Minuten Abstand, zwischen 8 und 24 Uhr.
+Die GTA-6-Voreinstellung postet im **Maximal-Profil**: 10 Videos pro Tag auf TikTok, Instagram und YouTube
+(zusammen 30 am Tag), mindestens 60 Minuten Abstand, zwischen 8 und 24 Uhr. Mehr lassen neue Accounts kaum zu,
+ohne dass die Videos als Spam gelten. Meldet YouTube trotzdem das Upload-Limit, pausiert nur YouTube 12 Stunden.
 Umschalten ohne Texteditor (im Ordner der Maschine):
 
 | Befehl | Wirkung |
@@ -161,6 +162,10 @@ Jeder Clip wird lokal mit ffmpeg so geschnitten, dass möglichst viele bis zum E
 3. **Zoom-Schnitt** im Moment des Höhepunkts (`punch_zoom`).
 4. **Hook-Text** oben, **Karaoke-Untertitel** in Vice-City-Pink, Credit des Streamers.
 5. **Fortschrittsbalken** in Vice-City-Türkis am unteren Rand (`progress_bar`).
+6. **Animierter Kanal-Banner** über dem Video (`banner`): „GTA 6 HIGHLIGHTS“ mit Neon-Flackern und glitzerndem
+   Wasser. Er wurde einmal mit Higgsfield erstellt (`presets/branding/gta6_banner_loop.mp4`) und wird bei jedem Clip
+   lokal eingeblendet, ohne weitere Kosten. Er sitzt unter den App-Tabs und lässt Platz für den Hook. Bei
+   Hochkant-Quellen ohne freien Platz wird er weggelassen. Eigener Banner: Pfad zu einer `.mp4` oder `.png` eintragen.
 
 Gibt es keinen klar lauteren Moment, bleibt der Clip ungekürzt. Alle Schalter stehen unter `editing:`.
 In der normalen Clipmaschine sind Kürzen, Zoom und Fortschrittsbalken ebenfalls an, der Teaser ist optional.

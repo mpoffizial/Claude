@@ -45,6 +45,9 @@ editing:
   punch_zoom: true                    # Zoom-Schnitt beim Höhepunkt
   progress_bar: true
   progress_bar_color: "#2DE2E6"       # Vice-City-Türkis
+  # Animierter Kanal-Banner über dem Video (einmal mit Higgsfield erstellt, wird lokal eingeblendet).
+  # Eigener Banner: Pfad zu .mp4/.png eintragen; ausschalten: banner: ""
+  banner: presets/branding/gta6_banner_loop.mp4
   caption_highlight_color: "#FF3EA5"  # Vice-City-Pink
   hook_color: "#FFFFFF"
 
@@ -77,12 +80,12 @@ instagram:
 
 youtube:
   enabled: true                       # wird übersprungen, bis YouTube verbunden ist ("Konten verbinden")
-  max_posts_per_day: 6                # neue Kanäle: mehr löst schnell das YouTube-Upload-Limit aus
+  max_posts_per_day: 10               # meldet YouTube das Upload-Limit, pausiert nur YouTube 12 h
   method: browser                     # mit deinem Google-Konto über YouTube Studio – Videos sofort öffentlich
   privacy_status: public
   category_id: "20"
 
-# Maximal-Profil: 10 Posts pro Tag auf TikTok und Instagram, 6 auf YouTube (Kontingent),
+# Maximal-Profil: 10 Posts pro Tag auf TikTok, Instagram und YouTube (30 Videos am Tag),
 # mindestens 60 Minuten Abstand, 8–24 Uhr. Mehr lassen neue Accounts kaum zu, ohne dass die Videos
 # als Spam gelten. Stuft TikTok trotzdem mehrere Videos herab, greift automatisch die Schutzpause.
 # Ruhiger: python -m clipmaschine set --profil normal

@@ -51,6 +51,7 @@ class LayoutPlan:
     hook: Placement
     captions: Placement
     credit: Placement
+    banner_box: tuple[int, int, int, int] | None = None   # freie Fläche (x, y, w, h) für den Kanal-Banner
 
 
 def _require(binary: str) -> str:
@@ -144,15 +145,21 @@ def plan_blur(info: MediaInfo, cfg: EditingConfig) -> LayoutPlan:
         f"[fgsrc]scale={fg_w}:{fg_h}[fg];"
         "[bg][fg]overlay=(W-w)/2:(H-h)/2[base]"
     )
+    banner = None
     if top >= int(H * 0.15):  # genug Platz über und unter dem Video
         hook = Placement(alignment=2, margin_v=H - top + int(H * 0.02))
         credit = Placement(alignment=8, margin_v=bottom + int(H * 0.01))
         captions = Placement(alignment=8, margin_v=bottom + int(H * 0.045))
+        # Banner: unter den Tabs der Apps (oberste 8 %), darunter Platz für zwei Zeilen Hook freihalten
+        y0 = int(H * 0.08)
+        free_h = top - int(H * 0.02) - int(H * 0.13) - y0
+        if free_h >= int(H * 0.05):
+            banner = (0, y0, W, free_h)
     else:                     # Quelle ist schon (fast) hochkant
         hook = Placement(alignment=8, margin_v=int(H * 0.12))
         credit = Placement(alignment=8, margin_v=int(H * 0.08))
         captions = Placement(alignment=2, margin_v=int(H * 0.25))
-    return LayoutPlan("blur", graph, hook, captions, credit)
+    return LayoutPlan("blur", graph, hook, captions, credit, banner_box=banner)
 
 
 def plan_crop(info: MediaInfo, cfg: EditingConfig, crop_x: float = 0.5) -> LayoutPlan:
@@ -405,6 +412,42 @@ def _filter_path(path: str) -> str:
     return path.replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
 
 
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
+_warned_banners: set[str] = set()
+
+
+def banner_source(cfg: EditingConfig, plan: LayoutPlan) -> Path | None:
+    """Banner-Datei, falls eingestellt, vorhanden und im Layout Platz ist."""
+    if not cfg.banner or plan.banner_box is None:
+        return None
+    path = Path(cfg.banner)
+    if not path.is_file():
+        if cfg.banner not in _warned_banners:
+            _warned_banners.add(cfg.banner)
+            log.warning("Banner-Datei nicht gefunden: %s – Videos werden ohne Banner gerendert", cfg.banner)
+        return None
+    return path
+
+
+def banner_input_args(path: Path) -> list[str]:
+    if path.suffix.lower() in IMAGE_SUFFIXES:
+        return ["-loop", "1", "-i", str(path)]
+    return ["-stream_loop", "-1", "-i", str(path)]
+
+
+def banner_graph(plan: LayoutPlan, cfg: EditingConfig, index: int) -> str:
+    """Skaliert den Banner (Seitenverhältnis bleibt) und legt ihn mittig in die freie Fläche → [banner]."""
+    _, y, _, free_h = plan.banner_box
+    max_w = _even(cfg.width * min(max(cfg.banner_width, 0.2), 1.0))
+    max_h = _even(min(free_h, cfg.height * cfg.banner_max_height))
+    chain = (f"[{index}:v]fps={cfg.fps},scale={max_w}:{max_h}:force_original_aspect_ratio=decrease,"
+             f"scale=trunc(iw/2)*2:trunc(ih/2)*2,setsar=1")
+    if cfg.banner_border_color:
+        color = "0x" + cfg.banner_border_color.lstrip("#")[:6]
+        chain += f",drawbox=x=0:y=0:w=iw:h=ih:color={color}@0.9:t={max(2, round(4 * cfg.width / 1080))}"
+    return f"{chain}[bnr];[base][bnr]overlay=x=(W-w)/2:y={y}+({free_h}-h)/2:shortest=1[banner]"
+
+
 def render_vertical(src: Path, out: Path, cfg: EditingConfig, *, layout: str | None = None,
                     facecam: dict | None = None, crop_x: float = 0.5, hook: str | None = None,
                     credit: str | None = None, captions: list[CaptionChunk] | None = None) -> Path:
@@ -425,7 +468,13 @@ def render_vertical(src: Path, out: Path, cfg: EditingConfig, *, layout: str | N
     workdir = out.parent / f".work_{out.stem}"
     workdir.mkdir(parents=True, exist_ok=True)
     try:
-        video_chain = f"[base]fps={cfg.fps},setsar=1"
+        banner = banner_source(cfg, plan)
+        inputs = ["-i", str(src)]
+        banner_part = ""
+        if banner:
+            inputs += banner_input_args(banner)
+            banner_part = ";" + banner_graph(plan, cfg, 1)
+        video_chain = f"{'[banner]' if banner else '[base]'}fps={cfg.fps},setsar=1"
         doc = build_overlay(plan, cfg, duration, hook, credit, captions, teaser=cut.teaser)
         if doc and not has_filter("ass"):
             doc = None                     # lieber ohne Texte als gar kein Video
@@ -436,7 +485,7 @@ def render_vertical(src: Path, out: Path, cfg: EditingConfig, *, layout: str | N
             if cfg.fonts_dir:
                 video_chain += f":fontsdir='{_filter_path(str(Path(cfg.fonts_dir).resolve()))}'"
         layout_graph = plan.filtergraph.replace("[0:v]", "[vsrc]")
-        graph = f"{segment_graph(cut, info)};{layout_graph};{video_chain},format=yuv420p[vout]"
+        graph = f"{segment_graph(cut, info)};{layout_graph}{banner_part};{video_chain},format=yuv420p[vout]"
         audio_map = []
         if info.has_audio:
             if cfg.loudnorm:
@@ -448,7 +497,7 @@ def render_vertical(src: Path, out: Path, cfg: EditingConfig, *, layout: str | N
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp_out = workdir / f"render{out.suffix or '.mp4'}"
         cmd = [
-            ffmpeg, "-y", "-hide_banner", "-loglevel", "error", "-i", str(src),
+            ffmpeg, "-y", "-hide_banner", "-loglevel", "error", *inputs,
             "-filter_complex", graph, "-map", "[vout]", *audio_map,
             "-t", f"{duration:.3f}",
             "-c:v", "libx264", "-preset", cfg.preset, "-crf", str(cfg.crf),
@@ -473,6 +522,8 @@ def render_vertical(src: Path, out: Path, cfg: EditingConfig, *, layout: str | N
         details.append(f"Höhepunkt bei {peak:.1f}s")
     if cut.teaser:
         details.append("Teaser")
+    if banner:
+        details.append("Banner")
     log.info("Gerendert (%s): %s", ", ".join(details), out.name)
     return out
 

@@ -84,6 +84,12 @@ editing:
   cold_open_text: "WARTE BIS ZUM ENDE"
   progress_bar: true
   progress_bar_color: "#2DE2E6"
+  # Kanal-Banner über dem Video (Video-Loop .mp4/.mov/.webm/.gif oder Bild .png/.jpg; leer = aus).
+  # Erscheint nur, wo über dem Video Platz ist (blur-Layout mit Querformat-Stream).
+  banner: ""
+  banner_width: 0.84                  # Anteil der Videobreite
+  banner_max_height: 0.13             # Anteil der Videohöhe
+  banner_border_color: "#2DE2E6"      # leer = ohne Rahmen
 
 # ── Untertitel (optional, lokal, kostenlos): pip install faster-whisper ─────
 captions:

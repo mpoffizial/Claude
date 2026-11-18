@@ -272,12 +272,13 @@ def test_set_command_keeps_comments_and_validates(tmp_path, monkeypatch, capsys)
     text = preset_path("gta6").read_text(encoding="utf-8").replace("test_mode: false", "test_mode: true")
     text = text.replace("  max_posts_per_day: 10\n  min_minutes_between_posts: 60",
                         "  max_posts_per_day: 6\n  min_minutes_between_posts: 150")
+    text = text.replace("  max_posts_per_day: 10               # meldet YouTube", "  max_posts_per_day: 3  # meldet YouTube")
     config.write_text(text, encoding="utf-8")
 
     assert main(["-c", str(config), "set", "--profil", "maximal"]) == 0
     cfg = load_config(config)
     assert cfg.test_mode is False and cfg.posting.max_posts_per_day == 10
-    assert cfg.posting.min_minutes_between_posts == 60 and cfg.youtube.max_posts_per_day == 6
+    assert cfg.posting.min_minutes_between_posts == 60 and cfg.youtube.max_posts_per_day == 10
     assert "# Vice-City-Türkis" in config.read_text(encoding="utf-8")      # Kommentare bleiben
 
     before = config.read_text(encoding="utf-8")
