@@ -13,7 +13,9 @@ PROFILES: dict[str, dict[str, str]] = {
     "maximal": {
         "test_mode": "false",
         "posting.max_posts_per_day": "10",          # TikTok + Instagram
-        "posting.min_minutes_between_posts": "60",
+        "posting.burst_size": "3",                  # 3 Clips direkt nacheinander (10 min Abstand) ...
+        "posting.burst_gap_minutes": "10",
+        "posting.min_minutes_between_posts": "240", # ... dann 4 h Pause → Serien bis in den Abend verteilt
         "posting.active_hours": "[8, 24]",
         "posting.queue_size": "10",
         "youtube.max_posts_per_day": "10",          # Browser-Modus; per API pausiert YouTube bei leerem Kontingent
@@ -22,6 +24,7 @@ PROFILES: dict[str, dict[str, str]] = {
     "normal": {
         "test_mode": "false",
         "posting.max_posts_per_day": "6",
+        "posting.burst_size": "1",
         "posting.min_minutes_between_posts": "150",
         "posting.queue_size": "6",
     },

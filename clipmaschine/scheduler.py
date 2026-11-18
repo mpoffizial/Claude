@@ -42,6 +42,23 @@ def next_active_time(when: datetime, hours: list[int] | None, tz: tzinfo) -> dat
     return start.astimezone(timezone.utc)
 
 
+def burst_position(recent: list[datetime], cfg: PostingConfig) -> int:
+    """Wie viele Posts die aktuelle Serie schon hat (recent: neueste zuerst).
+
+    Posts gehören zu einer Serie, solange ihr Abstand kürzer ist als die normale Pause – so zählt ein
+    Clip, der etwas länger zum Rendern brauchte, trotzdem noch zur laufenden Serie.
+    """
+    if not recent:
+        return 0
+    count = 1
+    pause = timedelta(minutes=cfg.min_minutes_between_posts)
+    for newer, older in zip(recent, recent[1:]):
+        if newer - older >= pause:
+            break
+        count += 1
+    return count
+
+
 def next_allowed_time(db: Database, platform: str, cfg: PostingConfig, now: datetime,
                       max_posts: int | None = None) -> tuple[datetime, str]:
     """Wann darf auf `platform` frühestens wieder gepostet werden – und warum nicht sofort?
@@ -57,9 +74,11 @@ def next_allowed_time(db: Database, platform: str, cfg: PostingConfig, now: date
         if free_at > when:
             when, reason = free_at, f"Tageslimit erreicht ({len(recent)}/{limit})"
     if recent:
-        gap_end = recent[0] + timedelta(minutes=cfg.min_minutes_between_posts)
+        in_series = burst_position(recent, cfg) < max(cfg.burst_size, 1)
+        gap = cfg.burst_gap_minutes if in_series else cfg.min_minutes_between_posts
+        gap_end = recent[0] + timedelta(minutes=gap)
         if gap_end > when:
-            when, reason = gap_end, "Mindestabstand zwischen Posts"
+            when, reason = gap_end, ("nächster Clip der Serie" if in_series else "Mindestabstand zwischen Posts")
     active = next_active_time(when, cfg.active_hours, local_timezone(cfg.timezone))
     if active > when:
         when, reason = active, reason or "außerhalb der Posting-Zeiten"

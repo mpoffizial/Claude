@@ -247,6 +247,9 @@ class InstagramConfig:
 class PostingConfig:
     max_posts_per_day: int = 4           # pro Plattform, rollierende 24 Stunden
     min_minutes_between_posts: float = 120
+    # Serien: so viele Clips direkt nacheinander (im Abstand burst_gap_minutes), danach die normale Pause
+    burst_size: int = 1                  # 1 = keine Serien, immer min_minutes_between_posts Abstand
+    burst_gap_minutes: float = 10
     active_hours: list[int] | None = field(default_factory=lambda: [10, 23])  # [Start, Ende) Ortszeit; null = immer
     timezone: str | None = None          # z. B. "Europe/Berlin"; leer = Systemzeitzone
     max_clip_age_hours: float = 72
@@ -472,6 +475,11 @@ def validate(cfg: AppConfig) -> None:
     p = cfg.posting
     if p.max_posts_per_day < 1 or p.max_attempts < 1 or p.queue_size < 1:
         problems.append("posting.max_posts_per_day, max_attempts und queue_size müssen mindestens 1 sein")
+    if p.burst_size < 1:
+        problems.append("posting.burst_size muss mindestens 1 sein")
+    elif p.burst_size > 1 and not 1 <= p.burst_gap_minutes < p.min_minutes_between_posts:
+        problems.append("posting.burst_gap_minutes muss mindestens 1 und kleiner als "
+                        "posting.min_minutes_between_posts sein")
     if p.timezone:
         try:
             from zoneinfo import ZoneInfo

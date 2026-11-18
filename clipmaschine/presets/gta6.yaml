@@ -85,13 +85,15 @@ youtube:
   privacy_status: public
   category_id: "20"
 
-# Maximal-Profil: 10 Posts pro Tag auf TikTok, Instagram und YouTube (30 Videos am Tag),
-# mindestens 60 Minuten Abstand, 8–24 Uhr. Mehr lassen neue Accounts kaum zu, ohne dass die Videos
-# als Spam gelten. Stuft TikTok trotzdem mehrere Videos herab, greift automatisch die Schutzpause.
+# Maximal-Profil: 10 Posts pro Tag auf TikTok, Instagram und YouTube (30 Videos am Tag), in Serien
+# zu 3 Clips im Abstand von 10 Minuten, danach 4 Stunden Pause, 8–24 Uhr. Mehr lassen neue Accounts
+# kaum zu, ohne dass die Videos als Spam gelten. Stuft TikTok trotzdem mehrere Videos herab, greift automatisch die Schutzpause.
 # Ruhiger: python -m clipmaschine set --profil normal
 posting:
   max_posts_per_day: 10
-  min_minutes_between_posts: 60
+  burst_size: 3                       # 3 Clips direkt nacheinander (alle 10 Minuten) ...
+  burst_gap_minutes: 10
+  min_minutes_between_posts: 240      # ... dann 4 Stunden Pause – Serien um ca. 8, 12, 16 und 21 Uhr
   active_hours: [8, 24]
   timezone: Europe/Berlin
   max_clip_age_hours: 36

@@ -137,8 +137,10 @@ Ein Konto später verbinden oder eine abgelaufene Anmeldung erneuern: **„Konte
 ### Wie viel gepostet wird: Profile
 
 Die GTA-6-Voreinstellung postet im **Maximal-Profil**: 10 Videos pro Tag auf TikTok, Instagram und YouTube
-(zusammen 30 am Tag), mindestens 60 Minuten Abstand, zwischen 8 und 24 Uhr. Mehr lassen neue Accounts kaum zu,
-ohne dass die Videos als Spam gelten. Meldet YouTube trotzdem das Upload-Limit, pausiert nur YouTube 12 Stunden.
+(zusammen 30 am Tag), zwischen 8 und 24 Uhr, **in Serien**: 3 Clips direkt nacheinander im Abstand von 10 Minuten,
+danach 4 Stunden Pause. So kommen vier Serien, ungefähr um 8, 12, 16 und 21 Uhr (`posting.burst_size`,
+`burst_gap_minutes`, `min_minutes_between_posts`). Mehr lassen neue Accounts kaum zu, ohne dass die Videos
+als Spam gelten. Meldet YouTube trotzdem das Upload-Limit, pausiert nur YouTube 12 Stunden.
 Umschalten ohne Texteditor (im Ordner der Maschine):
 
 | Befehl | Wirkung |
