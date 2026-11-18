@@ -109,7 +109,7 @@ def test_gta6_preset_is_valid(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     shutil.copy(preset_path("gta6"), tmp_path / "config.yaml")
     cfg = load_config(tmp_path / "config.yaml")
-    assert cfg.discovery.games == ["Grand Theft Auto VI"] and cfg.discovery.games_start_at == "2026-11-19"
+    assert cfg.discovery.games == ["Grand Theft Auto VI"] and cfg.discovery.games_start_at == "2026-11-18"
     assert cfg.tiktok.enabled and cfg.instagram.enabled and cfg.youtube.enabled
     assert cfg.tiktok_method == "browser" and cfg.tiktok.check_recommendation
     assert cfg.metadata.title_prefix == "GTA 6: " and "gta6" in cfg.metadata.default_hashtags

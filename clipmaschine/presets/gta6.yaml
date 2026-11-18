@@ -16,7 +16,7 @@ data_dir: clipmaschine_data
 
 discovery:
   games: ["Grand Theft Auto VI"]      # die Maschine wartet, bis es Kategorie und Clips gibt
-  games_start_at: "2026-11-19"        # Release – vorher wird nichts geclippt (bei Verschiebung anpassen)
+  games_start_at: "2026-11-18"        # ab hier wird geclippt (erste Streams laufen schon vor dem Release)
   interval_minutes: 10                # alle 10 Minuten nach neuen Highlights suchen
   lookback_hours: 12
   min_views: 150                      # nur Clips, die schon gut laufen

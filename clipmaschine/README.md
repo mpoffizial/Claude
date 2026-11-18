@@ -105,7 +105,7 @@ Ab dann reicht ein Doppelklick auf dieselbe Datei. Den Assistenten kannst du jed
 
 Clippt die Highlights **aller** Twitch-Streams von *Grand Theft Auto VI* und postet sie auf TikTok,
 Instagram Reels und YouTube Shorts. Sie läuft in einem eigenen Ordner mit eigenen Logins, unabhängig von
-deiner ersten Clipmaschine. Vor dem Release (`games_start_at: "2026-11-19"`) wartet sie und legt dann von selbst los.
+deiner ersten Clipmaschine. Sie clippt ab `games_start_at` (Voreinstellung: 18.11.2026, die ersten Streams laufen schon vor dem Release).
 
 **Mac** (Terminal):
 
